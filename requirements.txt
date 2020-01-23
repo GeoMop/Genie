@@ -1,0 +1,5 @@
+numpy
+PyQt5
+bgem
+pandas
+xlrd
