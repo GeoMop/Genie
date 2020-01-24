@@ -105,6 +105,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print(measurements)
             #data = ert_prepare.prepare(self._electrode_groups, measurements)
             #data.save("out.dat")
+            from run_inv import RunInvDlg
             dlg = RunInvDlg(self._electrode_groups, measurements, self)
             dlg.exec()
 
