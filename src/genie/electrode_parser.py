@@ -74,7 +74,7 @@ def parse(file_name):
         v = df_m["date"][i]
         if type(v) is not pd.Timestamp:
             continue
-        date = v.to_pydatetime()
+        date = str(v.to_pydatetime())
 
         # file
         v = df_m["file"][i]

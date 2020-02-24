@@ -1,33 +1,38 @@
 import ares_parser
 
 import os
+from typing import List
+import attr
+import json_data
 
 
-class ElectrodeGroup:
-    def __init__(self, gallery="", wall="", height=""):
-        self.gallery = gallery
-        self.wall = wall
-        self.height = height
-        self.electrodes = []
-
-
+@json_data.jsondata
 class Electrode:
-    def __init__(self, id=0, offset=0.0, x=0.0, y=0.0, z=0.0):
-        self.id = id
-        self.offset = offset
-        self.x = x
-        self.y = y
-        self.z = z
+    id: int = 0
+    offset: float = 0.0
+    x: float = 0.0
+    y: float = 0.0
+    z: float = 0.0
 
 
+@json_data.jsondata
+class ElectrodeGroup:
+    gallery: str = ""
+    wall: str = ""
+    height: str = ""
+    electrodes: List[Electrode] = attr.ib(factory=list)
+
+
+@json_data.jsondata
 class Measurement:
-    def __init__(self, number="", date="", file="", el_start=0, el_stop=0):
-        self.number = number
-        """Measurement number, this is key"""
-        self.date = date
-        self.file = file
-        self.el_start = el_start
-        self.el_stop = el_stop
+    number: str = ""
+    """Measurement number, this is key"""
+    date: str = ""
+    file: str = ""
+    el_start: int = 0
+    el_stop: int = 0
+
+    def __attrs_post_init__(self):
         self.data = None
 
     def load_data(self):

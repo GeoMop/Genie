@@ -3,6 +3,9 @@ import electrode_parser
 from electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from measurement_view import MeasurementModel, MeasurementView
 from region_panel import RegionPanel
+from ui.menus.main_menu_bar import MainMenuBar
+from ui.dialogs.new_project_dialog import NewProjectDialog
+from ui.dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
 
@@ -10,8 +13,8 @@ from PyQt5 import QtWidgets, QtCore
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, genie):
+        super().__init__()
 
         self.setWindowTitle("Genie")
 
@@ -72,6 +75,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.diagram_view.show_map()
         self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+        # menuBar
+        self.menuBar = MainMenuBar(self)
+        self.setMenuBar(self.menuBar)
+
+        # connect actions
+        self.menuBar.file.actionExit.triggered.connect(QtWidgets.QApplication.quit)
+        self.menuBar.file.actionNewProject.triggered.connect(self._handle_new_project_action)
+        self.menuBar.inversions.actionEdit.triggered.connect(self._handle_inversions_edit_action)
+
+    def _handle_new_project_action(self):
+        dlg = NewProjectDialog(self)
+        dlg.exec()
+
+    def _handle_inversions_edit_action(self):
+        dlg = EditInversionsDialog(self)
+        dlg.exec()
 
     # def _handle_el_groupList_item_change(self):
     #     currentItem = self.el_groupView.currentItem()
