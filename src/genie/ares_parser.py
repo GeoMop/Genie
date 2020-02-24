@@ -44,6 +44,11 @@ def _parse_ares(file_name):
         raw_df['V'] *= 0.001
         raw_df['EP'] *= 0.001
 
+        raw_df['ca'] = raw_df['ca'].apply(lambda x: str(x))
+        raw_df['cb'] = raw_df['cb'].apply(lambda x: str(x))
+        raw_df['pa'] = raw_df['pa'].apply(lambda x: str(x))
+        raw_df['pb'] = raw_df['pb'].apply(lambda x: str(x))
+
         ret["data"] = raw_df
 
     return ret
@@ -65,9 +70,10 @@ def _parse_ares2(file_name):
             else:
                 break
 
-        raw_df = pd.read_csv(fd, header=None, sep="\t")
         # name columns
-        raw_df.columns = ['ca', 'cb', 'pa', 'pb', 'Pn', 'Pn_1', 'array', 'Uout', 'I', 'V', 'EP', 'AppRes', 'std']
+        names = ['ca', 'cb', 'pa', 'pb', 'Pn', 'Pn_1', 'array', 'Uout', 'I', 'V', 'EP', 'AppRes', 'std']
+
+        raw_df = pd.read_csv(fd, header=None, sep="\t", names=names)
 
         # remove wrong readings
         raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
@@ -84,11 +90,13 @@ def _parse_ares2(file_name):
         def rem_star(x):
             if isinstance(x, str):
                 s = x.split("*", maxsplit=1)
-                return int(s[0])
-            return x
+                return s[0]
+            return str(x)
 
         raw_df['ca'] = raw_df['ca'].apply(rem_star)
         raw_df['cb'] = raw_df['cb'].apply(rem_star)
+        raw_df['pa'] = raw_df['pa'].apply(lambda x: str(x))
+        raw_df['pb'] = raw_df['pb'].apply(lambda x: str(x))
 
         ret["data"] = raw_df
 
