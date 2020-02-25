@@ -40,5 +40,15 @@ class Measurement:
         if self.file == "" or not os.path.isfile(self.file):
             return
         res = ares_parser.parse(self.file)
+
+        # remove wrong readings
+        res.data = res.data.drop(res.data[res.data['V'] < 0].index)
+
+        # assume that electrode indexes are integers
+        res.data['ca'] = res.data['ca'].apply(lambda x: int(x))
+        res.data['cb'] = res.data['cb'].apply(lambda x: int(x))
+        res.data['pa'] = res.data['pa'].apply(lambda x: int(x))
+        res.data['pb'] = res.data['pb'].apply(lambda x: int(x))
+
         if not res["errors"]:
             self.data = res

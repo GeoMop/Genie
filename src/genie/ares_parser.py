@@ -34,7 +34,7 @@ def _parse_ares(file_name):
         raw_df.columns = ['ca', 'cb', 'pa', 'pb', 'array', 'I', 'V', 'EP', 'AppRes', 'std']
 
         # remove wrong readings
-        raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
+        #raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
 
         # input error is in percent
         raw_df['std'] *= 0.01
@@ -76,7 +76,7 @@ def _parse_ares2(file_name):
         raw_df = pd.read_csv(fd, header=None, sep="\t", names=names)
 
         # remove wrong readings
-        raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
+        #raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
 
         # input error is in percent
         raw_df['std'] *= 0.01
