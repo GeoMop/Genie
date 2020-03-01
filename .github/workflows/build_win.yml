@@ -1,0 +1,22 @@
+name: Build Win
+
+on:
+  push:
+    branches:
+      - release*
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create Windows installer
+      run: bash build_win.sh
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: win_install
+        path: dist
