@@ -177,7 +177,7 @@ Section "Runtime Environment" SecRuntime
 SectionEnd
 
 
-Section "XlsReader" SecXlsReader
+Section "XLSReader" SecXLSReader
 
   # Section is mandatory.
   SectionIn RO
@@ -227,7 +227,7 @@ Section "Start Menu shortcuts" SecStartShortcuts
 
   IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
     SetOutPath $INSTDIR\xlsreader
-    CreateShortcut "$SMPROGRAMS\Genie\XlsReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"' "$INSTDIR\gm_base\resources\icons\ico\geomap.ico" 0
+    CreateShortcut "$SMPROGRAMS\Genie\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"' "$INSTDIR\gm_base\resources\icons\ico\geomap.ico" 0
 
 SectionEnd
 
@@ -236,7 +236,7 @@ Section "Desktop icons" SecDesktopIcons
 
   IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
     SetOutPath $INSTDIR\xlsreader
-    CreateShortCut "$DESKTOP\XlsReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
+    CreateShortCut "$DESKTOP\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
 
 SectionEnd
 
@@ -286,7 +286,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${SecRuntime} \
 "The runtime environment for Genie - Python 3.7 with PyQt5."
-!insertmacro MUI_DESCRIPTION_TEXT ${SecXlsReader} \
+!insertmacro MUI_DESCRIPTION_TEXT ${SecXLSReader} \
 "The reader for Excel files."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecBatchFiles} \
 "This adds batch files to bin directory."
@@ -309,7 +309,7 @@ Section "Uninstall"
   DeleteRegKey HKCU SOFTWARE\Genie
 
   # Delete desktop icons.
-  Delete "$DESKTOP\XlsReader.lnk"
+  Delete "$DESKTOP\XLSReader.lnk"
 
   # Remove start menu shortcuts.
   RMDir /r "$SMPROGRAMS\Genie"

@@ -8,7 +8,9 @@ import sys
 class XlsReaderDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("XlsReader")
+        self._log_text = ""
+
+        self.setWindowTitle("XLSReader")
 
         main_layout = QtWidgets.QVBoxLayout()
 
@@ -30,9 +32,12 @@ class XlsReaderDialog(QtWidgets.QDialog):
         # button box
         read_button = QtWidgets.QPushButton("Read")
         read_button.clicked.connect(self._handle_read_action)
+        save_results_button = QtWidgets.QPushButton("Save results...")
+        save_results_button.clicked.connect(self._handle_save_results_action)
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Close)
         button_box.rejected.connect(self.reject)
         button_box.addButton(read_button, QtWidgets.QDialogButtonBox.ActionRole)
+        button_box.addButton(save_results_button, QtWidgets.QDialogButtonBox.ActionRole)
         main_layout.addWidget(button_box)
 
         self.setLayout(main_layout)
@@ -46,9 +51,18 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log.clear()
         measurements_groups, log = parse(self._file_edit.text())
         if log.items:
-            self._log.append(log.to_string())
+            self._log_text = log.to_string()
         else:
-            self._log.append("Ok.")
+            self._log_text = "Ok."
+        self._log.append(self._log_text)
+
+    def _handle_save_results_action(self):
+        if self._log_text:
+            file = QtWidgets.QFileDialog.getSaveFileName(self, "Save results to file", "results.txt", "Text Files (*.txt)")
+            file_name = file[0]
+            if file_name:
+                with open(file_name, 'w') as fd:
+                    fd.write(self._log_text)
 
     def _handle_browse_action(self):
         file = QtWidgets.QFileDialog.getOpenFileName(self, "Open excel file", "", "Excel Files (*.xlsx)")
