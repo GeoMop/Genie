@@ -3,12 +3,14 @@ from xlsreader.xls_parser import parse
 from PyQt5 import QtWidgets, QtGui
 
 import sys
+import os
 
 
 class XlsReaderDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._log_text = ""
+        self._dir = ""
 
         self.setWindowTitle("XLSReader")
 
@@ -45,20 +47,31 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self.resize(600, 300)
 
     def _handle_read_action(self):
-        if not self._file_edit.text():
+        xls_file = self._file_edit.text()
+        if not os.path.isfile(xls_file):
             return
 
         self._log.clear()
-        measurements_groups, log = parse(self._file_edit.text())
+        self._dir = os.path.dirname(xls_file)
+
+        groups, log = parse(xls_file)
         if log.items:
-            self._log_text = log.to_string()
+            text = log.to_string()
         else:
-            self._log_text = "Ok."
-        self._log.append(self._log_text)
+            text = "Ok."
+
+        text += "\n\nMeasurements without errors:\n"
+        meas_nums = sorted([m.number for mg in groups if not mg.has_error for m in mg.measurements if not m.has_error])
+        text += "\n".join(meas_nums) + "\n"
+
+        self._log_text = text
+        self._log.append(text)
+        self._log.moveCursor(QtGui.QTextCursor.End)
 
     def _handle_save_results_action(self):
         if self._log_text:
-            file = QtWidgets.QFileDialog.getSaveFileName(self, "Save results to file", "results.txt", "Text Files (*.txt)")
+            file = QtWidgets.QFileDialog.getSaveFileName(self, "Save results to file",
+                                                         os.path.join(self._dir, "results.txt"), "Text Files (*.txt)")
             file_name = file[0]
             if file_name:
                 with open(file_name, 'w') as fd:

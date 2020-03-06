@@ -37,6 +37,7 @@ class XlsMeasurement:
     file: str = ""
     xls_row: int = 0
     xls_col: int = 0
+    has_error: bool = False
 
 
 @json_data.jsondata
@@ -44,6 +45,7 @@ class XlsMeasurementGroup:
     electrodes: List[XlsElectrode] = attr.ib(factory=list)
     measurements: List[XlsMeasurement] = attr.ib(factory=list)
     xls_row: int = 0
+    has_error: bool = False
 
 
 class XlsLogLevel(Enum):
@@ -160,49 +162,59 @@ def parse(xls_file):
         for e in mg.electrodes:
             if _empty_cell(e.gallery):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1, "Gallery is empty."))
+                mg.has_error = True
                 e.gallery = ""
             else:
                 e.gallery = str(e.gallery).strip()
 
             if _empty_cell(e.wall):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 2, "Wall is empty."))
+                mg.has_error = True
                 e.wall = ""
             else:
                 e.wall = str(e.wall).strip()
 
             if _empty_cell(e.height):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3, "Height is empty."))
+                mg.has_error = True
                 e.height = ""
             else:
                 e.height = str(e.height).strip()
 
             if _empty_cell(e.meas_id):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5, "Electrode measurement id is empty."))
+                mg.has_error = True
                 e.meas_id = ""
             else:
                 e.meas_id = str(e.meas_id).strip()
 
             if _empty_cell(e.x):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 7, "X is empty."))
+                mg.has_error = True
             elif not (type(e.x) is float) and not (type(e.x) is int):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 7,
                                         'X type must be float or int. Found "{}".'.format(type(e.x).__name__)))
+                mg.has_error = True
             else:
                 e.x = float(e.x)
 
             if _empty_cell(e.y):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 8, "Y is empty."))
+                mg.has_error = True
             elif not (type(e.y) is float) and not (type(e.y) is int):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 8,
                                         'Y type must be float or int. Found "{}".'.format(type(e.y).__name__)))
+                mg.has_error = True
             else:
                 e.y = float(e.y)
 
             if _empty_cell(e.z):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 9, "Z is empty."))
+                mg.has_error = True
             elif not (type(e.z) is float) and not (type(e.z) is int):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 9,
                                         'Z type must be float or int. Found "{}".'.format(type(e.z).__name__)))
+                mg.has_error = True
             else:
                 e.z = float(e.z)
 
@@ -211,26 +223,32 @@ def parse(xls_file):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col,
                                         'Measurement number must not contain white space nor diacritics. Found "{}".'.format(
                                             m.number)))
+                m.has_error = True
 
             if _empty_cell(m.date):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 1, "Date is empty."))
+                m.has_error = True
                 m.date = ""
             else:
                 m.date = str(m.date).strip()
                 if not m.date:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 1, "Date is empty."))
+                    m.has_error = True
 
             if _empty_cell(m.file):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 4, "File name is empty."))
+                m.has_error = True
                 m.file = ""
             else:
                 m.file = str(m.file).strip()
                 if not m.file:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 4, "File name is empty."))
+                    m.has_error = True
                 elif _white_space_diacritics(m.file):
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 4,
                                             'File name must not contain white space nor diacritics. Found "{}".'.format(
                                                 m.file)))
+                    m.has_error = True
 
     # check that duplicate electrode are the same
     ed = {}
@@ -242,26 +260,32 @@ def parse(xls_file):
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1,
                                             'Gallery differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.gallery, e_ed.gallery)))
+                    mg.has_error = True
                 if e.wall != e_ed.wall:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 2,
                                             'Wall differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.wall, e_ed.wall)))
+                    mg.has_error = True
                 if e.height != e_ed.height:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3,
                                             'Height differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.height, e_ed.height)))
+                    mg.has_error = True
                 if e.x != e_ed.x:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 7,
                                             'X differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.x, e_ed.x)))
+                    mg.has_error = True
                 if e.y != e_ed.y:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 8,
                                             'Y differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.y, e_ed.y)))
+                    mg.has_error = True
                 if e.z != e_ed.z:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 9,
                                             'X differs from the same electrode on row {}. "{}" != "{}"'.format(
                                                 e_ed.xls_row, e.z, e_ed.z)))
+                    mg.has_error = True
             else:
                 ed[e.id] = e
 
@@ -273,15 +297,21 @@ def parse(xls_file):
             f = os.path.join(xls_dir, m.number, m.file)
             if not os.path.isfile(f):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, m.xls_col + 4, 'File "{}" does not exist.'.format(f)))
+                m.has_error = True
             else:
                 m_file_el_set = _get_el_set_file(f)
                 m_el_set = {e.meas_id for e in mg.electrodes}
-                log.add_item(XlsLogItem(XlsLogLevel.WARNING, m.xls_row, 5,
-                                        'Measurement "{}" has {} electrode ids which are not in measurement file.'.format(
-                                            m.number, m_el_set - m_file_el_set)))
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 5,
-                                        'Measurement "{}" has {} electrode ids which are not in xls file.'.format(
-                                            m.number, m_file_el_set - m_el_set)))
+                not_meas = m_el_set - m_file_el_set
+                if not_meas:
+                    log.add_item(XlsLogItem(XlsLogLevel.WARNING, m.xls_row, 5,
+                                            'Measurement "{}" has {} electrode ids which are not in measurement file.'.format(
+                                                m.number, not_meas)))
+                not_xls = m_file_el_set - m_el_set
+                if not_xls:
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 5,
+                                            'Measurement "{}" has {} electrode ids which are not in xls file.'.format(
+                                                m.number, not_xls)))
+                    m.has_error = True
 
     # with open("out.json", "w") as fd:
     #     json.dump([mg.serialize() for mg in measurements_groups], fd, indent=4, sort_keys=True)
