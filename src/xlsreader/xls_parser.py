@@ -301,16 +301,16 @@ def parse(xls_file):
             else:
                 m_file_el_set = _get_el_set_file(f)
                 m_el_set = {e.meas_id for e in mg.electrodes}
-                not_meas = m_el_set - m_file_el_set
+                not_meas = sorted(m_el_set - m_file_el_set)
                 if not_meas:
                     log.add_item(XlsLogItem(XlsLogLevel.WARNING, m.xls_row, 5,
                                             'Measurement "{}" has {} electrode ids which are not in measurement file.'.format(
-                                                m.number, not_meas)))
-                not_xls = m_file_el_set - m_el_set
+                                                m.number, ", ".join(['"' + s + '"' for s in not_meas]))))
+                not_xls = sorted(m_file_el_set - m_el_set)
                 if not_xls:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 5,
                                             'Measurement "{}" has {} electrode ids which are not in xls file.'.format(
-                                                m.number, not_xls)))
+                                                m.number, ", ".join(['"' + s + '"' for s in not_xls]))))
                     m.has_error = True
 
     # with open("out.json", "w") as fd:
