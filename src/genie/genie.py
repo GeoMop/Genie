@@ -1,5 +1,5 @@
-from scene import DiagramView, Cursor
-from main_window import MainWindow
+from ui.panels.scene import DiagramView, Cursor
+from ui.main_window import MainWindow
 import config_file
 from config import GenieConfig
 

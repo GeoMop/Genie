@@ -3,8 +3,10 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg
 from PyQt5.QtCore import Qt
 from bgem.external import undo
-import mouse
+from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
+
+import random
 
 
 enable_undo()
@@ -905,7 +907,7 @@ class DiagramView(QtWidgets.QGraphicsView):
             for el in eg.electrodes:
                 x = el.x
                 y = -el.y
-                print("x: {}, y: {}".format(x, y))
+                #print("x: {}, y: {}".format(x, y))
                 pt = self._scene.decomposition.add_point((x, -y))
                 self._scene.regions.set_region(1, pt.id, reg_id)
                 gpt = GsPoint(pt)
@@ -913,6 +915,28 @@ class DiagramView(QtWidgets.QGraphicsView):
                 self._scene.addItem(gpt)
                 gpt.update()
                 self.el_map[id(el)] = gpt
+
+        self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
+
+    def show_laser(self, file_name):
+        reg_id = self._scene.regions.add_region(dim=1)
+        with open(file_name) as fd:
+            for i, line in enumerate(fd):
+                #if i % 1000 != 0:
+                if random.random() > 0.001:
+                    continue
+                #print(line)
+                s = line.split()
+                if len(s) >= 3:
+                    x = float(s[0]) - 622000
+                    y = -float(s[1]) + 1128000
+                    print("x: {}, y: {}".format(x, y))
+                    pt = self._scene.decomposition.add_point((x, -y))
+                    self._scene.regions.set_region(1, pt.id, reg_id)
+                    gpt = GsPoint(pt)
+                    self._scene.points[pt.id] = gpt
+                    self._scene.addItem(gpt)
+                    gpt.update()
 
         self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
 
@@ -926,7 +950,7 @@ class DiagramView(QtWidgets.QGraphicsView):
                 last_gpt = gpt
 
     def show_map(self):
-        map = QtSvg.QGraphicsSvgItem("bukov_situace.svg")
+        map = QtSvg.QGraphicsSvgItem("res/bukov_situace.svg")
 
         # map transform
         # 622380 - 247.266276267186

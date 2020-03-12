@@ -1,13 +1,14 @@
-from scene import DiagramView
+from ui.panels.scene import DiagramView
 import electrode_parser
-from electrode_views import ElectrodeGroupModel, ElectrodeGroupView
-from measurement_view import MeasurementModel, MeasurementView
-from region_panel import RegionPanel
+from ui.panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
+from ui.panels.measurement_view import MeasurementModel, MeasurementView
+from ui.panels.region_panel import RegionPanel
 from ui.menus.main_menu_bar import MainMenuBar
 from ui.dialogs.new_project_dialog import NewProjectDialog
 from ui.dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
+from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -26,7 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         vlayout = QtWidgets.QVBoxLayout()
         hlayout.addLayout(vlayout)
 
-        file_name = "seznam souřadnic ERT bukov_finale_pb 4.xlsx"
+        file_name = "res/seznam souřadnic ERT bukov_finale_pb 4.xlsx"
         res = electrode_parser.parse(file_name)
         self._electrode_groups = res["electrode_groups"]
         self._measurements = res["measurements"]
@@ -71,6 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
         hlayout.addWidget(self.diagram_view)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
+        #self.diagram_view.show_laser("/home/radek/work/Genie/laser/BUK_20160907_JTSK_zkr_1cm.txt")
         #self.region_panel.selection_changed()
 
         self.diagram_view.show_map()
@@ -136,4 +138,5 @@ class MainWindow(QtWidgets.QMainWindow):
             self.diagram_view.connect_electrodes(eg)
 
     def _handle_generate_meshButton(self):
-        pass
+        dlg = GenerateMeshDlg(self.diagram_view._scene.decomposition, self)
+        dlg.exec()
