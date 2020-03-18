@@ -1,7 +1,8 @@
+from PyQt5.QtCore import Qt
 from ui.panels.scene import DiagramView
 import electrode_parser
 from ui.panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
-from ui.panels.measurement_view import MeasurementModel, MeasurementView
+from ui.panels.measurement_view import MeasurementModel, MeasurementGroupView
 from ui.panels.region_panel import RegionPanel
 from ui.menus.main_menu_bar import MainMenuBar
 from ui.dialogs.new_project_dialog import NewProjectDialog
@@ -12,6 +13,8 @@ from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
 
 from PyQt5 import QtWidgets, QtCore
 
+from ui.panels.measurement_view import MeasurementGroupView
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, genie):
@@ -20,12 +23,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Genie")
 
         self.resize(1200, 800)
-
         central_widget = QtWidgets.QWidget(self)
-        self.setCentralWidget(central_widget)
-        hlayout = QtWidgets.QHBoxLayout(central_widget)
-        vlayout = QtWidgets.QVBoxLayout()
-        hlayout.addLayout(vlayout)
+        self._init_docks()
 
         file_name = "res/seznam souřadnic ERT bukov_finale_pb 4.xlsx"
         res = electrode_parser.parse(file_name)
@@ -34,42 +33,28 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._electrode_group_model = ElectrodeGroupModel(self._electrode_groups)
 
-        self.el_groupView = ElectrodeGroupView(central_widget)
-        self.el_groupView.setModel(self._electrode_group_model)
-        vlayout.addWidget(self.el_groupView)
+        self.el_groupView = ElectrodeGroupView(self, self._electrode_group_model)
+        self.edit_electrodes.setWidget(self.el_groupView)
         self.el_groupView.setMinimumWidth(200)
         self.el_groupView.setMaximumWidth(400)
 
-        self.connect_electrodesButton = QtWidgets.QPushButton("Connect electrodes", central_widget)
-        self.connect_electrodesButton.clicked.connect(self._handle_connect_electrodesButton)
-        vlayout.addWidget(self.connect_electrodesButton)
-
-        self.generate_meshButton = QtWidgets.QPushButton("Generate mesh", central_widget)
-        self.generate_meshButton.clicked.connect(self._handle_generate_meshButton)
-        vlayout.addWidget(self.generate_meshButton)
-
         self.diagram_view = DiagramView()
+        self.setCentralWidget(self.diagram_view)
 
         self.region_panel = RegionPanel(self, self.diagram_view._scene)
         self.region_panel._update_region_list()
-        vlayout.addWidget(self.region_panel)
+        self.region_panel_dock.setWidget(self.region_panel)
 
         self.region_panel.region_changed.connect(self.diagram_view._scene.region_panel_changed)
         self.diagram_view._scene.selection_changed.connect(self.region_panel.selection_changed)
 
         self._measurement_model = MeasurementModel(self._measurements)
 
-        self.measurementView = MeasurementView(central_widget)
-        self.measurementView.setModel(self._measurement_model)
-        vlayout.addWidget(self.measurementView)
-        self.measurementView.setMinimumWidth(200)
-        self.measurementView.setMaximumWidth(400)
+        self.measurement_view = MeasurementGroupView(self, self._measurement_model)
+        self.measurements_dock.setWidget(self.measurement_view)
+        self.measurement_view.setMinimumWidth(200)
+        self.measurement_view.setMaximumWidth(400)
 
-        self.run_invButton = QtWidgets.QPushButton("Run inversion", central_widget)
-        self.run_invButton.clicked.connect(self._handle_run_invButton)
-        vlayout.addWidget(self.run_invButton)
-
-        hlayout.addWidget(self.diagram_view)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
         #self.diagram_view.show_laser("/home/radek/work/Genie/laser/BUK_20160907_JTSK_zkr_1cm.txt")
@@ -86,6 +71,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuBar.file.actionExit.triggered.connect(QtWidgets.QApplication.quit)
         self.menuBar.file.actionNewProject.triggered.connect(self._handle_new_project_action)
         self.menuBar.inversions.actionEdit.triggered.connect(self._handle_inversions_edit_action)
+
+    def _init_docks(self):
+        """Initializes docks"""
+        self.edit_electrodes = QtWidgets.QDockWidget("Electrodes", self)
+        self.edit_electrodes.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.edit_electrodes)
+
+        self.region_panel_dock = QtWidgets.QDockWidget("Regions", self)
+        self.region_panel_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.region_panel_dock)
+        #self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+
+        self.measurements_dock = QtWidgets.QDockWidget("Measurements", self)
+        self.measurements_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.measurements_dock)
 
     def _handle_new_project_action(self):
         dlg = NewProjectDialog(self)

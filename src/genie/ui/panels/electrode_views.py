@@ -66,8 +66,21 @@ class ElectrodeGroupModel(QtCore.QAbstractItemModel):
         return QtCore.QVariant()
 
 
-class ElectrodeGroupView(QtWidgets.QTreeView):
-    def __init__(self, parent=None):
+class ElectrodeGroupView(QtWidgets.QWidget):
+    def __init__(self, main_window, model, parent=None):
         super().__init__(parent)
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+        self.view = QtWidgets.QTreeView(self)
+        layout.addWidget(self.view)
 
-        self.setRootIsDecorated(False)
+        self.connect_electrodesButton = QtWidgets.QPushButton("Connect electrodes", self)
+        self.connect_electrodesButton.clicked.connect(main_window._handle_connect_electrodesButton)
+        layout.addWidget(self.connect_electrodesButton)
+
+        self.generate_meshButton = QtWidgets.QPushButton("Generate mesh", self)
+        self.generate_meshButton.clicked.connect(main_window._handle_generate_meshButton)
+        layout.addWidget(self.generate_meshButton)
+
+        self.view.setRootIsDecorated(False)
+        self.view.setModel(model)
