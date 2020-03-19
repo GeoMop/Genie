@@ -33,10 +33,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._electrode_group_model = ElectrodeGroupModel(self._electrode_groups)
 
-        self.el_groupView = ElectrodeGroupView(self, self._electrode_group_model)
-        self.edit_electrodes.setWidget(self.el_groupView)
-        self.el_groupView.setMinimumWidth(200)
-        self.el_groupView.setMaximumWidth(400)
+        self.el_group_view = ElectrodeGroupView(self, self._electrode_group_model)
+        self.edit_electrodes.setWidget(self.el_group_view)
+        self.el_group_view.setMinimumWidth(200)
+        self.el_group_view.setMaximumWidth(400)
 
         self.diagram_view = DiagramView()
         self.setCentralWidget(self.diagram_view)
@@ -132,7 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
             dlg.exec()
 
     def _handle_connect_electrodesButton(self):
-        sel = self.el_groupView.selectedIndexes()
+        sel = self.el_group_view.view.selectedIndexes()
         if sel:
             eg = self._electrode_groups[sel[0].row()]
             self.diagram_view.connect_electrodes(eg)
