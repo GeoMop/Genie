@@ -29,7 +29,7 @@ if __name__ == '__main__':
     genie = Genie()
     genie.load_cfg()
     mainWindow = MainWindow(genie)
-    #mainWindow.setGeometry(400, 200, 1200, 800)
+    mainWindow.setGeometry(400, 200, 1200, 800)
     mainWindow.show()
     ret = app.exec()
     genie.save_cfg()
