@@ -1,6 +1,6 @@
 from ui.menus.main_menu_bar import MainMenuBar
 
-from ui.tabs.tab_widget import TabWidget
+from ui.tab_widget import TabWidget
 
 from PyQt5 import QtWidgets, QtCore
 
