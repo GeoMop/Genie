@@ -37,49 +37,48 @@ class RegionPanel(QtWidgets.QWidget):
         """
         grid = QtWidgets.QGridLayout()
 
-        label = QtWidgets.QLabel("Regions", self)
-        grid.addWidget(label, 0, 0)
 
         self.wg_region_combo = QtWidgets.QComboBox()
         self.wg_region_combo.currentIndexChanged.connect(self._combo_set_region)
-        grid.addWidget(self.wg_region_combo, 1, 0)
+        grid.addWidget(self.wg_region_combo, 0, 0)
 
         self.wg_add_button = QtWidgets.QPushButton("+")
         #self.wg_add_button.setIcon(icon.get_app_icon("add"))
         self.wg_add_button.setToolTip('Create new region')
         self.wg_add_button.clicked.connect(self.add_region)
-        grid.addWidget(self.wg_add_button, 1, 1)
+        grid.addWidget(self.wg_add_button, 0, 1)
 
         self.wg_remove_button = QtWidgets.QPushButton("-")
         #self.wg_remove_button.setIcon(icon.get_app_icon("remove"))
         self.wg_remove_button.clicked.connect(self.remove_region)
-        grid.addWidget(self.wg_remove_button, 1, 2)
+        grid.addWidget(self.wg_remove_button, 0, 2)
 
         # name
         self.wg_name = QtWidgets.QLineEdit()
         self.wg_name.editingFinished.connect(self._name_editing_finished)
-        grid.addWidget(self.wg_name, 2, 1, 1, 2)
+        grid.addWidget(self.wg_name, 1, 1, 1, 2)
         name_label = QtWidgets.QLabel("Name:", self)
         name_label.setToolTip("Name of the region.")
         name_label.setBuddy(self.wg_name)
-        grid.addWidget(name_label, 2, 0)
+        grid.addWidget(name_label, 1, 0)
 
         # color button
         self.wg_color_button = QtWidgets.QPushButton()
         self.wg_color_button.setFixedSize(25, 25)
         self.wg_color_button.clicked.connect(self._set_color)
-        grid.addWidget(self.wg_color_button, 3, 1)
+        grid.addWidget(self.wg_color_button, 2, 1)
         color_label = QtWidgets.QLabel("Color:", self)
         color_label.setBuddy(self.wg_color_button)
-        grid.addWidget(color_label, 3, 0)
+        grid.addWidget(color_label, 2, 0)
 
         # dimension (just label)
         wg_dim_label = QtWidgets.QLabel("Dimension:", self)
-        grid.addWidget(wg_dim_label, 4, 0)
+        grid.addWidget(wg_dim_label, 3, 0)
         self.wg_dims = QtWidgets.QLabel("", self)
-        grid.addWidget(self.wg_dims, 4, 1)
+        grid.addWidget(self.wg_dims, 3, 1)
 
         self.setLayout(grid)
+        self.setFixedHeight(self.minimumSizeHint().height())
 
     def _update_region_list(self):
         """

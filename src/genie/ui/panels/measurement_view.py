@@ -80,9 +80,19 @@ class MeasurementModel(QtCore.QAbstractItemModel):
         return [self._measurements[i] for i in range(len(self._measurements)) if self._checked[i]]
 
 
-class MeasurementView(QtWidgets.QTreeView):
-    def __init__(self, parent=None):
+class MeasurementGroupView(QtWidgets.QTreeView):
+    def __init__(self, main_window, model, parent=None):
         super().__init__(parent)
 
-        self.setRootIsDecorated(False)
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+        self.view = QtWidgets.QTreeView(self)
+        layout.addWidget(self.view)
+
+        self.run_invButton = QtWidgets.QPushButton("Run inversion")
+        self.run_invButton.clicked.connect(main_window._handle_run_invButton)
+        layout.addWidget(self.run_invButton)
+
+        self.view.setRootIsDecorated(False)
+        self.view.setModel(model)
         #self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)

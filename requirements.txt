@@ -1,5 +1,6 @@
 numpy
 PyQt5
+vtk
 bgem
 pandas
 xlrd
