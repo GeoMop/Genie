@@ -27,7 +27,7 @@ def _parse_ares(file_name):
 
         fd.readline()
 
-        raw_df = pd.read_csv(fd, header=None, sep="\t")
+        raw_df = pd.read_csv(fd, header=None, sep="\t", index_col=False)
         # remove last empty column
         raw_df = raw_df.dropna(axis=1)
         # name columns
@@ -73,7 +73,7 @@ def _parse_ares2(file_name):
         # name columns
         names = ['ca', 'cb', 'pa', 'pb', 'Pn', 'Pn_1', 'array', 'Uout', 'I', 'V', 'EP', 'AppRes', 'std']
 
-        raw_df = pd.read_csv(fd, header=None, sep="\t", names=names)
+        raw_df = pd.read_csv(fd, header=None, sep="\t", names=names, index_col=False)
 
         # remove wrong readings
         #raw_df = raw_df.drop(raw_df[raw_df['V'] < 0].index)
