@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from bgem.external import undo
 from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
+from bgem.gmsh.gmsh_io import GmshIO
 
 import random
 
@@ -387,6 +388,146 @@ class GsPolygon(QtWidgets.QGraphicsPolygonItem):
         return complex_path
 
 
+class MeshCutToolPoint(QtWidgets.QGraphicsRectItem):
+    def __init__(self, pen, z, move_fun):
+        size = 10
+        super().__init__(-size, -size, 2 * size, 2 * size)
+        self.setPen(pen)
+        self.setZValue(z)
+        self.move_fun = move_fun
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
+            self.move_fun(self.pos())
+        return super().itemChange(change, value)
+
+
+class MeshCutToolPoint2(QtWidgets.QGraphicsEllipseItem):
+    def __init__(self, pen, z, move_fun):
+        size = 10
+        super().__init__(-size, -size, 2 * size, 2 * size)
+        self.setPen(pen)
+        self.setZValue(z)
+        self.move_fun = move_fun
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
+            self.move_fun(self.pos())
+        return super().itemChange(change, value)
+
+
+class MeshCutToolLine(QtWidgets.QGraphicsLineItem):
+    def __init__(self, pen, z):
+        super().__init__()
+        self.setPen(pen)
+        self.setZValue(z)
+
+
+class MeshCutTool:
+    def __init__(self, scene):
+        self._scene = scene
+
+        self.origin = np.array([-622340.0, 1128940.0])
+        self.gen_vec1 = np.array([40.0, 0.0])
+        self.gen_vec2 = np.array([0.0, -20.0])
+        self.margin = 5.0
+
+        pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
+        pen.setCosmetic(True)
+        margin_pen = QtGui.QPen(QtGui.QColor("red"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen.setCosmetic(True)
+        z = 30
+
+        # create items
+        self.point0 = MeshCutToolPoint(pen, z, self.point0_move_to)
+        self.point1 = MeshCutToolPoint2(pen, z, self.point1_move_to)
+        self.point2 = MeshCutToolPoint2(pen, z, self.point2_move_to)
+        self.line1 = MeshCutToolLine(pen, z)
+        self.line2 = MeshCutToolLine(pen, z)
+        self.line3 = MeshCutToolLine(pen, z)
+        self.line4 = MeshCutToolLine(pen, z)
+        self.margin_line1 = MeshCutToolLine(margin_pen, z)
+        self.margin_line2 = MeshCutToolLine(margin_pen, z)
+        self.margin_line3 = MeshCutToolLine(margin_pen, z)
+        self.margin_line4 = MeshCutToolLine(margin_pen, z)
+
+        # add items to scene
+        self._scene.addItem(self.line1)
+        self._scene.addItem(self.line2)
+        self._scene.addItem(self.line3)
+        self._scene.addItem(self.line4)
+        self._scene.addItem(self.point0)
+        self._scene.addItem(self.point1)
+        self._scene.addItem(self.point2)
+        self._scene.addItem(self.margin_line1)
+        self._scene.addItem(self.margin_line2)
+        self._scene.addItem(self.margin_line3)
+        self._scene.addItem(self.margin_line4)
+
+        self.update()
+
+    def update(self):
+        # corner points
+        a = self.origin
+        b = a + self.gen_vec1
+        c = b + self.gen_vec2
+        d = a + self.gen_vec2
+
+        # margin corner points
+        m = self.margin
+        g1n = self.gen_vec1 / np.linalg.norm(self.gen_vec1)
+        g2n = self.gen_vec2 / np.linalg.norm(self.gen_vec2)
+        am = a - g1n * m - g2n * m
+        bm = b + g1n * m - g2n * m
+        cm = c + g1n * m + g2n * m
+        dm = d - g1n * m + g2n * m
+
+        # set new positions
+        self.line1.setLine(a[0], a[1], b[0], b[1])
+        self.line2.setLine(b[0], b[1], c[0], c[1])
+        self.line3.setLine(c[0], c[1], d[0], d[1])
+        self.line4.setLine(d[0], d[1], a[0], a[1])
+        self.point0.setPos(a[0], a[1])
+        self.point1.setPos(b[0], b[1])
+        self.point2.setPos(d[0], d[1])
+        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
+        self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
+        self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
+        self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
+
+
+    def point0_move_to(self, pos):
+        self.origin = np.array([pos.x(), pos.y()])
+        self.update()
+        #self.print_pos()
+        self._scene.mesh_cut_tool_changed.emit()
+
+    def point1_move_to(self, pos):
+        self.gen_vec1 = np.array([pos.x(), pos.y()]) - self.origin
+        self.update()
+        #self.print_pos()
+        self._scene.mesh_cut_tool_changed.emit()
+
+    def point2_move_to(self, pos):
+        self.gen_vec2 = np.array([pos.x(), pos.y()]) - self.origin
+        self.update()
+        #self.print_pos()
+        self._scene.mesh_cut_tool_changed.emit()
+
+    def print_pos(self):
+        print("base_point = np.array([{}, {}, {}])".format(self.origin[0] + 622000, -self.origin[1] + 1128000, 10))
+        print("gen_vecs = [np.array([{}, {}, {}]), np.array([{}, {}, {}]), np.array([{}, {}, {}])]"
+              .format(self.gen_vec1[0], -self.gen_vec1[1], 0,
+                      self.gen_vec2[0], -self.gen_vec2[1], 0,
+                      0, 0, 30))
+
+
 class Selection():
     def __init__(self, diagram):
         self._diagram = diagram
@@ -505,6 +646,8 @@ class Regions:
 class Diagram(QtWidgets.QGraphicsScene):
     selection_changed = QtCore.pyqtSignal()
     # selection has changed
+    mesh_cut_tool_changed = QtCore.pyqtSignal()
+    # cut tool changed
 
     def __init__(self, parent):
         rect = QtCore.QRectF(-622500, 1128600, 400, 500)
@@ -529,6 +672,8 @@ class Diagram(QtWidgets.QGraphicsScene):
         #assert res[0] == PolygonChange.add
         self.outer_id = res[1]
         """Decomposition of the a plane into polygons."""
+
+        self.mesh_cut_tool = MeshCutTool(self)
 
     def create_aux_segment(self):
         pt_size = GsPoint.SIZE
@@ -937,6 +1082,82 @@ class DiagramView(QtWidgets.QGraphicsView):
                     self._scene.points[pt.id] = gpt
                     self._scene.addItem(gpt)
                     gpt.update()
+
+        self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
+
+    def show_laser2(self, file_name):
+        def xy_gen(fd):
+            line = fd.readline()
+            while line:
+                s = line.split()
+                if len(s) >= 3:
+                    x = float(s[0]) - 622000
+                    y = -float(s[1]) + 1128000
+                    yield x, y
+                line = fd.readline()
+
+        with open(file_name) as fd:
+            # determine range
+            gen = xy_gen(fd)
+            x, y = next(gen)
+            x_min = x_max = x
+            y_min = y_max = y
+            for x, y in gen:
+                if x < x_min:
+                    x_min = x
+                elif x > x_max:
+                    x_max = x
+                if y < y_min:
+                    y_min = y
+                elif y > y_max:
+                    y_max = y
+
+            # create pixmap
+            fd.seek(0)
+            x_max_min = x_max - x_min
+            y_max_min = y_max - y_min
+            max_min = max(x_max_min, y_max_min)
+            pixmap_size = 1000
+            max_min_pixmap_size = max_min / pixmap_size
+            pixmap = QtGui.QPixmap(x_max_min / max_min_pixmap_size, y_max_min / max_min_pixmap_size)
+            pixmap.fill(Qt.transparent)
+            painter = QtGui.QPainter(pixmap)
+            pen = QtGui.QPen(QtGui.QColor("green"))
+            painter.setPen(pen)
+            for x, y in xy_gen(fd):
+                painter.drawPoint((x - x_min) / max_min_pixmap_size, (y - y_min) / max_min_pixmap_size)
+            painter.end()
+
+            # pixmap item
+            pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
+            pixmap_item.setZValue(25)
+            pixmap_item.setTransformOriginPoint(x_min, y_min)
+            pixmap_item.setScale(max_min_pixmap_size)
+            pixmap_item.setOffset(x_min, y_min)
+            self._scene.addItem(pixmap_item)
+
+        self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
+
+    def show_laser_mesh(self, file_name):
+        pen = QtGui.QPen(QtGui.QColor("green"), 0, QtCore.Qt.SolidLine)
+
+        def add_line(a, b):
+            line = QtWidgets.QGraphicsLineItem()
+            line.setZValue(1)
+            line.setPen(pen)
+            line.setLine(a[0] - 622000, -a[1] + 1128000, b[0] - 622000, -b[1] + 1128000)
+            self._scene.addItem(line)
+
+        mesh = GmshIO(file_name)
+        for data in mesh.elements.values():
+            type_, tags, nodeIDs = data
+            a = mesh.nodes[nodeIDs[0]]
+            b = mesh.nodes[nodeIDs[1]]
+            c = mesh.nodes[nodeIDs[2]]
+
+            add_line(a, b)
+            add_line(b, c)
+            add_line(c, a)
 
         self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
 

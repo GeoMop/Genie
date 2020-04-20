@@ -4,6 +4,7 @@ import electrode_parser
 from ui.panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from ui.panels.measurement_view import MeasurementModel, MeasurementGroupView
 from ui.panels.region_panel import RegionPanel
+from ui.panels.mesh_cut_tool_panel import MeshCutToolPanel
 from ui.menus.main_menu_bar import MainMenuBar
 from ui.dialogs.new_project_dialog import NewProjectDialog
 from ui.dialogs.edit_inversions_dialog import EditInversionsDialog
@@ -44,6 +45,12 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.region_panel.region_changed.connect(self.diagram_view._scene.region_panel_changed)
         self.diagram_view._scene.selection_changed.connect(self.region_panel.selection_changed)
 
+        self.mesh_cut_tool_panel = MeshCutToolPanel(self, self.diagram_view._scene)
+        self.mesh_cut_tool_panel.scene_cut_changed()
+        self.mesh_cut_tool_panel_dock.setWidget(self.mesh_cut_tool_panel)
+
+        self.diagram_view._scene.mesh_cut_tool_changed.connect(self.mesh_cut_tool_panel.scene_cut_changed)
+
         self._measurement_model = MeasurementModel(self._measurements)
 
         self.measurement_view = MeasurementGroupView(self, self._measurement_model)
@@ -52,7 +59,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.setMaximumWidth(400)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
-        # self.diagram_view.show_laser("/home/radek/work/Genie/laser/BUK_20160907_JTSK_zkr_1cm.txt")
+        #self.diagram_view.show_laser2("/home/radek/work/Genie/laser/BUK_20160907_JTSK_zkr_1cm.txt")
+        #self.diagram_view.show_laser2("/home/radek/work/Genie/laser/cele/Bukov_cele_1cm_03_2des_1cm.txt")
+        #self.diagram_view.show_laser_mesh("/home/radek/work/Genie/laser/mesh.msh")
+        #self.diagram_view.show_laser_mesh("/media/radek/Elements/radek/mesh_cele_9.msh")
         # self.region_panel.selection_changed()
 
         self.diagram_view.show_map()
@@ -73,6 +83,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.region_panel_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.region_panel_dock)
         # self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+
+        self.mesh_cut_tool_panel_dock = QtWidgets.QDockWidget("Mesh cut tool", self)
+        self.mesh_cut_tool_panel_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.mesh_cut_tool_panel_dock)
 
         self.measurements_dock = QtWidgets.QDockWidget("Measurements", self)
         self.measurements_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
