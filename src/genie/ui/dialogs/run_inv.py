@@ -2,8 +2,8 @@
 Dialog for running inversion.
 """
 
-import ert_prepare
-from data_types import InversionParam
+from core import ert_prepare
+from core.data_types import InversionParam
 
 import os
 import sys

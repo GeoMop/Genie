@@ -6,7 +6,7 @@ from bgem.external import undo
 from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
 from bgem.gmsh.gmsh_io import GmshIO
-from data_types import MeshCutToolParam
+from core.data_types import MeshCutToolParam
 
 import random
 import os

@@ -2,18 +2,20 @@
 Script for run inversion in separate process.
 """
 
-import snap_electrodes
-from config import InversionConfig
-import mesh_gen2
-import cut_point_cloud
-from bgem.gmsh.gmsh_io import GmshIO
-
 import json
 import psutil
 import sys
 import os
 import subprocess
 import time
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+from core import snap_electrodes
+from core.config import InversionConfig
+from core import mesh_gen2
+from core import cut_point_cloud
+from bgem.gmsh.gmsh_io import GmshIO
 
 import numpy as np
 #import pybert as pb

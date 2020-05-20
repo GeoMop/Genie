@@ -1,4 +1,4 @@
-from data_types import ElectrodeGroup, Electrode, Measurement
+from core.data_types import ElectrodeGroup, Electrode, Measurement
 
 import pandas as pd
 import math

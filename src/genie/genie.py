@@ -1,7 +1,7 @@
 from ui.panels.scene import DiagramView, Cursor
 from ui.main_window import MainWindow
 from core import config_file
-from config import GenieConfig
+from core.config import GenieConfig
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 

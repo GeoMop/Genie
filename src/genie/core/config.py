@@ -1,5 +1,5 @@
 from xlsreader import json_data
-from data_types import MeshCutToolParam, InversionParam
+from core.data_types import MeshCutToolParam, InversionParam
 from xlsreader.xls_parser import XlsMeasurementGroup
 
 from typing import List

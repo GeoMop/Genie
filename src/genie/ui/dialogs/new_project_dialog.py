@@ -1,5 +1,5 @@
-import electrode_parser
-from global_const import GENIE_PROJECT_FILE_NAME
+import core.electrode_parser
+from core.global_const import GENIE_PROJECT_FILE_NAME
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 

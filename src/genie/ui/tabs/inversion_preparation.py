@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from ui.panels.scene import DiagramView
-import electrode_parser
-from data_types import ElectrodeGroup, Electrode, Measurement
+import core.electrode_parser
+from core.data_types import ElectrodeGroup, Electrode, Measurement
 from ui.panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from ui.panels.measurement_view import MeasurementModel, MeasurementGroupView
 from ui.panels.region_panel import RegionPanel
@@ -14,8 +14,8 @@ from ui.dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
 from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
-from global_const import GENIE_PROJECT_FILE_NAME
-from config import ProjectConfig, InversionConfig
+from core.global_const import GENIE_PROJECT_FILE_NAME
+from core.config import ProjectConfig, InversionConfig
 
 from PyQt5 import QtWidgets, QtCore
 

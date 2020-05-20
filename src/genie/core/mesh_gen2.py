@@ -1,6 +1,6 @@
 from bgem.gmsh.gmsh_io import GmshIO
 from bgem.bspline import brep_writer as bw
-from cut_point_cloud import cut_tool_to_gen_vecs
+from core.cut_point_cloud import cut_tool_to_gen_vecs
 
 import numpy as np
 
