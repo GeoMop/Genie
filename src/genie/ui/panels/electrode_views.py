@@ -23,7 +23,7 @@ class ElectrodeGroupModel(QtCore.QAbstractItemModel):
 
         elif role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
-                return QtCore.QVariant(Region.colors[index.row() % len(Region.colors) + 1])
+                return QtCore.QVariant(Region.colors[index.row() % len(Region.colors)])
 
         return QtCore.QVariant()
 
@@ -74,13 +74,13 @@ class ElectrodeGroupView(QtWidgets.QWidget):
         self.view = QtWidgets.QTreeView(self)
         layout.addWidget(self.view)
 
-        self.connect_electrodesButton = QtWidgets.QPushButton("Connect electrodes", self)
-        self.connect_electrodesButton.clicked.connect(main_window._handle_connect_electrodesButton)
-        layout.addWidget(self.connect_electrodesButton)
+        # self.connect_electrodesButton = QtWidgets.QPushButton("Connect electrodes", self)
+        # self.connect_electrodesButton.clicked.connect(main_window._handle_connect_electrodesButton)
+        # layout.addWidget(self.connect_electrodesButton)
 
-        self.generate_meshButton = QtWidgets.QPushButton("Generate mesh", self)
-        self.generate_meshButton.clicked.connect(main_window._handle_generate_meshButton)
-        layout.addWidget(self.generate_meshButton)
+        # self.generate_meshButton = QtWidgets.QPushButton("Generate mesh", self)
+        # self.generate_meshButton.clicked.connect(main_window._handle_generate_meshButton)
+        # layout.addWidget(self.generate_meshButton)
 
         self.view.setRootIsDecorated(False)
         self.view.setModel(model)

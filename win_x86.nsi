@@ -6,6 +6,8 @@
 # Maximum compression.
 SetCompressor /SOLID lzma
 
+#faster compression
+#SetCompressor /SOLID zlib
 
 # installation only for current user
 !define MULTIUSER_EXECUTIONLEVEL Standard
@@ -156,6 +158,16 @@ Section "Runtime Environment" SecRuntime
   File "${BUILD_DIR}\numpy-1.18.1-cp37-cp37m-win_amd64.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\numpy-1.18.1-cp37-cp37m-win_amd64.whl"'
 
+  # Install SciPy.
+  SetOutPath $INSTDIR\prerequisites
+  File "${BUILD_DIR}\scipy-1.4.1-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\scipy-1.4.1-cp37-cp37m-win_amd64.whl"'
+
+  # Install psutil.
+  SetOutPath $INSTDIR\prerequisites
+  File "${BUILD_DIR}\psutil-5.7.0-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\psutil-5.7.0-cp37-cp37m-win_amd64.whl"'
+
   # Install attrs.
   SetOutPath $INSTDIR\prerequisites
   File "${BUILD_DIR}\attrs-19.3.0-py2.py3-none-any.whl"
@@ -173,6 +185,44 @@ Section "Runtime Environment" SecRuntime
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pandas-1.0.1-cp37-cp37m-win_amd64.whl"'
   File "${BUILD_DIR}\xlrd-1.2.0-py2.py3-none-any.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\xlrd-1.2.0-py2.py3-none-any.whl"'
+
+  # Install bgem.
+  SetOutPath $INSTDIR\prerequisites
+  File "${BUILD_DIR}\pybind11-2.5.0-py2.py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pybind11-2.5.0-py2.py3-none-any.whl"'
+  File "${BUILD_DIR}\bih-1.0.1-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bih-1.0.1-cp37-cp37m-win_amd64.whl"'
+  File "${BUILD_DIR}\gmsh_sdk-4.5.6.post1-py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh_sdk-4.5.6.post1-py3-none-any.whl"'
+  File "${BUILD_DIR}\bgem-0.2.0-py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bgem-0.2.0-py3-none-any.whl"'
+
+  # Install vtk.
+  SetOutPath $INSTDIR\prerequisites
+  File "${BUILD_DIR}\vtk-8.1.2-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\vtk-8.1.2-cp37-cp37m-win_amd64.whl"'
+
+  # Install pygimli.
+  SetOutPath $INSTDIR\prerequisites
+  File "${BUILD_DIR}\pyparsing-2.4.7-py2.py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pyparsing-2.4.7-py2.py3-none-any.whl"'
+  File "${BUILD_DIR}\kiwisolver-1.2.0-cp37-none-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\kiwisolver-1.2.0-cp37-none-win_amd64.whl"'
+  File "${BUILD_DIR}\cycler-0.10.0-py2.py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\cycler-0.10.0-py2.py3-none-any.whl"'
+  File "${BUILD_DIR}\matplotlib-3.2.1-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\matplotlib-3.2.1-cp37-cp37m-win_amd64.whl"'
+  File "${BUILD_DIR}\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"'
+
+  # Install gmsh.
+  SetOutPath $INSTDIR
+  File /r "${BUILD_DIR}\gmsh"
+
+  # Install MeshLab.
+  SetOutPath $INSTDIR
+  File /r "${BUILD_DIR}\meshlab"
+  ExecWait '"$INSTDIR\meshlab\vc_redist.x64.exe" /q /norestart'
 
 SectionEnd
 
@@ -192,6 +242,26 @@ Section "XLSReader" SecXLSReader
 SectionEnd
 
 
+Section "Genie" SecGenie
+
+  # Section is mandatory.
+  SectionIn RO
+
+  RMDir /r "$INSTDIR\genie"
+  SetOutPath $INSTDIR
+  File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${SRC_DIR}\genie"
+
+  #RMDir /r "$INSTDIR\data"
+  #SetOutPath $INSTDIR\data
+  #File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${GIT_DIR}\data\*"
+
+  #RMDir /r "$INSTDIR\projects"
+  #SetOutPath $INSTDIR\projects
+  #File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${GIT_DIR}\projects\*"
+
+SectionEnd
+
+
 Section "-Batch files" SecBatchFiles
 
   CreateDirectory "$INSTDIR\bin"
@@ -202,6 +272,13 @@ Section "-Batch files" SecBatchFiles
     FileWrite $0 "@echo off$\r$\n"
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
     FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\xlsreader\xls_reader.py" %*$\r$\n'
+    FileClose $0
+
+  IfFileExists "$INSTDIR\genie\genie.py" 0 +6
+    FileOpen $0 "genie.bat" w
+    FileWrite $0 "@echo off$\r$\n"
+    FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
+    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie.py" %*$\r$\n'
     FileClose $0
 
   FileOpen $0 "pythonw.bat" w
@@ -227,7 +304,11 @@ Section "Start Menu shortcuts" SecStartShortcuts
 
   IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
     SetOutPath $INSTDIR\xlsreader
-    CreateShortcut "$SMPROGRAMS\Genie\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"' "$INSTDIR\gm_base\resources\icons\ico\geomap.ico" 0
+    CreateShortcut "$SMPROGRAMS\Genie\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
+
+  IfFileExists "$INSTDIR\genie\genie.py" 0 +3
+    SetOutPath $INSTDIR\xlsreader
+    CreateShortcut "$SMPROGRAMS\Genie\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie.py"'
 
 SectionEnd
 
@@ -237,6 +318,10 @@ Section "Desktop icons" SecDesktopIcons
   IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
     SetOutPath $INSTDIR\xlsreader
     CreateShortCut "$DESKTOP\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
+
+  IfFileExists "$INSTDIR\genie\genie.py" 0 +3
+    SetOutPath $INSTDIR\genie
+    CreateShortCut "$DESKTOP\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie.py"'
 
 SectionEnd
 
@@ -288,6 +373,8 @@ SectionEnd
 "The runtime environment for Genie - Python 3.7 with PyQt5."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecXLSReader} \
 "The reader for Excel files."
+!insertmacro MUI_DESCRIPTION_TEXT ${SecGenie} \
+"Genie application."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecBatchFiles} \
 "This adds batch files to bin directory."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecStartShortcuts} \
@@ -310,6 +397,7 @@ Section "Uninstall"
 
   # Delete desktop icons.
   Delete "$DESKTOP\XLSReader.lnk"
+  Delete "$DESKTOP\Genie.lnk"
 
   # Remove start menu shortcuts.
   RMDir /r "$SMPROGRAMS\Genie"

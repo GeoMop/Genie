@@ -3,6 +3,7 @@ Dialog for running inversion.
 """
 
 import ert_prepare
+from data_types import InversionParam
 
 import os
 import sys
@@ -11,13 +12,17 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class RunInvDlg(QtWidgets.QDialog):
-    def __init__(self, electrode_groups, measurements, parent=None):
+    def __init__(self, electrode_groups, measurements, genie, parent=None):
         super().__init__(parent)
 
         self._electrode_groups = electrode_groups
         self._measurements = measurements
+        self.genie = genie
 
-        self._work_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "work_dir")
+        #self._work_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "work_dir")
+        #self._work_dir = "/home/radek/work/Genie/projects/prj2/inversions/inv_1"
+        self._work_dir = os.path.join(parent.genie.cfg.current_project_dir, "inversions",
+                                      parent.genie.project_cfg.curren_inversion_name)
 
         self.setWindowTitle("Run inversion")
 
@@ -48,6 +53,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_worDirLineEdit = QtWidgets.QLineEdit(self._work_dir)
+        self._par_worDirLineEdit.setEnabled(False)
         self._parameters_formLayout.addRow("workDir:", self._par_worDirLineEdit)
 
         self._par_verboseCheckBox = QtWidgets.QCheckBox()
@@ -68,8 +74,8 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
-        self._par_meshFileLineEdit = QtWidgets.QLineEdit()
-        self._parameters_formLayout.addRow("meshFile:", self._par_meshFileLineEdit)
+        self._par_meshFileLineEdit = QtWidgets.QLineEdit("mesh_out.msh")
+        #self._parameters_formLayout.addRow("meshFile:", self._par_meshFileLineEdit)
 
         self._par_refineMeshCheckBox = QtWidgets.QCheckBox()
         self._par_refineMeshCheckBox.setChecked(True)
@@ -81,19 +87,19 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_omitBackgroundCheckBox = QtWidgets.QCheckBox()
         self._par_omitBackgroundCheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("omitBackground:", self._par_omitBackgroundCheckBox)
+        #self._parameters_formLayout.addRow("omitBackground:", self._par_omitBackgroundCheckBox)
 
         self._par_depthLineEdit = QtWidgets.QLineEdit()
-        self._parameters_formLayout.addRow("depth:", self._par_depthLineEdit)
+        #self._parameters_formLayout.addRow("depth:", self._par_depthLineEdit)
 
         self._par_qualityLineEdit = QtWidgets.QLineEdit("34.0")
-        self._parameters_formLayout.addRow("quality:", self._par_qualityLineEdit)
+        #self._parameters_formLayout.addRow("quality:", self._par_qualityLineEdit)
 
         self._par_maxCellAreaLineEdit = QtWidgets.QLineEdit("0.0")
-        self._parameters_formLayout.addRow("maxCellArea:", self._par_maxCellAreaLineEdit)
+        #self._parameters_formLayout.addRow("maxCellArea:", self._par_maxCellAreaLineEdit)
 
         self._par_paraDXLineEdit = QtWidgets.QLineEdit("0.3")
-        self._parameters_formLayout.addRow("paraDX:", self._par_paraDXLineEdit)
+        #self._parameters_formLayout.addRow("paraDX:", self._par_paraDXLineEdit)
 
         label = QtWidgets.QLabel("Inversion")
         label.setFont(font)
@@ -120,6 +126,18 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_recalcJacobianCheckBox.setChecked(True)
         self._parameters_formLayout.addRow("recalcJacobian:", self._par_recalcJacobianCheckBox)
 
+        label = QtWidgets.QLabel("Test options")
+        label.setFont(font)
+        self._parameters_formLayout.addRow(label)
+
+        self._par_data_logCheckBox = QtWidgets.QCheckBox()
+        self._par_data_logCheckBox.setChecked(True)
+        self._parameters_formLayout.addRow("data_log:", self._par_data_logCheckBox)
+
+        self._par_k_onesCheckBox = QtWidgets.QCheckBox()
+        self._par_k_onesCheckBox.setChecked(False)
+        self._parameters_formLayout.addRow("k_ones:", self._par_k_onesCheckBox)
+
         # process
         self._proc = QtCore.QProcess(self)
         self._proc.setProcessChannelMode(QtCore.QProcess.MergedChannels)
@@ -145,6 +163,8 @@ class RunInvDlg(QtWidgets.QDialog):
         self.setMinimumSize(500, 850)
         self.resize(700, 500)
 
+        self._from_inversion_param(genie.current_inversion_cfg.inversion_param)
+
     def _proc_started(self):
         self._start_button.setEnabled(False)
         self._kill_button.setEnabled(True)
@@ -166,12 +186,16 @@ class RunInvDlg(QtWidgets.QDialog):
             msg_box.exec()
 
     def _start(self):
+        # save inversion config
+        self.genie.current_inversion_cfg.inversion_param = self._to_inversion_param()
+        self.parent()._save_current_inversion()
+
         self._output_edit.clear()
 
         if not self._create_input_files():
             return
 
-        args = [os.path.join(os.path.dirname(os.path.realpath(__file__)), "invert.py")]
+        args = [os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "invert.py")]
         cmd = sys.executable
         self._proc.setWorkingDirectory(self._work_dir)
         self._proc.start(cmd, args)
@@ -181,7 +205,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
     def _read_proc_output(self):
         self._output_edit.moveCursor(QtGui.QTextCursor.End)
-        self._output_edit.insertPlainText(str(self._proc.readAllStandardOutput(), encoding='utf-8'))
+        self._output_edit.insertPlainText(str(self._proc.readAllStandardOutput(), encoding='utf-8', errors='replace'))
         self._output_edit.moveCursor(QtGui.QTextCursor.End)
 
     def reject(self):
@@ -200,46 +224,117 @@ class RunInvDlg(QtWidgets.QDialog):
                 self._proc.kill()
             else:
                 return
+
+        # save inversion config
+        self.genie.current_inversion_cfg.inversion_param = self._to_inversion_param()
+        self.parent()._save_current_inversion()
+
         super().reject()
 
-    def _create_input_files(self):
-        conf = {}
+    def _to_inversion_param(self):
+        param = InversionParam()
 
         try:
-            self._work_dir = self._par_worDirLineEdit.text()
-            conf['verbose'] = self._par_verboseCheckBox.isChecked()
+            #self._work_dir = self._par_worDirLineEdit.text()
+            param.verbose = self._par_verboseCheckBox.isChecked()
 
-            conf['absoluteError'] = float(self._par_absoluteErrorLineEdit.text())
-            conf['relativeError'] = float(self._par_relativeErrorLineEdit.text())
+            param.absoluteError = float(self._par_absoluteErrorLineEdit.text())
+            param.relativeError = float(self._par_relativeErrorLineEdit.text())
 
-            conf['meshFile'] = self._par_meshFileLineEdit.text()
-            conf['refineMesh'] = self._par_refineMeshCheckBox.isChecked()
-            conf['refineP2'] = self._par_refineP2CheckBox.isChecked()
-            conf['omitBackground'] = self._par_omitBackgroundCheckBox.isChecked()
+            param.meshFile = self._par_meshFileLineEdit.text()
+            param.refineMesh = self._par_refineMeshCheckBox.isChecked()
+            param.refineP2 = self._par_refineP2CheckBox.isChecked()
+            param.omitBackground = self._par_omitBackgroundCheckBox.isChecked()
             text = self._par_depthLineEdit.text()
             if text != "":
-                conf['depth'] = float(text)
+                param.depth = float(text)
             else:
-                conf['depth'] = None
-            conf['quality'] = float(self._par_qualityLineEdit.text())
-            conf['maxCellArea'] = float(self._par_maxCellAreaLineEdit.text())
-            conf['paraDX'] = float(self._par_paraDXLineEdit.text())
+                param.depth = None
+            param.quality = float(self._par_qualityLineEdit.text())
+            param.maxCellArea = float(self._par_maxCellAreaLineEdit.text())
+            param.paraDX = float(self._par_paraDXLineEdit.text())
 
-            conf['zWeight'] = float(self._par_zWeightLineEdit.text())
-            conf['lam'] = float(self._par_lamLineEdit.text())
-            conf['maxIter'] = int(self._par_maxIterLineEdit.text())
-            conf['robustData'] = self._par_robustDataCheckBox.isChecked()
-            conf['blockyModel'] = self._par_blockyModelCheckBox.isChecked()
-            conf['recalcJacobian'] = self._par_recalcJacobianCheckBox.isChecked()
+            param.zWeight = float(self._par_zWeightLineEdit.text())
+            param.lam = float(self._par_lamLineEdit.text())
+            param.maxIter = int(self._par_maxIterLineEdit.text())
+            param.robustData = self._par_robustDataCheckBox.isChecked()
+            param.blockyModel = self._par_blockyModelCheckBox.isChecked()
+            param.recalcJacobian = self._par_recalcJacobianCheckBox.isChecked()
+
+            param.data_log = self._par_data_logCheckBox.isChecked()
+            param.k_ones = self._par_k_onesCheckBox.isChecked()
         except ValueError as e:
             self._output_edit.setText("ValueError: {0}".format(e))
-            return False
+            return InversionParam()
 
-        os.makedirs(self._work_dir, exist_ok=True)
+        return param
 
-        file = os.path.join(self._work_dir, "inv.conf")
-        with open(file, 'w') as fd:
-            json.dump(conf, fd, indent=4, sort_keys=True)
+    def _from_inversion_param(self, param):
+        self._par_verboseCheckBox.setChecked(param.verbose)
+
+        self._par_absoluteErrorLineEdit.setText(str(param.absoluteError))
+        self._par_relativeErrorLineEdit.setText(str(param.relativeError))
+
+        self._par_meshFileLineEdit.setText(param.meshFile)
+        self._par_refineMeshCheckBox.setChecked(param.refineMesh)
+        self._par_refineP2CheckBox.setChecked(param.refineP2)
+        self._par_omitBackgroundCheckBox.setChecked(param.omitBackground)
+        if param.depth is not None:
+            self._par_depthLineEdit.setText(str(param.depth))
+        else:
+            self._par_depthLineEdit.setText("")
+        self._par_qualityLineEdit.setText(str(param.quality))
+        self._par_maxCellAreaLineEdit.setText(str(param.maxCellArea))
+        self._par_paraDXLineEdit.setText(str(param.paraDX))
+
+        self._par_zWeightLineEdit.setText(str(param.zWeight))
+        self._par_lamLineEdit.setText(str(param.lam))
+        self._par_maxIterLineEdit.setText(str(param.maxIter))
+        self._par_robustDataCheckBox.setChecked(param.robustData)
+        self._par_blockyModelCheckBox.setChecked(param.blockyModel)
+        self._par_recalcJacobianCheckBox.setChecked(param.recalcJacobian)
+
+        self._par_data_logCheckBox.setChecked(param.data_log)
+        self._par_k_onesCheckBox.setChecked(param.k_ones)
+
+    def _create_input_files(self):
+        # conf = {}
+        #
+        # try:
+        #     self._work_dir = self._par_worDirLineEdit.text()
+        #     conf['verbose'] = self._par_verboseCheckBox.isChecked()
+        #
+        #     conf['absoluteError'] = float(self._par_absoluteErrorLineEdit.text())
+        #     conf['relativeError'] = float(self._par_relativeErrorLineEdit.text())
+        #
+        #     conf['meshFile'] = self._par_meshFileLineEdit.text()
+        #     conf['refineMesh'] = self._par_refineMeshCheckBox.isChecked()
+        #     conf['refineP2'] = self._par_refineP2CheckBox.isChecked()
+        #     conf['omitBackground'] = self._par_omitBackgroundCheckBox.isChecked()
+        #     text = self._par_depthLineEdit.text()
+        #     if text != "":
+        #         conf['depth'] = float(text)
+        #     else:
+        #         conf['depth'] = None
+        #     conf['quality'] = float(self._par_qualityLineEdit.text())
+        #     conf['maxCellArea'] = float(self._par_maxCellAreaLineEdit.text())
+        #     conf['paraDX'] = float(self._par_paraDXLineEdit.text())
+        #
+        #     conf['zWeight'] = float(self._par_zWeightLineEdit.text())
+        #     conf['lam'] = float(self._par_lamLineEdit.text())
+        #     conf['maxIter'] = int(self._par_maxIterLineEdit.text())
+        #     conf['robustData'] = self._par_robustDataCheckBox.isChecked()
+        #     conf['blockyModel'] = self._par_blockyModelCheckBox.isChecked()
+        #     conf['recalcJacobian'] = self._par_recalcJacobianCheckBox.isChecked()
+        # except ValueError as e:
+        #     self._output_edit.setText("ValueError: {0}".format(e))
+        #     return False
+
+        #os.makedirs(self._work_dir, exist_ok=True)
+
+        # file = os.path.join(self._work_dir, "inv.conf")
+        # with open(file, 'w') as fd:
+        #     json.dump(conf, fd, indent=4, sort_keys=True)
 
         data = ert_prepare.prepare(self._electrode_groups, self._measurements)
         data.save(os.path.join(self._work_dir, "input.dat"))

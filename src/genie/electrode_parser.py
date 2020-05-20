@@ -95,7 +95,7 @@ def parse(file_name):
         el_stop = v
 
         m = Measurement(number=number, date=date, file=file, el_start=el_start, el_stop=el_stop)
-        m.load_data()
+        #m.load_data()
 
         # todo: if jenom pro testovani
         if m.file == "ldp po filtraci.2dm" or m.file == "lhp po filtraci.2dm":

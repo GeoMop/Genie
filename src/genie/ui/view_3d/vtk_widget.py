@@ -11,10 +11,10 @@ from ui.view_3d.color_maps.default_log10 import lut
 
 class VTKWidget(QVTKRenderWindowInteractor):
     plane_changed = pyqtSignal(tuple, tuple)
-    def __init__(self):
+    def __init__(self, model_file):
         super(VTKWidget, self).__init__()
 
-        self.model = UnstructuredGridActor("ui/view_3d/dcinv.result.vtk")
+        self.model = UnstructuredGridActor(model_file)
 
         self.renderer = vtkRenderer()
         self.renderer.AddActor(self.model)

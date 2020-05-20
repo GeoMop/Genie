@@ -1,0 +1,44 @@
+Provedení inverze
+-----------------
+- z menu File vybrat New project
+- v dialogu zadat adresář projektu
+- importovat xsl soubor
+- importovat mračno bodů, oblast pokrytá body je zobrazena zeleně
+- pomocí Mesh cut tool nastavit oblast zájmu, buď v textových editech nebo pomocí červeného obrazce v pravé části,
+  poloha obrazce ve 3D prostoru musí být taková, aby k řezu chodby docházelo ve stěnách obrazce, né na hranách
+- vlevo dole zaškrtnou měření, která se použijí pro inverzi
+- stisknout Run inversion
+- nastavit parametry inverze, parametry jsou převzaty z BERT/GIMLI
+- stisknout Start
+- po úspěšné inverzi a zavření dialogu Run inversion, se zobrazí karta Inversion 3D view se zobrazením výsledků inverze,
+  je zde možné procházet řezy 3D prostoru
+
+Parametry inverze
+-----------------
+- zWeight, lam, robustData, blockyModel - popsano v http://www.resistivity.net/download/bert-tutorial.pdf kapitola 2.2
+- maxIter - maximální počet iterací
+- recalcJacobian - Jacobián bude přepočítán v každé iteraci
+
+Tipy
+----
+- ořez mračna bodů trvá dlouho, pokud chceme pracovat s menší oblastí, po prvním spočítání inverze je možné importovat
+  do projektu soubor inversions/inversion_name/point_cloud_cut.xyz, který obsahuje ořízlé mračno bodů
+- součástí instalace jsou softwary Meshlab a Gmsh, které je možné použít pro zobrazení a editaci mračen bodů a sítí
+
+Popis souborů v aresáři inverze
+-------------------------------
+- inv.conf - konfigurace inverze
+- point_cloud_cut.xyz - oříznuté mračno bodů
+- gallery_mesh.ply, gallery_mesh.msh - síť chodby
+- inv_mesh.msh - síť pro vlastní inverzi
+- input.dat - soubor s pozicemi elektrod a seznamem jednotlivých měření
+- input_snapped.dat - jako předchozí, ale elektrody jsou přichyceny k síti chodby
+- resistivity.vtk - výsledek inverze .vtk soubor
+- resistivity.vector - vektor rezistivit na jednotlivých elementech
+
+
+Známé problémy/nedostatky
+-------------------------
+- v dialogu New project není možné procházet adresáře
+- dialog PointCloudReader není možné ovládat dokud neskončí načítání
+- v dialogu inverze se log nezobrazuje postupně, ale zobrazí se na konci nebo po velkých částech

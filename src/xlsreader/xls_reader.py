@@ -7,10 +7,12 @@ import os
 
 
 class XlsReaderDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, enable_import=False):
         super().__init__(parent)
         self._log_text = ""
-        self._dir = ""
+        self.directory = ""
+        self.measurements_groups = []
+        self._enable_import = enable_import
 
         self.setWindowTitle("XLSReader")
 
@@ -36,10 +38,14 @@ class XlsReaderDialog(QtWidgets.QDialog):
         read_button.clicked.connect(self._handle_read_action)
         save_results_button = QtWidgets.QPushButton("Save results...")
         save_results_button.clicked.connect(self._handle_save_results_action)
+        self._import_button = QtWidgets.QPushButton("Import")
+        self._import_button.clicked.connect(self._handle_import_action)
+        self._import_button.setEnabled(False)
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Close)
         button_box.rejected.connect(self.reject)
         button_box.addButton(read_button, QtWidgets.QDialogButtonBox.ActionRole)
         button_box.addButton(save_results_button, QtWidgets.QDialogButtonBox.ActionRole)
+        button_box.addButton(self._import_button, QtWidgets.QDialogButtonBox.ActionRole)
         main_layout.addWidget(button_box)
 
         self.setLayout(main_layout)
@@ -52,30 +58,38 @@ class XlsReaderDialog(QtWidgets.QDialog):
             return
 
         self._log.clear()
-        self._dir = os.path.dirname(xls_file)
+        self.directory = os.path.dirname(xls_file)
 
-        groups, log = parse(xls_file)
+        self.measurements_groups, log = parse(xls_file)
         if log.items:
             text = log.to_string()
         else:
             text = "Ok."
 
         text += "\n\nMeasurements without errors:\n"
-        meas_nums = sorted([m.number for mg in groups if not mg.has_error for m in mg.measurements if not m.has_error])
+        meas_nums = sorted([m.number for mg in self.measurements_groups if not mg.has_error for m in mg.measurements
+                            if not m.has_error])
         text += "\n".join(meas_nums) + "\n"
 
         self._log_text = text
         self._log.append(text)
         self._log.moveCursor(QtGui.QTextCursor.End)
 
+        if self._enable_import:
+            self._import_button.setEnabled(True)
+
     def _handle_save_results_action(self):
         if self._log_text:
             file = QtWidgets.QFileDialog.getSaveFileName(self, "Save results to file",
-                                                         os.path.join(self._dir, "results.txt"), "Text Files (*.txt)")
+                                                         os.path.join(self.directory, "results.txt"),
+                                                         "Text Files (*.txt)")
             file_name = file[0]
             if file_name:
                 with open(file_name, 'w') as fd:
                     fd.write(self._log_text)
+
+    def _handle_import_action(self):
+        self.accept()
 
     def _handle_browse_action(self):
         file = QtWidgets.QFileDialog.getOpenFileName(self, "Open excel file", "", "Excel Files (*.xlsx)")

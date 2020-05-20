@@ -5,3 +5,4 @@ bgem
 pandas
 xlrd
 pygimli
+psutil

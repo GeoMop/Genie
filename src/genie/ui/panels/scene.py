@@ -6,8 +6,10 @@ from bgem.external import undo
 from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
 from bgem.gmsh.gmsh_io import GmshIO
+from data_types import MeshCutToolParam
 
 import random
+import os
 
 
 enable_undo()
@@ -36,8 +38,11 @@ class Cursor:
         cls.draw = QtGui.QCursor(QtCore.Qt.ArrowCursor)
 
 class Region:
-    _cols = ["cyan", "magenta", "red", "darkRed", "darkCyan", "darkMagenta",
-             "green", "darkBlue", "yellow","blue"]
+    # _cols = ["cyan", "magenta", "red", "darkRed", "darkCyan", "darkMagenta",
+    #          "green", "darkBlue", "yellow","blue"]
+    _cols = ["cyan", "magenta", "darkRed", "darkCyan", "darkMagenta",
+             "darkBlue", "yellow","blue"]
+    # red and green is used for cut tool resp. cloud pixmap
     colors = [ QtGui.QColor(col) for col in _cols]
     id_next = 1
 
@@ -173,6 +178,56 @@ class GsPoint(QtWidgets.QGraphicsEllipseItem):
     #     self.update()
     #     super().mouseReleaseEvent(event)
 
+
+
+class GsPoint2(QtWidgets.QGraphicsEllipseItem):
+    SIZE = 6
+    STD_ZVALUE = 20+7
+    SELECTED_ZVALUE = 21+7
+    __pen_table={}
+
+    no_brush = QtGui.QBrush(QtCore.Qt.NoBrush)
+    no_pen = QtGui.QPen(QtCore.Qt.NoPen)
+    add_brush = QtGui.QBrush(QtCore.Qt.darkGreen, QtCore.Qt.SolidPattern)
+
+    @classmethod
+    def make_pen(cls, color):
+        brush = QtGui.QBrush(color, QtCore.Qt.SolidPattern)
+        pen = QtGui.QPen(color, 1.4, QtCore.Qt.SolidLine)
+        return (brush, pen)
+
+    @classmethod
+    def pen_table(cls, color):
+        brush_pen = cls.__pen_table.setdefault(color, cls.make_pen(QtGui.QColor(color)))
+        return brush_pen
+
+    def __init__(self, x, y, color):
+        self.my_x = x
+        self.my_y = y
+        self.color = color
+        super().__init__(-self.SIZE, -self.SIZE, 2*self.SIZE, 2*self.SIZE, )
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
+        # do not scale points whenzooming
+        #self.setCursor(Cursor.point)
+        self.setAcceptedMouseButtons(QtCore.Qt.LeftButton | QtCore.Qt.RightButton)
+        self.update()
+
+    def paint(self, painter, option, widget):
+        if self.scene().selection.is_selected(self):
+            painter.setBrush(GsPoint.no_brush)
+            painter.setPen(self.region_pen)
+        else:
+            painter.setBrush(self.region_brush)
+            painter.setPen(GsPoint.no_pen)
+        painter.drawEllipse(self.rect())
+
+    def update(self):
+        self.setPos(self.my_x, self.my_y)
+
+        self.region_brush, self.region_pen = GsPoint.pen_table(self.color)
+
+        self.setZValue(self.STD_ZVALUE)
+        super().update()
 
 
 class GsSegment(QtWidgets.QGraphicsLineItem):
@@ -398,6 +453,7 @@ class MeshCutToolPoint(QtWidgets.QGraphicsRectItem):
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setCursor(Cursor.point)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
@@ -415,6 +471,7 @@ class MeshCutToolPoint2(QtWidgets.QGraphicsEllipseItem):
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setCursor(Cursor.point)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
@@ -433,9 +490,11 @@ class MeshCutTool:
     def __init__(self, scene):
         self._scene = scene
 
-        self.origin = np.array([-622340.0, 1128940.0])
+        self.origin = np.array([-622340.0, -1128940.0])
         self.gen_vec1 = np.array([40.0, 0.0])
-        self.gen_vec2 = np.array([0.0, -20.0])
+        self.gen_vec2 = np.array([0.0, 20.0])
+        self.z_min = 10.0
+        self.z_max = 40.0
         self.margin = 5.0
 
         pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
@@ -489,43 +548,66 @@ class MeshCutTool:
         dm = d - g1n * m + g2n * m
 
         # set new positions
-        self.line1.setLine(a[0], a[1], b[0], b[1])
-        self.line2.setLine(b[0], b[1], c[0], c[1])
-        self.line3.setLine(c[0], c[1], d[0], d[1])
-        self.line4.setLine(d[0], d[1], a[0], a[1])
-        self.point0.setPos(a[0], a[1])
-        self.point1.setPos(b[0], b[1])
-        self.point2.setPos(d[0], d[1])
-        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
-        self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
-        self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
-        self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
+        self.line1.setLine(a[0], -a[1], b[0], -b[1])
+        self.line2.setLine(b[0], -b[1], c[0], -c[1])
+        self.line3.setLine(c[0], -c[1], d[0], -d[1])
+        self.line4.setLine(d[0], -d[1], a[0], -a[1])
+        self.point0.setPos(a[0], -a[1])
+        self.point1.setPos(b[0], -b[1])
+        self.point2.setPos(d[0], -d[1])
+        self.margin_line1.setLine(am[0], -am[1], bm[0], -bm[1])
+        self.margin_line2.setLine(bm[0], -bm[1], cm[0], -cm[1])
+        self.margin_line3.setLine(cm[0], -cm[1], dm[0], -dm[1])
+        self.margin_line4.setLine(dm[0], -dm[1], am[0], -am[1])
 
 
     def point0_move_to(self, pos):
-        self.origin = np.array([pos.x(), pos.y()])
+        self.origin = np.array([pos.x(), -pos.y()])
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
 
     def point1_move_to(self, pos):
-        self.gen_vec1 = np.array([pos.x(), pos.y()]) - self.origin
+        self.gen_vec1 = np.array([pos.x(), -pos.y()]) - self.origin
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
 
     def point2_move_to(self, pos):
-        self.gen_vec2 = np.array([pos.x(), pos.y()]) - self.origin
+        self.gen_vec2 = np.array([pos.x(), -pos.y()]) - self.origin
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
 
     def print_pos(self):
-        print("base_point = np.array([{}, {}, {}])".format(self.origin[0] + 622000, -self.origin[1] + 1128000, 10))
+        print("base_point = np.array([{}, {}, {}])".format(self.origin[0] + 622000, -self.origin[1] + 1128000, self.z_min))
         print("gen_vecs = [np.array([{}, {}, {}]), np.array([{}, {}, {}]), np.array([{}, {}, {}])]"
               .format(self.gen_vec1[0], -self.gen_vec1[1], 0,
                       self.gen_vec2[0], -self.gen_vec2[1], 0,
-                      0, 0, 30))
+                      0, 0, self.z_max - self.z_min))
+
+    def from_mesh_cut_tool_param(self, param):
+        self.origin = np.array([param.origin_x, param.origin_y])
+        self.gen_vec1 = np.array([param.gen_vec1_x, param.gen_vec1_y])
+        self.gen_vec2 = np.array([param.gen_vec2_x, param.gen_vec2_y])
+        self.z_min = param.z_min
+        self.z_max = param.z_max
+        self.margin = param.margin
+
+        self.update()
+
+    def to_mesh_cut_tool_param(self):
+        cut_tool = MeshCutToolParam()
+        cut_tool.origin_x = self.origin[0]
+        cut_tool.origin_y = self.origin[1]
+        cut_tool.gen_vec1_x = self.gen_vec1[0]
+        cut_tool.gen_vec1_y = self.gen_vec1[1]
+        cut_tool.gen_vec2_x = self.gen_vec2[0]
+        cut_tool.gen_vec2_y = self.gen_vec2[1]
+        cut_tool.z_min = self.z_min
+        cut_tool.z_max = self.z_max
+        cut_tool.margin = self.margin
+        return cut_tool
 
 
 class Selection():
@@ -675,6 +757,8 @@ class Diagram(QtWidgets.QGraphicsScene):
 
         self.mesh_cut_tool = MeshCutTool(self)
 
+        self.pixmap_item = None
+
     def create_aux_segment(self):
         pt_size = GsPoint.SIZE
         no_pen = QtGui.QPen(QtCore.Qt.NoPen)
@@ -805,8 +889,8 @@ class Diagram(QtWidgets.QGraphicsScene):
         below_item = self.below_item(event.scenePos())
         screen_pos_not_changed = event.screenPos() == self._press_screen_pos
 
-        if event.button() == mouse.Event.Left and screen_pos_not_changed:
-            self.mouse_create_event(event)
+        # if event.button() == mouse.Event.Left and screen_pos_not_changed:
+        #     self.mouse_create_event(event)
 
         if event.button() == mouse.Event.Right and screen_pos_not_changed:
             item = None
@@ -1046,7 +1130,7 @@ class DiagramView(QtWidgets.QGraphicsView):
     #         self.photoClicked.emit(QtCore.QPoint(event.pos()))
     #     super(PhotoViewer, self).mousePressEvent(event)
 
-    def show_electrodes(self, electrode_groups):
+    def show_electrodes_old(self, electrode_groups):
         for eg in electrode_groups:
             reg_id = self._scene.regions.add_region(dim=1)
             for el in eg.electrodes:
@@ -1062,6 +1146,25 @@ class DiagramView(QtWidgets.QGraphicsView):
                 self.el_map[id(el)] = gpt
 
         self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
+
+    def show_electrodes(self, electrode_groups):
+        for item in self.el_map.values():
+            self._scene.removeItem(item)
+
+        reg_id = self._scene.regions.add_region(dim=1)
+        color_ind = 0
+        for eg in electrode_groups:
+            for el in eg.electrodes:
+                x = el.x
+                y = -el.y
+                gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name())
+                self._scene.addItem(gpt)
+                gpt.update()
+                self.el_map[id(el)] = gpt
+            color_ind += 1
+
+        #self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
+        #self._scene.update_scene()
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1183,6 +1286,30 @@ class DiagramView(QtWidgets.QGraphicsView):
 
         self._scene.addItem(map)
         map.setCursor(QtCore.Qt.CrossCursor)
+
+    def show_pixmap(self, genie):
+        self.hide_pixmap()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+        pixmap = QtGui.QPixmap(os.path.join(prj_dir, "point_cloud_pixmap.png"))
+        pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap.transformed(QtGui.QTransform.fromScale(1, -1)))
+
+        pixmap_item.setZValue(25)
+        offset_x = cfg.point_cloud_origin_x + cfg.point_cloud_pixmap_x_min
+        offset_y = cfg.point_cloud_origin_y + (cfg.point_cloud_pixmap_y_min + pixmap.height() * cfg.point_cloud_pixmap_scale)
+        pixmap_item.setTransformOriginPoint(offset_x, -offset_y )
+        #pixmap_item.setTransform(QtGui.QTransform.fromScale(1, -1))
+        pixmap_item.setScale(cfg.point_cloud_pixmap_scale)
+        pixmap_item.setOffset(offset_x, -offset_y)
+        self._scene.addItem(pixmap_item)
+
+        self._scene.pixmap_item = pixmap_item
+
+    def hide_pixmap(self):
+        if self._scene.pixmap_item is not None:
+            self._scene.removeItem(self._scene.pixmap_item)
+            self._scene.pixmap_item = None
 
 
 if __name__ == '__main__':

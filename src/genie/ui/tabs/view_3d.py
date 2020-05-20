@@ -7,10 +7,10 @@ from ui.view_3d.panels.color_map_panel import ColorMapPanel
 
 
 class View3D(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, model_file):
         super(View3D, self).__init__()
         self.init_docks()
-        self.vtk_view = VTKWidget()
+        self.vtk_view = VTKWidget(model_file)
         self.vtk_view.update_scalar_range(*self.vtk_view.model.scalar_range)
         self.setCentralWidget(self.vtk_view)
 

@@ -9,7 +9,7 @@ import attr
 import math
 import operator
 import json
-import json_data
+from xlsreader import json_data
 import pandas as pd
 
 
@@ -22,7 +22,7 @@ class XlsElectrode:
     gallery: str = ""
     wall: str = ""
     height: str = ""
-    meas_id: int = 0
+    meas_id: str = ""
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0

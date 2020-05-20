@@ -79,6 +79,13 @@ class MeasurementModel(QtCore.QAbstractItemModel):
     def checkedMeasurements(self):
         return [self._measurements[i] for i in range(len(self._measurements)) if self._checked[i]]
 
+    def checkMeasurements(self, numbers):
+        for i in range(len(self._measurements)):
+            self._checked[i] = self._measurements[i].number in numbers
+
+        #self.dataChanged.emit()
+        # todo: nevim parametry
+
 
 class MeasurementGroupView(QtWidgets.QTreeView):
     def __init__(self, main_window, model, parent=None):
@@ -88,6 +95,10 @@ class MeasurementGroupView(QtWidgets.QTreeView):
         self.setLayout(layout)
         self.view = QtWidgets.QTreeView(self)
         layout.addWidget(self.view)
+
+        self.analyse_measurementButton = QtWidgets.QPushButton("Analyse measurement")
+        self.analyse_measurementButton.clicked.connect(main_window._handle_analyse_measurementButton)
+        layout.addWidget(self.analyse_measurementButton)
 
         self.run_invButton = QtWidgets.QPushButton("Run inversion")
         self.run_invButton.clicked.connect(main_window._handle_run_invButton)

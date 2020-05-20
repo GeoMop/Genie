@@ -1,10 +1,9 @@
 import electrode_parser
+from global_const import GENIE_PROJECT_FILE_NAME
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 import os
-import shutil
-import json
 
 
 class NewProjectDialog(QtWidgets.QDialog):
@@ -14,6 +13,8 @@ class NewProjectDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.project_dir = ""
+
         self.setWindowTitle("New project")
 
         main_layout = QtWidgets.QVBoxLayout()
@@ -22,17 +23,18 @@ class NewProjectDialog(QtWidgets.QDialog):
 
         # location
         self.location_line_edit = QtWidgets.QLineEdit()
-        self.location_line_edit.setText("/home/radek/work/Genie/projects/prj1")
-        formLayout.addRow("Location:", self.location_line_edit)
-
-        # xls file
-        self.xls_file_line_edit = QtWidgets.QLineEdit()
-        self.xls_file_line_edit.setText("/home/radek/work/Genie/src/genie/seznam souřadnic ERT bukov_finale_pb 4.xlsx")
-        formLayout.addRow("xls file:", self.xls_file_line_edit)
+        self.location_line_edit.setText(os.path.join(os.path.abspath(""), "prj1"))
+        browse_button = QtWidgets.QPushButton("Browse...")
+        browse_button.clicked.connect(self._handle_browse_action)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.location_line_edit)
+        layout.addWidget(browse_button)
+        formLayout.addRow("Project location:", layout)
 
         # button box
-        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
         main_layout.addWidget(button_box)
 
         self.setLayout(main_layout)
@@ -40,29 +42,25 @@ class NewProjectDialog(QtWidgets.QDialog):
         self.resize(600, 300)
 
     def _handle_create_project_action(self):
-        # make prj dir
-        prj_dir = self.location_line_edit.text()
-        os.makedirs(prj_dir, exist_ok=True)
+        # check if project already exist
+        self.project_dir = self.location_line_edit.text()
+        prj_conf_file = os.path.join(self.project_dir, GENIE_PROJECT_FILE_NAME)
+        if os.path.isfile(prj_conf_file):
+            msg_box = QtWidgets.QMessageBox(self)
+            msg_box.setWindowTitle("Error")
+            msg_box.setIcon(QtWidgets.QMessageBox.Critical)
+            msg_box.setText("There is a project in this location already.")
+            msg_box.exec()
+            return False
+        return True
 
-        # parse .xls, save .prj
-        xls_file = self.xls_file_line_edit.text()
-        res = electrode_parser.parse(xls_file)
-        to_save = {}
-        to_save["electrode_groups"] = [eg.serialize() for eg in res["electrode_groups"]]
-        to_save["measurements"] = [eg.serialize() for eg in res["measurements"]]
-        file = os.path.join(prj_dir, "genie.prj")
-        with open(file, 'w') as fd:
-            json.dump(to_save, fd, indent=4, sort_keys=True)
-
-        # copy measurements files
-        xls_dir = os.path.dirname(xls_file)
-        meas_dir = os.path.join(prj_dir, "measurements")
-        os.makedirs(meas_dir, exist_ok=True)
-        for m in res["measurements"]:
-            shutil.copyfile(os.path.join(xls_dir, m.file),
-                            os.path.join(meas_dir, m.file))
+    def _handle_browse_action(self):
+        prj_dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "New project", self.location_line_edit.text(),
+            QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
+        if prj_dir:
+            self.location_line_edit.setText(prj_dir)
 
     def accept(self):
-        self._handle_create_project_action()
-
-        super().accept()
+        if self._handle_create_project_action():
+            super().accept()

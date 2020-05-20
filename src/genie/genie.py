@@ -1,6 +1,6 @@
 from ui.panels.scene import DiagramView, Cursor
 from ui.main_window import MainWindow
-import config_file
+from core import config_file
 from config import GenieConfig
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -11,13 +11,17 @@ import sys
 class Genie:
     def __init__(self):
         self.cfg = GenieConfig()
+        self.project_cfg = None
+        self.current_inversion_cfg = None
 
     def load_cfg(self):
-        cfg = config_file.get_config_file("genie", cls=GenieConfig, extension="conf")
+        cfg = None#config_file.get_config_file("genie", cls=GenieConfig, extension="conf")
         if cfg is None:
             self.cfg = GenieConfig()
         else:
             self.cfg = cfg
+
+        self.cfg.current_project_dir = ""
 
     def save_cfg(self):
         config_file.save_config_file("genie", self.cfg, extension="conf")

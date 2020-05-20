@@ -1,0 +1,14 @@
+- Zajímá nás první list v .xls souboru.
+- Sloučené buňky chápeme tak, jako by byla hodnota pouze v levé horní buňce.
+- Případné mezery na začátku a konci textových řetězců jsou chápány tak jako by tam nebyly.
+- Sloupec “A” “číslo elektrody”, souvislá řada určuje skupinu měření. (začíná na řádku 3, pouze celá čísla)
+- Sloupce “B”, “C”, “D” - “dílo”, “Světová strana”, “výška”, pokud není uvedena na příslušném řádku, bere se hodnota předchozí.
+- Sloupec “F” “číslo el. při měření”, čísla musí být uvedena identicky s indexy v souborech měření.
+- Sloupce “H”, “I”, “J” - “X”, “Y”, “Z”.
+- Pokud se vyskytují řádky s totožným id elektrody (sloupec “A”) musí být i hodnoty ve sloupcích “B”, “C”, “D”, “H”, “I”, “J” totožné.
+- Následující údaje týkající se jednotlivých měření uvedeny vždy na prvním řádku skupiny měření.
+- Sloupec “K” “číslo měření” (nesmí obsahovat mezery ani diakritiku).
+- Sloupec “L” “datum měření”.
+- Sloupec “O” “soubor s daty” (nesmí obsahovat mezery ani diakritiku).
+- Případná další měření ve skupině posunuta o 10 sloupců.
+- Soubory s daty jsou uloženy ve složkách pojmenovaných jako “číslo měření”. Složky jsou umístěny ve stejné složce jako xls soubor.
