@@ -2,6 +2,8 @@ import pandas as pd
 #import pybert as pb
 import pygimli as pg
 
+from .data_types import MeasurementInfoItem, MeasurementsInfo
+
 
 def prepare_old(electrode_groups, measurements):
     """
@@ -142,6 +144,8 @@ def prepare(electrode_groups, measurements):
     err = pd.Series()
     rhoa = pd.Series()
 
+    meas_info = MeasurementsInfo()
+
     for ms in measurements:
         if ms.data is None:
             continue
@@ -177,6 +181,12 @@ def prepare(electrode_groups, measurements):
 
         #el_offset += len(ms.meas_map)
 
+        for j in range(len(d)):
+            meas_info.items.append(MeasurementInfoItem(measurement_number=ms.number,
+                                                       ca=d["ca"][j], cb=d["cb"][j], pa=d["pa"][j], pb=d["pb"][j],
+                                                       I=d["I"][j], V=d["V"][j], AppRes=d["AppRes"][j], std=d["std"][j],
+                                                       inv_ca=meas_map_sensor[d["ca"][j]], inv_cb=meas_map_sensor[d["cb"][j]], inv_pa=meas_map_sensor[d["pa"][j]], inv_pb=meas_map_sensor[d["pb"][j]]))
+
     data = pg.DataContainerERT()
     for e in electrodes:
         data.createSensor([e.x, e.y, e.z])
@@ -191,7 +201,8 @@ def prepare(electrode_groups, measurements):
     data.set('rhoa', rhoa)
     #data.markValid(data('rhoa') > 0)
     # zakomentovano kvuli analyse_measurement_dialog.py
-    return data
+
+    return data, meas_info
 
 
 def _find_el(electrode_groups, e_id):

@@ -274,11 +274,11 @@ Section "-Batch files" SecBatchFiles
     FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\xlsreader\xls_reader.py" %*$\r$\n'
     FileClose $0
 
-  IfFileExists "$INSTDIR\genie\genie.py" 0 +6
+  IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +6
     FileOpen $0 "genie.bat" w
     FileWrite $0 "@echo off$\r$\n"
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie.py" %*$\r$\n'
+    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie_ert.py" %*$\r$\n'
     FileClose $0
 
   FileOpen $0 "pythonw.bat" w
@@ -306,9 +306,9 @@ Section "Start Menu shortcuts" SecStartShortcuts
     SetOutPath $INSTDIR\xlsreader
     CreateShortcut "$SMPROGRAMS\Genie\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
 
-  IfFileExists "$INSTDIR\genie\genie.py" 0 +3
-    SetOutPath $INSTDIR\xlsreader
-    CreateShortcut "$SMPROGRAMS\Genie\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie.py"'
+  IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
+    SetOutPath $INSTDIR\genie
+    CreateShortcut "$SMPROGRAMS\Genie\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
 
 SectionEnd
 
@@ -319,9 +319,9 @@ Section "Desktop icons" SecDesktopIcons
     SetOutPath $INSTDIR\xlsreader
     CreateShortCut "$DESKTOP\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
 
-  IfFileExists "$INSTDIR\genie\genie.py" 0 +3
+  IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortCut "$DESKTOP\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie.py"'
+    CreateShortCut "$DESKTOP\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
 
 SectionEnd
 

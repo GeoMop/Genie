@@ -2,8 +2,8 @@
 Dialog for running inversion.
 """
 
-from core import ert_prepare
-from core.data_types import InversionParam
+from genie.core import ert_prepare
+from genie.core.data_types import InversionParam
 
 import os
 import sys
@@ -31,7 +31,9 @@ class RunInvDlg(QtWidgets.QDialog):
         # edit for process output
         self._output_edit = QtWidgets.QTextEdit()
         self._output_edit.setReadOnly(True)
-        self._output_edit.setFont(QtGui.QFont("monospace"))
+        font = QtGui.QFont("monospace")
+        font.setStyleHint(QtGui.QFont.TypeWriter)
+        self._output_edit.setFont(font)
         grid.addWidget(self._output_edit, 0, 0, 4, 6)
 
         # label for showing status
@@ -52,9 +54,8 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
-        self._par_worDirLineEdit = QtWidgets.QLineEdit(self._work_dir)
-        self._par_worDirLineEdit.setEnabled(False)
-        self._parameters_formLayout.addRow("workDir:", self._par_worDirLineEdit)
+        self._par_worDirLabel = QtWidgets.QLabel(self._work_dir)
+        self._parameters_formLayout.addRow("workDir:", self._par_worDirLabel)
 
         self._par_verboseCheckBox = QtWidgets.QCheckBox()
         self._par_verboseCheckBox.setChecked(True)
@@ -62,13 +63,13 @@ class RunInvDlg(QtWidgets.QDialog):
 
         label = QtWidgets.QLabel("Error")
         label.setFont(font)
-        self._parameters_formLayout.addRow(label)
+        #self._parameters_formLayout.addRow(label)
 
         self._par_absoluteErrorLineEdit = QtWidgets.QLineEdit("0.001")
-        self._parameters_formLayout.addRow("absoluteError:", self._par_absoluteErrorLineEdit)
+        #self._parameters_formLayout.addRow("absoluteError:", self._par_absoluteErrorLineEdit)
 
         self._par_relativeErrorLineEdit = QtWidgets.QLineEdit("0.03")
-        self._parameters_formLayout.addRow("relativeError:", self._par_relativeErrorLineEdit)
+        #self._parameters_formLayout.addRow("relativeError:", self._par_relativeErrorLineEdit)
 
         label = QtWidgets.QLabel("Mesh")
         label.setFont(font)
@@ -84,6 +85,9 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_refineP2CheckBox = QtWidgets.QCheckBox()
         self._par_refineP2CheckBox.setChecked(False)
         self._parameters_formLayout.addRow("refineP2:", self._par_refineP2CheckBox)
+
+        self._par_refineMeshCheckBox.stateChanged.connect(self._handle_refine_checkbox_changed)
+        self._handle_refine_checkbox_changed()
 
         self._par_omitBackgroundCheckBox = QtWidgets.QCheckBox()
         self._par_omitBackgroundCheckBox.setChecked(False)
@@ -109,7 +113,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("zWeight:", self._par_zWeightLineEdit)
 
         self._par_lamLineEdit = QtWidgets.QLineEdit("20.0")
-        self._parameters_formLayout.addRow("lam:", self._par_lamLineEdit)
+        self._parameters_formLayout.addRow("lambda:", self._par_lamLineEdit)
 
         self._par_maxIterLineEdit = QtWidgets.QLineEdit("20")
         self._parameters_formLayout.addRow("maxIter:", self._par_maxIterLineEdit)
@@ -165,6 +169,21 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._from_inversion_param(genie.current_inversion_cfg.inversion_param)
 
+        # load log
+        file = os.path.join(self._work_dir, "inv_log.txt")
+        if os.path.isfile(file):
+            with open(file) as fd:
+                log = fd.read()
+            self._output_edit.clear()
+            self._output_edit.insertPlainText(log)
+            self._output_edit.moveCursor(QtGui.QTextCursor.Start)
+
+    def _handle_refine_checkbox_changed(self, state=None):
+        if self._par_refineMeshCheckBox.isChecked():
+            self._par_refineP2CheckBox.setEnabled(True)
+        else:
+            self._par_refineP2CheckBox.setEnabled(False)
+
     def _proc_started(self):
         self._start_button.setEnabled(False)
         self._kill_button.setEnabled(True)
@@ -176,6 +195,12 @@ class RunInvDlg(QtWidgets.QDialog):
         self._kill_button.setEnabled(False)
 
         self._set_status("Ready")
+
+        # save log
+        log = self._output_edit.toPlainText()
+        file = os.path.join(self._work_dir, "inv_log.txt")
+        with open(file, "w") as fd:
+            fd.write(log)
 
     def _proc_error(self, error):
         if error == QtCore.QProcess.FailedToStart:
@@ -192,10 +217,20 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._output_edit.clear()
 
+        # delete old log file
+        file = os.path.join(self._work_dir, "inv_log.txt")
+        if os.path.isfile(file):
+            os.remove(file)
+
+        # delete old measurements info file
+        file = os.path.join(self._work_dir, "measurements_info.json")
+        if os.path.isfile(file):
+            os.remove(file)
+
         if not self._create_input_files():
             return
 
-        args = [os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "invert.py")]
+        args = ["-u", os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "invert.py")]
         cmd = sys.executable
         self._proc.setWorkingDirectory(self._work_dir)
         self._proc.start(cmd, args)
@@ -265,6 +300,7 @@ class RunInvDlg(QtWidgets.QDialog):
             param.k_ones = self._par_k_onesCheckBox.isChecked()
         except ValueError as e:
             self._output_edit.setText("ValueError: {0}".format(e))
+            # todo: je to dobre?
             return InversionParam()
 
         return param
@@ -336,7 +372,10 @@ class RunInvDlg(QtWidgets.QDialog):
         # with open(file, 'w') as fd:
         #     json.dump(conf, fd, indent=4, sort_keys=True)
 
-        data = ert_prepare.prepare(self._electrode_groups, self._measurements)
+        data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements)
         data.save(os.path.join(self._work_dir, "input.dat"))
+        meas_info_file = os.path.join(self._work_dir, "measurements_info.json")
+        with open(meas_info_file, "w") as fd:
+            json.dump(meas_info.serialize(), fd, indent=4, sort_keys=True)
 
         return True

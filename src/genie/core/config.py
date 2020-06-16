@@ -1,5 +1,5 @@
 from xlsreader import json_data
-from core.data_types import MeshCutToolParam, InversionParam
+from .data_types import MeshCutToolParam, InversionParam
 from xlsreader.xls_parser import XlsMeasurementGroup
 
 from typing import List
@@ -32,5 +32,4 @@ class ProjectConfig:
 
 @json_data.jsondata
 class GenieConfig:
-    test: int = 0
     current_project_dir: str = ""

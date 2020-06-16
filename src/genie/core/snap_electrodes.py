@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 
-def main():
+def main(max_dist=1.0):
     mesh_file = "gallery_mesh.msh"
     mesh = GmshIO(mesh_file)
 
@@ -46,47 +46,38 @@ def main():
     #     for el in snapped_electrodes:
     #         fd.write("{} {} {}\n".format(el[0], el[1], el[2]))
 
-    data = pg.DataContainerERT("input.dat")
+    data = pg.DataContainerERT("input.dat", removeInvalid=False)
     for i in range(len(data.sensorPositions())):
         pos = data.sensorPosition(i)
-        print(pos)
         pos = np.array([pos[0], pos[1], pos[2]])
-        print(pos)
-        new_pos = snap_electrode(pos, mesh, tree)
-        print(new_pos)
+        new_pos = snap_electrode(pos, mesh, tree, max_dist)
 
         data.setSensorPosition(i, new_pos)
     data.save("input_snapped.dat")
 
 
-def snap_electrode(electrode, mesh, tree):
+def snap_electrode(electrode, mesh, tree, max_dist):
     dist_min = np.inf
     pos_min = electrode
 
     #intersect_box_ids = tree.find_point(electrode)
-    #print(intersect_box_ids)
 
-    d = 1
-    box = bih.AABB([electrode - d, electrode + d])
+    box = bih.AABB([electrode - max_dist, electrode + max_dist])
     intersect_box_ids = tree.find_box(box)
-    #print(intersect_box_ids)
 
 
     #for id, data in mesh.elements.items():
     for id in intersect_box_ids:
         data = mesh.elements2[id]
-        type_, tags, nodeIDs = data
-        #print(nodeIDs)
-        #print(id)
-        a = np.array(mesh.nodes[nodeIDs[0]]) + np.array([-622000.0, -1128000.0, 0.0])
-        b = np.array(mesh.nodes[nodeIDs[1]]) + np.array([-622000.0, -1128000.0, 0.0])
-        c = np.array(mesh.nodes[nodeIDs[2]]) + np.array([-622000.0, -1128000.0, 0.0])
-        # a = np.array(mesh.nodes[nodeIDs[0]])
-        # b = np.array(mesh.nodes[nodeIDs[1]])
-        # c = np.array(mesh.nodes[nodeIDs[2]])
+        el_type, tags, nodes = data
+        a = np.array(mesh.nodes[nodes[0]]) + np.array([-622000.0, -1128000.0, 0.0])
+        b = np.array(mesh.nodes[nodes[1]]) + np.array([-622000.0, -1128000.0, 0.0])
+        c = np.array(mesh.nodes[nodes[2]]) + np.array([-622000.0, -1128000.0, 0.0])
+        # a = np.array(mesh.nodes[nodes[0]])
+        # b = np.array(mesh.nodes[nodes[1]])
+        # c = np.array(mesh.nodes[nodes[2]])
         dist, snapped_electrode = tri_point_dist(a, b, c, electrode)
-        #print(dist)
-        if dist < dist_min:
+        if dist < dist_min and dist <= max_dist:
             dist_min = dist
             pos_min = snapped_electrode
 
@@ -97,11 +88,6 @@ count = 0
 def tri_point_dist(a, b, c, p):
     global count
     count += 1
-
-    # print()
-    # print("{:.10f}, {:.10f}, {:.10f}".format(a[0], a[1], a[2]))
-    # print("{:.10f}, {:.10f}, {:.10f}".format(b[0], b[1], b[2]))
-    # print("{:.10f}, {:.10f}, {:.10f}".format(c[0], c[1], c[2]))
 
     ab = b - a
     ac = c - a

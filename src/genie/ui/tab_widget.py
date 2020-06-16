@@ -1,24 +1,35 @@
 from PyQt5 import QtWidgets
-from ui.tabs.inversion_preparation import InversionPreparation
-from ui.tabs.view_3d import View3D
+from .tabs.inversion_preparation import InversionPreparation
+from .tabs.view_3d import View3D
+from .tabs.measurements_model import Measurements_model
 
 
 class TabWidget(QtWidgets.QTabWidget):
     def __init__(self, main_window, genie, parent=None):
         super(TabWidget, self).__init__(parent)
 
-        self._3d_id = None
+        self._3d_widget = None
+        self._meas_model_widget = None
 
         self.inv_prep = InversionPreparation(main_window, genie, self)
         self.addTab(self.inv_prep, "Inversion Preparation")
 
-        #self.show_3d("ui/view_3d/dcinv.result.vtk")
-
     def show_3d(self, model_file):
         self.hide_3d()
-        self._3d_id = self.addTab(View3D(model_file), "Inversion 3D View")
+        self._3d_widget = View3D(model_file)
+        self._3d_id = self.addTab(self._3d_widget, "Inversion 3D View")
 
     def hide_3d(self):
-        if self._3d_id is not None:
-            self.removeTab(self._3d_id)
-            self._3d_id = None
+        if self._3d_widget is not None:
+            self.removeTab(self.indexOf(self._3d_widget))
+            self._3d_widget = None
+
+    def show_meas_model(self, meas_model_file):
+        self.hide_meas_model()
+        self._meas_model_widget = Measurements_model(meas_model_file)
+        self.addTab(self._meas_model_widget, "Measurements on model")
+
+    def hide_meas_model(self):
+        if self._meas_model_widget is not None:
+            self.removeTab(self.indexOf(self._meas_model_widget))
+            self._meas_model_widget = None

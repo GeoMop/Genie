@@ -15,7 +15,7 @@ Provedení inverze
 
 Parametry inverze
 -----------------
-- zWeight, lam, robustData, blockyModel - popsano v http://www.resistivity.net/download/bert-tutorial.pdf kapitola 2.2
+- zWeight, lambda, robustData, blockyModel - popsano v http://www.resistivity.net/download/bert-tutorial.pdf kapitola 2.2
 - maxIter - maximální počet iterací
 - recalcJacobian - Jacobián bude přepočítán v každé iteraci
 
@@ -39,6 +39,4 @@ Popis souborů v aresáři inverze
 
 Známé problémy/nedostatky
 -------------------------
-- v dialogu New project není možné procházet adresáře
 - dialog PointCloudReader není možné ovládat dokud neskončí načítání
-- v dialogu inverze se log nezobrazuje postupně, ale zobrazí se na konci nebo po velkých částech

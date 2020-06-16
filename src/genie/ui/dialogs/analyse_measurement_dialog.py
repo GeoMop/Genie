@@ -2,8 +2,8 @@
 Dialog for analysing measurement.
 """
 
-from core import ert_prepare
-from core.data_types import InversionParam
+from genie.core import ert_prepare
+from genie.core.data_types import InversionParam
 
 import os
 import sys
@@ -29,7 +29,9 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
         # edit for output
         self._output_edit = QtWidgets.QTextEdit()
         self._output_edit.setReadOnly(True)
-        self._output_edit.setFont(QtGui.QFont("monospace"))
+        font = QtGui.QFont("monospace")
+        font.setStyleHint(QtGui.QFont.TypeWriter)
+        self._output_edit.setFont(font)
         grid.addWidget(self._output_edit, 0, 0, 4, 6)
 
         # label for showing status
@@ -83,26 +85,26 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
             return
         d = self._measurement.data["data"]
 
-        data = ert_prepare.prepare(self._electrode_groups, [self._measurement])
+        data, meas_info = ert_prepare.prepare(self._electrode_groups, [self._measurement])
 
         k = pg.geometricFactors(data)
 
-        log += "ca  cb  pa  pb  I         V        std       AppRes AppResGimli ratio ratio2\n"
-        log += "----------------------------------------------------------------------------\n"
+        log += "ca  cb  pa  pb  I[A]      V[V]     std    AppRes[Ohmm] AppResGimli[Ohmm] ratio\n"
+        log += "------------------------------------------------------------------------------\n"
         print(len(d))
         print(data.size())
         for i in range(data.size()):
-            log += "{:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:6.4f} {:9.2f} {:11.2f} {:5.2f}".format(d["ca"][i], d["cb"][i], d["pa"][i], d["pb"][i], d["I"][i], d["V"][i], d["std"][i], d["AppRes"][i], d["V"][i] / d["I"][i] * k[i], (d["V"][i] / d["I"][i] * k[i])/d["AppRes"][i])
+            log += "{:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:6.4f} {:12.2f} {:17.2f} {:5.2f}\n".format(d["ca"][i], d["cb"][i], d["pa"][i], d["pb"][i], d["I"][i], d["V"][i], d["std"][i], d["AppRes"][i], d["V"][i] / d["I"][i] * k[i], (d["V"][i] / d["I"][i] * k[i])/d["AppRes"][i])
             # if "Electrode distance" in self._measurement.data["header"]:
             #     dis = float(self._measurement.data["header"]["Electrode distance"].split()[0])
-            def od(a, b):
-                try:
-                    return 1.0 / (int(d[b][i]) - int(d[a][i]))
-                except:
-                    return np.nan
-
-            kk = 1.0 / (od('ca', 'pa') - od('pa', 'cb') - od('ca', 'pb') + od('pb', 'cb')) * 2 * np.pi
-            log += " {:6.2f}\n".format((d["V"][i] / d["I"][i] * kk)/d["AppRes"][i])
+            # def od(a, b):
+            #     try:
+            #         return 1.0 / (int(d[b][i]) - int(d[a][i]))
+            #     except:
+            #         return np.nan
+            #
+            # kk = 1.0 / (od('ca', 'pa') - od('pa', 'cb') - od('ca', 'pb') + od('pb', 'cb')) * 2 * np.pi
+            # log += " {:6.2f}\n".format((d["V"][i] / d["I"][i] * kk)/d["AppRes"][i])
 
         self._output_edit.moveCursor(QtGui.QTextCursor.End)
         self._output_edit.insertPlainText(log)

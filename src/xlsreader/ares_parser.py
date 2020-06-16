@@ -44,6 +44,9 @@ def _parse_ares(file_name):
         raw_df['V'] *= 0.001
         raw_df['EP'] *= 0.001
 
+        # change type
+        raw_df['AppRes'] = raw_df['AppRes'].astype('float64')
+
         raw_df['ca'] = raw_df['ca'].apply(lambda x: str(x))
         raw_df['cb'] = raw_df['cb'].apply(lambda x: str(x))
         raw_df['pa'] = raw_df['pa'].apply(lambda x: str(x))
@@ -85,6 +88,9 @@ def _parse_ares2(file_name):
         raw_df['I'] *= 0.001
         raw_df['V'] *= 0.001
         raw_df['EP'] *= 0.001
+
+        # change type
+        raw_df['AppRes'] = raw_df['AppRes'].astype('float64')
 
         # remove * from ca, cb
         def rem_star(x):

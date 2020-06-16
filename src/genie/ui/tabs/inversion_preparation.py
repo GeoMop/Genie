@@ -1,25 +1,25 @@
 from PyQt5.QtCore import Qt
-from ui.panels.scene import DiagramView
-import core.electrode_parser
-from core.data_types import ElectrodeGroup, Electrode, Measurement
-from ui.panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
-from ui.panels.measurement_view import MeasurementModel, MeasurementGroupView
-from ui.panels.region_panel import RegionPanel
-from ui.panels.mesh_cut_tool_panel import MeshCutToolPanel
-from ui.menus.main_menu_bar import MainMenuBar
-from ui.dialogs.new_project_dialog import NewProjectDialog
-from xlsreader.xls_reader import XlsReaderDialog
-from ui.dialogs.point_cloud_reader import PointCloudReaderDialog
-from ui.dialogs.edit_inversions_dialog import EditInversionsDialog
+from ..panels.scene import DiagramView
+#import core.electrode_parser
+from genie.core.data_types import ElectrodeGroup, Electrode, Measurement
+from ..panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
+from ..panels.measurement_view import MeasurementModel, MeasurementGroupView
+from ..panels.region_panel import RegionPanel
+from ..panels.mesh_cut_tool_panel import MeshCutToolPanel
+from ..menus.main_menu_bar import MainMenuBar
+from ..dialogs.new_project_dialog import NewProjectDialog
+from xlsreader.xls_reader_dialog import XlsReaderDialog
+from ..dialogs.point_cloud_reader import PointCloudReaderDialog
+from ..dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
-from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
-from core.global_const import GENIE_PROJECT_FILE_NAME
-from core.config import ProjectConfig, InversionConfig
+#from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
+from genie.core.global_const import GENIE_PROJECT_FILE_NAME
+from genie.core.config import ProjectConfig, InversionConfig
 
 from PyQt5 import QtWidgets, QtCore
 
-from ui.panels.measurement_view import MeasurementGroupView
+from ..panels.measurement_view import MeasurementGroupView
 
 import os
 import json
@@ -116,6 +116,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionCloseProject.setEnabled(enable)
         self.main_window.menuBar.file.actionImportExcel.setEnabled(enable)
         self.main_window.menuBar.file.actionImportPointCloud.setEnabled(enable)
+        self.mesh_cut_tool_panel.setEnabled(enable)
+        self.diagram_view.setEnabled(enable)
 
     def _show_current_inversion(self):
         prj_dir = self.genie.cfg.current_project_dir
@@ -196,6 +198,16 @@ class InversionPreparation(QtWidgets.QMainWindow):
                                  self.genie.project_cfg.curren_inversion_name, "resistivity.vtk")
         if os.path.isfile(file_name):
             self.tab_wiget.show_3d(file_name)
+        else:
+            self.tab_wiget.hide_3d()
+
+    def _show_meas_model(self):
+        file_name = os.path.join(self.genie.cfg.current_project_dir, "inversions",
+                                 self.genie.project_cfg.curren_inversion_name, "measurements_model.txt")
+        if os.path.isfile(file_name):
+            self.tab_wiget.show_meas_model(file_name)
+        else:
+            self.tab_wiget.hide_meas_model()
 
     def _handle_save_project_action(self):
         if not self.genie.cfg.current_project_dir or self.genie.project_cfg is None:
@@ -224,8 +236,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._measurement_model = MeasurementModel(self._measurements)
         self.measurement_view.view.setModel(self._measurement_model)
         self.diagram_view.hide_pixmap()
+        self.diagram_view.hide_electrodes()
 
         self.tab_wiget.hide_3d()
+        self.tab_wiget.hide_meas_model()
 
         self._enable_project_ctrl(False)
         self._show_current_inversion()
@@ -241,9 +255,15 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", name)
         os.makedirs(dir, exist_ok=True)
 
+        self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
+        self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
+        self.measurement_view.view.reset()
+
         #self._save_current_inversion()
         self._handle_save_project_action()
 
+        self.tab_wiget.hide_3d()
+        self.tab_wiget.hide_meas_model()
         self._show_current_inversion()
 
     def _copy_inversion(self, name, new_name):
@@ -251,10 +271,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self.genie.project_cfg.inversions.append(new_name)
 
-        # copy inversion directory
+        # create new directory and copy conf file
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", name)
         new_dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", new_name)
-        shutil.copytree(dir, new_dir)
+        os.makedirs(new_dir, exist_ok=True)
+        shutil.copyfile(os.path.join(dir, "inv.conf"), os.path.join(new_dir, "inv.conf"))
 
         self.genie.project_cfg.curren_inversion_name = new_name
         self._load_current_inversion()
@@ -296,6 +317,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.view.reset()
 
         self._show_3d()
+        self._show_meas_model()
         self._show_current_inversion()
 
     def _save_current_inversion(self):
@@ -487,6 +509,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
             dlg.exec()
 
             self._show_3d()
+            self._show_meas_model()
         else:
             QtWidgets.QMessageBox.information(
                 self, 'Measurements not checked',

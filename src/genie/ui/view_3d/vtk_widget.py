@@ -3,11 +3,12 @@ from vtk import vtkCommand, vtkImplicitPlaneRepresentation, vtkSphereSource, vtk
     vtkPolyDataMapper, vtkActor, vtkProperty, vtkRenderer, vtkRenderWindow, vtkRenderWindowInteractor, \
     vtkImplicitPlaneWidget2, vtkUnstructuredGridReader, vtkDataSetMapper, vtkInteractorStyleTrackballCamera, \
     vtkScalarBarActor
-from ui.view_3d.items.unstructured_grid import UnstructuredGridActor
-from ui.view_3d.items.plane_widget import PlaneWidget
-from ui.view_3d.items.cutter_actor import CutterActor
+from .items.unstructured_grid import UnstructuredGridActor
+from .items.plane_widget import PlaneWidget
+from .items.cutter_actor import CutterActor
 from PyQt5.QtCore import pyqtSignal, Qt, QEvent
-from ui.view_3d.color_maps.default_log10 import lut
+from .color_maps.default_log10 import lut
+
 
 class VTKWidget(QVTKRenderWindowInteractor):
     plane_changed = pyqtSignal(tuple, tuple)

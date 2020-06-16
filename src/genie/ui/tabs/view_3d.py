@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
-from ui.view_3d.vtk_widget import VTKWidget
-from ui.view_3d.panels.cut_plane_panel import CutPlanePanel
-from ui.view_3d.panels.visibility_panel import VisibilityPanel
-from ui.view_3d.panels.color_map_panel import ColorMapPanel
+from ..view_3d.vtk_widget import VTKWidget
+from ..view_3d.panels.cut_plane_panel import CutPlanePanel
+from ..view_3d.panels.visibility_panel import VisibilityPanel
+from ..view_3d.panels.color_map_panel import ColorMapPanel
 
 
 class View3D(QtWidgets.QMainWindow):

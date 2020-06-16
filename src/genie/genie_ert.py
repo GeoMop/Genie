@@ -1,11 +1,14 @@
-from ui.panels.scene import DiagramView, Cursor
-from ui.main_window import MainWindow
-from core import config_file
-from core.config import GenieConfig
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from genie.ui.panels.scene import DiagramView, Cursor
+from genie.ui.main_window import MainWindow
+from genie.core import config_file
+from genie.core.config import GenieConfig
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
-import sys
 
 
 class Genie:
@@ -24,7 +27,8 @@ class Genie:
         self.cfg.current_project_dir = ""
 
     def save_cfg(self):
-        config_file.save_config_file("genie", self.cfg, extension="conf")
+        #config_file.save_config_file("genie", self.cfg, extension="conf")
+        pass
 
 
 if __name__ == '__main__':

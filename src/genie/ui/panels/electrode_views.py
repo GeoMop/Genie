@@ -1,4 +1,4 @@
-from ui.panels.scene import Region
+from .scene import Region
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 

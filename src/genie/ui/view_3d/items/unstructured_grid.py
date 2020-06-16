@@ -1,5 +1,5 @@
 from vtk import vtkUnstructuredGridReader, vtkActor, vtkDataSetMapper
-from ui.view_3d.color_maps.default_log10 import lut
+from ..color_maps.default_log10 import lut
 
 
 class UnstructuredGridActor(vtkActor):

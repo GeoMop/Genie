@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QLabel, QHBoxLayout, QPushButton, QGridLayout
 from PyQt5.QtCore import pyqtSignal
-from ui.view_3d.utility import PointControler
+from ..utility import PointControler
 import sys
+
 
 class CutPlanePanel(QWidget):
     def __init__(self, parent=None):

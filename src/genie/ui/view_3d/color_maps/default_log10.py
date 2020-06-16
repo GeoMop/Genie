@@ -1,5 +1,6 @@
 from vtk import vtkLookupTable
-from ui.view_3d.color_maps.default_colors import default
+from .default_colors import default
+
 
 lut = vtkLookupTable()
 lut.SetNumberOfColors(len(default))

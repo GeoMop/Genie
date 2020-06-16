@@ -1,6 +1,6 @@
 from bgem.gmsh.gmsh_io import GmshIO
 from bgem.bspline import brep_writer as bw
-from core.cut_point_cloud import cut_tool_to_gen_vecs
+from .cut_point_cloud import cut_tool_to_gen_vecs
 
 import numpy as np
 
@@ -36,8 +36,6 @@ def gen(mesh_cut_tool_param):
     base_point, gen_vecs = cut_tool_to_gen_vecs(mesh_cut_tool_param)
     base_point[0] += - 622000
     base_point[1] += - 1128000
-    print("#####################")
-    print(base_point)
 
 
     opposite_pont = base_point + gen_vecs[0] + gen_vecs[1] + gen_vecs[2]
@@ -52,9 +50,7 @@ def gen(mesh_cut_tool_param):
     a = np.array(gen_vecs).T
     #a = np.concatenate(gen_vecs, axis=0)
     #a = np.array([[gen_vecs[0][0], gen_vecs[1][0], gen_vecs[2][0]], [gen_vecs[0][1], gen_vecs[1][1], gen_vecs[2][1]], [gen_vecs[0][2], gen_vecs[1][2], gen_vecs[2][2]]])
-    print(a)
     b = np.linalg.inv(a)
-    print(b)
 
     class VertInfo:
         def __init__(self, node):
@@ -78,12 +74,6 @@ def gen(mesh_cut_tool_param):
         bw_vertices_yz[id] = node[1:]
         vert_info[id] = VertInfo(node)
         vertices_tr[id] = b @ (np.array(node) - base_point)
-
-    print(bw_vertices[1].point)
-    print(vertices_tr[1])
-    print(a@vertices_tr[1]+base_point)
-
-
 
     bw_edges = {}
 
@@ -186,9 +176,7 @@ def gen(mesh_cut_tool_param):
             face_edges_yz[i].append((vertices_tr[last][1:], vertices_tr[first][1:]))
             face_edges_xz[i].append((vertices_tr[last][0:3:2], vertices_tr[first][0:3:2]))
             face_edges_xy[i].append((vertices_tr[last][0:3:2], vertices_tr[first][0:3:2]))
-    print(len(face_edges[4]))
-    # import sys
-    # sys.exit()
+
     v1 = bw.Vertex(base_point + gen_vecs[0])
     v2 = bw.Vertex(base_point + gen_vecs[2] + gen_vecs[0])
     v3 = bw.Vertex(base_point + gen_vecs[2] + gen_vecs[1] + gen_vecs[0])
@@ -210,7 +198,6 @@ def gen(mesh_cut_tool_param):
         #surf, vtxs_uv = bw.Approx.plane([(box[1][0], 0, 0), (box[1][0], 1, 0), (box[1][0], 0, 1)])
         #surf, vtxs_uv = bw.Approx.plane([planes[i][0], planes[i][0] + planes[i][1], planes[i][0] + planes[i][2]])
         surf, vtxs_uv = bw.Approx.plane([v1.point, v1.point + gen_vecs[1], v1.point + gen_vecs[2]])
-        print(vtxs_uv)
         # e1.attach_to_plane(surf, (box[0][1], box[0][2]), (box[0][1], box[1][2]) )
         # e2.attach_to_plane(surf, (box[0][1], box[1][2]), (box[1][1], box[1][2]) )
         # e3.attach_to_plane(surf, (box[1][1], box[1][2]), (box[1][1], box[0][2]) )
@@ -263,7 +250,6 @@ def gen(mesh_cut_tool_param):
         #surf, vtxs_uv = bw.Approx.plane([(box[1][0], 0, 0), (box[1][0], 1, 0), (box[1][0], 0, 1)])
         #surf, vtxs_uv = bw.Approx.plane([planes[i][0], planes[i][0] + planes[i][1], planes[i][0] + planes[i][2]])
         surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[0], v5.point + gen_vecs[2]])
-        print(vtxs_uv)
         # e1.attach_to_plane(surf, (box[0][1], box[0][2]), (box[0][1], box[1][2]) )
         # e2.attach_to_plane(surf, (box[0][1], box[1][2]), (box[1][1], box[1][2]) )
         # e3.attach_to_plane(surf, (box[1][1], box[1][2]), (box[1][1], box[0][2]) )
@@ -297,7 +283,6 @@ def gen(mesh_cut_tool_param):
         #surf, vtxs_uv = bw.Approx.plane([(box[1][0], 0, 0), (box[1][0], 1, 0), (box[1][0], 0, 1)])
         #surf, vtxs_uv = bw.Approx.plane([planes[i][0], planes[i][0] + planes[i][1], planes[i][0] + planes[i][2]])
         surf, vtxs_uv = bw.Approx.plane([v8.point, v8.point + gen_vecs[0], v8.point + gen_vecs[2]])
-        print(vtxs_uv)
         # e1.attach_to_plane(surf, (box[0][1], box[0][2]), (box[0][1], box[1][2]) )
         # e2.attach_to_plane(surf, (box[0][1], box[1][2]), (box[1][1], box[1][2]) )
         # e3.attach_to_plane(surf, (box[1][1], box[1][2]), (box[1][1], box[0][2]) )
@@ -331,7 +316,6 @@ def gen(mesh_cut_tool_param):
         #surf, vtxs_uv = bw.Approx.plane([(box[1][0], 0, 0), (box[1][0], 1, 0), (box[1][0], 0, 1)])
         #surf, vtxs_uv = bw.Approx.plane([planes[i][0], planes[i][0] + planes[i][1], planes[i][0] + planes[i][2]])
         surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[1], v5.point + gen_vecs[2]])
-        print(vtxs_uv)
         # e1.attach_to_plane(surf, (box[0][1], box[0][2]), (box[0][1], box[1][2]) )
         # e2.attach_to_plane(surf, (box[0][1], box[1][2]), (box[1][1], box[1][2]) )
         # e3.attach_to_plane(surf, (box[1][1], box[1][2]), (box[1][1], box[0][2]) )
@@ -369,6 +353,3 @@ def gen(mesh_cut_tool_param):
 
     with open("inv_mesh_tmp.brep", "w") as f:
         bw.write_model(f, c1, bw.Location())
-        # bw.write_model(sys.stdout, c1, cloc)
-    #print(c1)
-    #print([vi.plane_pos for vi in vert_info.values()])

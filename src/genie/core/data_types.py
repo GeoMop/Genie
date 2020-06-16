@@ -60,7 +60,7 @@ class Measurement:
 
 @json_data.jsondata
 class MeshCutToolParam:
-    origin_x: float = -622366.0
+    origin_x: float = -622365.0
     origin_y: float = -1128832.0
     gen_vec1_x: float = 50.0
     gen_vec1_y: float = 0.0
@@ -73,6 +73,7 @@ class MeshCutToolParam:
 
 @json_data.jsondata
 class InversionParam:
+    # bert/gimli params
     verbose: bool = True
     absoluteError: float = 0.001
     relativeError: float = 0.03
@@ -91,5 +92,32 @@ class InversionParam:
     blockyModel: bool = False
     recalcJacobian: bool = True
 
+    # test params
     data_log: bool = True
     k_ones: bool = False
+
+
+@json_data.jsondata
+class MeasurementInfoItem:
+    measurement_number: str = ""
+
+    # from measurement file
+    ca: str = ""
+    cb: str = ""
+    pa: str = ""
+    pb: str = ""
+    I: float = 0.0
+    V: float = 0.0
+    AppRes: float = 0.0
+    std: float = 0.0
+
+    # electrode id in inversion input.dat
+    inv_ca: int = 0
+    inv_cb: int = 0
+    inv_pa: int = 0
+    inv_pb: int = 0
+
+
+@json_data.jsondata
+class MeasurementsInfo:
+    items: List[MeasurementInfoItem] = attr.ib(factory=list)

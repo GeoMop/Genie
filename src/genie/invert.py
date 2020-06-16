@@ -9,12 +9,13 @@ import os
 import subprocess
 import time
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from core import snap_electrodes
-from core.config import InversionConfig
-from core import mesh_gen2
-from core import cut_point_cloud
+from genie.core import snap_electrodes
+from genie.core.config import InversionConfig
+from genie.core import mesh_gen2, mesh_gen3
+from genie.core import cut_point_cloud
+from genie.core.data_types import MeasurementsInfo
 from bgem.gmsh.gmsh_io import GmshIO
 
 import numpy as np
@@ -31,14 +32,21 @@ def main():
     inv_par = inversion_conf.inversion_param
     cut_par = inversion_conf.mesh_cut_tool_param
 
-    #remove_old_files()
+    remove_old_files()
 
-    prepare(cut_par)
+    if not prepare(cut_par):
+        return
     #return
+
+    # snap electrodes
+    print()
+    print_headline("Snapping electrodes")
+    snap_electrodes.main(max_dist=1.0)
 
     #ball_mesh("inv_mesh.msh", "inv_mesh2.msh", [-622342, -1128822, 22], 5.0)
     #return
 
+    print()
     print_headline("Inversion")
 
     # res = pb.Resistivity("input.dat")
@@ -47,16 +55,31 @@ def main():
     # return
 
     # load data file
-    data = pg.DataContainerERT("input_snapped.dat")
+    data = pg.DataContainerERT("input_snapped.dat", removeInvalid=False)
     #data = pg.DataContainerERT("ldp2.dat")
+    #print(data.size())
+    #print(data("a"))
+    #print(data.sensorIdx())
+    #return
+
+    # mark all data valid
+    #data.markValid(data('rhoa') > 0)
+    #data.markValid(data('rhoa') <= 0)
+    #data.markValid(data('u') > 0)
 
     # k, rhoa
+    #inv_par.k_ones = True
     if inv_par.k_ones:
         data.set("k", np.ones(data.size()))
     else:
         data.set("k", pg.geometricFactors(data))
     #data.set("err", pb.Resistivity.estimateError(data, absoluteUError=0.0001, relativeError=0.03))
+    #data.set("k", np.ones(data.size()))
+    #data.set("k", pg.geometricFactors(data))
     data.set("rhoa", data("u") / data("i") * data("k"))
+    tolerance = 1e-12
+    #data.markValid(np.abs(data('rhoa')) > tolerance)
+    data.markValid(data('rhoa') > tolerance)
 
     # remove invalid data
     oldsize = data.size()
@@ -69,11 +92,16 @@ def main():
         return
 
     # check, compute error
-    if data.allNonZero('err'):
-        error = data('err')
-    else:
-        print("estimate data error")
-        error = inv_par.relativeError + inv_par.absoluteError / data('rhoa')
+    # if data.allNonZero('err'):
+    #     error = data('err')
+    # else:
+    #     print("estimate data error")
+    #     error = inv_par.relativeError + inv_par.absoluteError / data('rhoa')
+    error = data('err')
+    min_err = 0.0005
+    for i in range(data.size()):
+        if error[i] < min_err:
+            error[i] = min_err
 
     # create FOP
     fop = pg.DCSRMultiElectrodeModelling(verbose=inv_par.verbose)
@@ -160,7 +188,13 @@ def main():
     inv.setRecalcJacobian(inv_par.recalcJacobian)
 
     pc = fop.regionManager().parameterCount()
-    startModel = pg.RVector(pc, pg.median(data('rhoa')))
+    if inv_par.k_ones:
+        # hack of gimli hack
+        v = pg.RVector(pg.RVector(pc, pg.median(data('rhoa') * pg.geometricFactors(data))))
+        v[0] += tolerance * 2
+        startModel = v
+    else:
+        startModel = pg.RVector(pc, pg.median(data('rhoa')))
     #startModel = pg.RVector(pc, 2000.0)
 
     inv.setModel(startModel)
@@ -174,7 +208,41 @@ def main():
     #paraDomain.addExportData('Resistivity (log10)', np.log10(resistivity))
     #paraDomain.addExportData('Coverage', coverageDC(fop, inv, paraDomain))
     paraDomain.exportVTK('resistivity')
-    print("Done.")
+
+    # measurements on model
+    print()
+    print_headline("Measurements on model")
+    with open("measurements_info.json") as fd:
+        meas_info = MeasurementsInfo.deserialize(json.load(fd))
+
+    resp = fop.response(resistivity)
+    # hack of gimli hack
+    v = pg.RVector(startModel)
+    v[0] += tolerance * 2
+    resp_start = fop.response(v)
+
+    map = {}
+    map_start = {}
+    map_appres_gimli = {}
+    for i in range(data.size()):
+        map[(data("a")[i], data("b")[i], data("m")[i], data("n")[i])] = resp[i]
+        map_start[(data("a")[i], data("b")[i], data("m")[i], data("n")[i])] = resp_start[i]
+        map_appres_gimli[(data("a")[i], data("b")[i], data("m")[i], data("n")[i])] = data('rhoa')[i]
+
+    with open("measurements_model.txt", "w") as fd:
+        fd.write("meas_number ca  cb  pa  pb  I[A]      V[V]     AppRes[Ohmm] std    AppResGimli[Ohmm] AppResModel[Ohmm]   ratio AppResStartModel[Ohmm] start_ratio\n")
+        fd.write("-------------------------------------------------------------------------------------------------------------------------------------------------\n")
+        for item in meas_info.items:
+            k = (item.inv_ca, item.inv_cb, item.inv_pa, item.inv_pb)
+            if k in map:
+                m_on_m = "{:17.2f} {:17.2f} {:7.2f} {:22.2f}     {:7.2f}".format(map_appres_gimli[k], map[k], map[k]/map_appres_gimli[k], map_start[k], map_start[k]/map_appres_gimli[k])
+            else:
+                m_on_m = "         not used"
+
+            fd.write("{:11} {:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:12.2f} {:6.4f} {}\n".format(item.measurement_number, item.ca, item.cb, item.pa, item.pb, item.I, item.V, item.AppRes, item.std, m_on_m))
+
+    print()
+    print("All done.")
 
 
 def coverageDC(fop, inv, paraDomain):
@@ -256,8 +324,16 @@ def find_markers_in_ball(paraDomain, pos, radius):
 
 def remove_old_files():
     files = [
+        "point_cloud_cut.xyz",
+        "gallery_mesh.ply",
+        "gallery_mesh.msh",
+        "input_snapped.dat",
+        "inv_mesh_tmp.brep",
+        "inv_mesh_tmp.msh",
+        "inv_mesh.msh",
         "resistivity.vector",
-        "resistivity.vtk"
+        "resistivity.vtk",
+        "measurements_model.txt"
     ]
 
     for file_name in files:
@@ -286,31 +362,35 @@ def prepare(mesh_cut_tool_param):
     t = time.time()
     cut_point_cloud.cut_ascii(os.path.join("..", "..", "point_cloud.xyz"), "point_cloud_cut.xyz", mesh_cut_tool_param)
     #cut_point_cloud.cut_ascii("point_cloud_cut_x.xyz", "point_cloud_cut.xyz", mesh_cut_tool_param)
-    print("elapsed time: {:0.3f} s".format(time.time() - t))
+    print("cutting elapsed time: {:0.3f} s".format(time.time() - t))
     #return
 
     # meshlab
     t = time.time()
+    print()
     print_headline("Creating gallery mesh")
-    meshlabserver_path = '/tmp/.mount_MeshLaDVxn6r'
+    meshlabserver_path = '/tmp/.mount_MeshLa3FLiBB'
     os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
-    meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../meshlab/meshlabserver.exe")
+    meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
     if not os.path.exists(meshlabserver_path):
         meshlabserver_path = "meshlabserver"
-    run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", os.path.join(os.path.dirname(os.path.realpath(__file__)), "meshlab_script.mlx")])
+    run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", os.path.join(os.path.dirname(os.path.realpath(__file__)), "core", "meshlab_script.mlx")])
     print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
+    #return
 
-    gmsh_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../gmsh/gmsh.exe")
+    gmsh_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "gmsh", "gmsh.exe")
     if not os.path.exists(gmsh_path):
         gmsh_path = "gmsh"
     run_process([gmsh_path, "-format", "msh2", "-save", "gallery_mesh.ply"])
 
-    print_headline("Snapping electrodes")
-    snap_electrodes.main()
 
     #return
+    print()
     print_headline("Creating inversion mesh")
-    mesh_gen2.gen(mesh_cut_tool_param)
+    #mesh_gen2.gen(mesh_cut_tool_param)
+    if not mesh_gen3.gen("gallery_mesh.msh", "inv_mesh_tmp.brep", mesh_cut_tool_param, [-622000.0, -1128000.0, 0.0]):
+        print("Error in mesh generation")
+        return False
 
     run_process([gmsh_path, "-3", "-format", "msh2", "inv_mesh_tmp.brep"])
     #run_process([gmsh_path, "inv_mesh_tmp.msh"])
@@ -320,8 +400,8 @@ def prepare(mesh_cut_tool_param):
 
     #print("test DONE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
+    return True
+
 
 if __name__ == "__main__":
     main()
-
-

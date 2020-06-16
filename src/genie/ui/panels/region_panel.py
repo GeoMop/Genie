@@ -1,4 +1,4 @@
-from ui.dialogs.add_region_dialog import AddRegionDlg
+from ..dialogs.add_region_dialog import AddRegionDlg
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 

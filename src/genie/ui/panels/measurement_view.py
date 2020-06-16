@@ -87,7 +87,7 @@ class MeasurementModel(QtCore.QAbstractItemModel):
         # todo: nevim parametry
 
 
-class MeasurementGroupView(QtWidgets.QTreeView):
+class MeasurementGroupView(QtWidgets.QWidget):
     def __init__(self, main_window, model, parent=None):
         super().__init__(parent)
 

@@ -6,7 +6,7 @@ from bgem.external import undo
 from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
 from bgem.gmsh.gmsh_io import GmshIO
-from core.data_types import MeshCutToolParam
+from genie.core.data_types import MeshCutToolParam
 
 import random
 import os
@@ -1148,8 +1148,7 @@ class DiagramView(QtWidgets.QGraphicsView):
         self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
 
     def show_electrodes(self, electrode_groups):
-        for item in self.el_map.values():
-            self._scene.removeItem(item)
+        self.hide_electrodes()
 
         reg_id = self._scene.regions.add_region(dim=1)
         color_ind = 0
@@ -1165,6 +1164,11 @@ class DiagramView(QtWidgets.QGraphicsView):
 
         #self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
         #self._scene.update_scene()
+
+    def hide_electrodes(self):
+        for item in self.el_map.values():
+            self._scene.removeItem(item)
+        self.el_map.clear()
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1274,7 +1278,8 @@ class DiagramView(QtWidgets.QGraphicsView):
                 last_gpt = gpt
 
     def show_map(self):
-        map = QtSvg.QGraphicsSvgItem("res/bukov_situace.svg")
+        file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "res", "bukov_situace.svg")
+        map = QtSvg.QGraphicsSvgItem(file)
 
         # map transform
         # 622380 - 247.266276267186

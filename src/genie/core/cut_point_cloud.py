@@ -8,17 +8,14 @@ def cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=False):
 
     base_point = np.array([mc.origin_x+622000.0, mc.origin_y+1128000.0, z_min])
     gen_vecs = [np.array([mc.gen_vec1_x, mc.gen_vec1_y, 0.0]), np.array([mc.gen_vec2_x, mc.gen_vec2_y, 0.0]), np.array([0.0, 0.0, z_max - z_min])]
-    # todo: smazat minus az se opravi souradnice
     # todo: osetrit prehozeny vektory
 
     if margin:
-        m = 0.0#mc.margin
+        m = mc.margin
         gn = [v / np.linalg.norm(v) for v in gen_vecs]
         base_point -= sum(gn) * m
         gen_vecs = [v + n * (m * 2) for v, n in zip(gen_vecs, gn)]
 
-    print(base_point)
-    print(gen_vecs)
     return base_point, gen_vecs
 
 
@@ -76,8 +73,6 @@ def cut_ascii(in_file, out_file, mesh_cut_tool_param):
     m21 = inv_tr_mat[2][1]
     m22 = inv_tr_mat[2][2]
 
-
-
     with open(in_file) as fd_in:
         with open(out_file, "w") as fd_out:
             points_count = 0
@@ -102,15 +97,15 @@ def cut_ascii(in_file, out_file, mesh_cut_tool_param):
                     continue
 
                 xb = x - b0
-                l0 = m00 * xb + m01 * xb + m02 * xb
+                yb = y - b1
+                zb = z - b2
+                l0 = m00 * xb + m01 * yb + m02 * zb
                 if (l0 < 0) or (l0 > 1):
                     continue
-                yb = y - b1
-                l1 = m10 * yb + m11 * yb + m12 * yb
+                l1 = m10 * xb + m11 * yb + m12 * zb
                 if (l1 < 0) or (l1 > 1):
                     continue
-                zb = z - b2
-                l2 = m20 * zb + m21 * zb + m22 * zb
+                l2 = m20 * xb + m21 * yb + m22 * zb
                 if (l2 < 0) or (l2 > 1):
                     continue
 
