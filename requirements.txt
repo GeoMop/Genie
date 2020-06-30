@@ -4,6 +4,7 @@ vtk
 bgem
 pandas
 xlrd
-pygimli
+#pygimli
 psutil
 attrs
+obspy
