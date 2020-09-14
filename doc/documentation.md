@@ -46,9 +46,19 @@ pip install -r requirements.txt
   in which is possible browse slices of 3D space
 
 ## Inversion parameters
-- zWeight, lambda, robustData, blockyModel - describe in http://www.resistivity.net/download/bert-tutorial.pdf chapter 2.2
-- maxIter - maximal number of iterations
-- recalcJacobian - Jacobian will be recompute every iteration
+
+**lambda** - Float, global regularization parameter. Higher values leads to smoother result, lower values to overfitting. Default value is 20. 
+**robustData** - Boolean, if set to 1, the [L1 minimization scheme](https://library.seg.org/doi/abs/10.1190/1.1440378) is used. Can be benefitial in the case of significant outliers in the data, but 
+not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.
+**zWeight** Float, anisotropic regularization parameter. Default value 1 prescribes an isometric regularization. For the values less then 1 the regularization in the vertical direction (Z-axis) is
+diminished, which can lead to better result for verticaly layered geological structures.
+**blockyModel** Boolean, L1 minimization scheme for the regulaization term. Allow non-smooth transitions in the resistivity.
+**ConstrantType** (? is it supported in PyGimli) 0,1,2 (1 is default), order of derivative used in the regularization term. TBD see [PyGimli tutorial](https://www.pygimli.org/_tutorials_auto/3_inversion/plot_6-geostatConstraints.html)
+**maxIter** - maximal number of iterations
+**recalcJacobian** - Jacobian will be recomputed at every iteration, default. (TODO: omit this option)
+
+Based on [parameters of the inversion](https://www.pygimli.org/pygimliapi/_generated/pygimli.manager.html) of the PyGimply library and 
+on the related SW Bert [Chapter 2.2](http://www.resistivity.net/download/bert-tutorial.pdf).
 
 ## Tips
 - cut of point cloud is time consuming operation, if we want to work with smaller area,
