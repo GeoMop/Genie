@@ -255,6 +255,177 @@ def coverageDC(fop, inv, paraDomain):
     return np.log10(covTrans / paraDomain.cellSizes())
 
 
+def save_csv(paraDomain, model, file_name):
+    xmin = paraDomain.xmin()
+    xmax = paraDomain.xmax()
+    ymin = paraDomain.ymin()
+    ymax = paraDomain.ymax()
+    zmin = paraDomain.zmin()
+    zmax = paraDomain.zmax()
+
+    with open(file_name, "w") as fd:
+        fd.write('"x","y","z","resistivity"\n')
+
+        m = model.array()
+        for k in range(10):
+            z = zmin + (zmax - zmin) / 10 * k
+            for j in range(10):
+                y = ymin + (ymax - ymin) / 10 * j
+                for i in range(10):
+                    x = xmin + (xmax - xmin) / 10 * i
+                    cell = paraDomain.findCell(pg.RVector3(x, y, z))
+                    if cell == None:
+                        continue
+                    r = m[cell.id()]
+                    fd.write("{},{},{},{}\n".format(x, y, z, r))
+
+
+def save_p3d(paraDomain, model, mesh_cut_tool_param, step, file_name):
+    """Saves result as .p3d file."""
+    base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param)
+    base_point[0] += - 622000
+    base_point[1] += - 1128000
+
+    x_nodes = math.floor(np.linalg.norm(gen_vecs[0]) / step) + 1
+    y_nodes = math.floor(np.linalg.norm(gen_vecs[1]) / step) + 1
+    z_nodes = math.floor(np.linalg.norm(gen_vecs[2]) / step) + 1
+
+    x_knots = [1 / (x_nodes - 1) * i for i in range(x_nodes)]
+    y_knots = [1 / (y_nodes - 1) * i for i in range(y_nodes)]
+    z_knots = [1 / (z_nodes - 1) * i for i in range(z_nodes)]
+
+    grid = [[[0.0] * x_nodes for _ in range(y_nodes)] for _ in range(z_nodes)]
+
+    m = model.array()
+    inv_tr_mat = cut_point_cloud.inv_tr(gen_vecs)
+    for i in range(paraDomain.cellCount()):
+        cell = paraDomain.cell(i)
+        for j, n in enumerate(cell.nodes()):
+            nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([n[0], n[1], n[2]]))
+            if j == 0:
+                cxmin = cxmax = nl[0]
+                cymin = cymax = nl[1]
+                czmin = czmax = nl[2]
+            else:
+                if nl[0] < cxmin:
+                    cxmin = nl[0]
+                elif nl[0] > cxmax:
+                    cxmax = nl[0]
+                if nl[1] < cymin:
+                    cymin = nl[1]
+                elif nl[1] > cymax:
+                    cymax = nl[1]
+                if nl[2] < czmin:
+                    czmin = nl[2]
+                elif nl[2] > czmax:
+                    czmax = nl[2]
+
+        x_s = 0
+        for i in range(1, len(x_knots)):
+            if x_knots[i] < cxmin:
+                x_s = i
+            else:
+                break
+        x_e = len(x_knots)
+        for i in reversed(range(0, len(x_knots))):
+            if x_knots[i] > cxmax:
+                x_e = i
+            else:
+                break
+        y_s = 0
+        for i in range(1, len(y_knots)):
+            if y_knots[i] < cymin:
+                y_s = i
+            else:
+                break
+        y_e = len(y_knots)
+        for i in reversed(range(0, len(y_knots))):
+            if y_knots[i] > cymax:
+                y_e = i
+            else:
+                break
+        z_s = 0
+        for i in range(1, len(z_knots)):
+            if z_knots[i] < czmin:
+                z_s = i
+            else:
+                break
+        z_e = len(z_knots)
+        for i in reversed(range(0, len(z_knots))):
+            if z_knots[i] > czmax:
+                z_e = i
+            else:
+                break
+
+        r = m[cell.id()]
+
+        shape = cell.shape()
+        for k in range(z_s, z_e):
+            for j in range(y_s, y_e):
+                for i in range(x_s, x_e):
+                    v = base_point + gen_vecs[0] * x_knots[i] + gen_vecs[1] * y_knots[j] + gen_vecs[2] * z_knots[k]
+                    if shape.isInside(pg.RVector3(v)):
+                        grid[k][j][i] = r
+
+    def five_writer(fd):
+        i = 0
+
+        def write(s):
+            nonlocal i
+            i += 1
+            if i > 1:
+                fd.write(" ")
+            fd.write(s)
+            if i >= 5:
+                fd.write("\n")
+                i = 0
+
+        def finalize():
+            nonlocal i
+            if i > 0:
+                fd.write("\n")
+
+        return write, finalize
+
+    with open(file_name + ".p3d", "w") as fd_p3d:
+        with open(file_name + ".q", "w") as fd_q:
+            fd_p3d.write("{} {} {}\n".format(x_nodes, y_nodes, z_nodes))
+
+            fd_q.write("{} {} {}\n".format(x_nodes, y_nodes, z_nodes))
+            fd_q.write("{} {} {} {}\n".format(0.0, 0.0, 0.0, 0.0))
+
+            x_list = []
+            y_list = []
+            z_list = []
+
+            p3d_write, p3d_finalize = five_writer(fd_p3d)
+            q_write, q_finalize = five_writer(fd_q)
+
+            for rrr, zl in zip(grid, z_knots):
+                for rr, yl in zip(rrr, y_knots):
+                    for r, xl in zip(rr, x_knots):
+                        q_write("{:.10g}".format(r))
+
+                        v = base_point + gen_vecs[0] * xl + gen_vecs[1] * yl + gen_vecs[2] * zl
+                        x_list.append(v[0])
+                        y_list.append(v[1])
+                        z_list.append(v[2])
+
+            for v in x_list:
+                p3d_write("{:.10g}".format(v))
+            for v in y_list:
+                p3d_write("{:.10g}".format(v))
+            for v in z_list:
+                p3d_write("{:.10g}".format(v))
+
+            s = "{}".format(0.0)
+            for _ in range(x_nodes * y_nodes * z_nodes * 4):
+                q_write(s)
+
+            p3d_finalize()
+            q_finalize()
+
+
 def modify_mesh(in_file, out_file):
     """Keeps only elements of dim 2 and 3. Sets physical id to 2."""
     el_type_to_dim = {15: 0, 1: 1, 2: 2, 4: 3}
