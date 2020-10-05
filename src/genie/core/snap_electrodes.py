@@ -98,33 +98,82 @@ def tri_point_dist(a, b, c, p):
     gama = loc[1]
     alpha = 1 - beta - gama
 
+    def ret_fun(snapped_p):
+        return np.linalg.norm(snapped_p - p), snapped_p
+
     if 0 <= alpha <= 1 and 0 <= beta <= 1 and 0 <= gama <= 1:
         # inside
         snapped_p = a + beta * ab + gama * ac
+        return ret_fun(snapped_p)
+
+    dab, pab = ret_fun(edge_dis(a, b, p))
+    dac, pac = ret_fun(edge_dis(a, c, p))
+    dbc, pbc = ret_fun(edge_dis(b, c, p))
+
+    if dab < dac:
+        if dab < dbc:
+            return dab, pab
+    else:
+        if dac < dbc:
+            return dac, pac
+    return dbc, pbc
+
+
+def edge_dis(a, b, p):
+    delta = b - a
+    t = np.dot(p - a, delta) / np.linalg.norm(delta) ** 2
+
+    if t < 0:
+        return a
+
+    if t > 1:
+        return b
+
+    return a + t * delta
+
+
+def tri_point_dist_fast_bug(a, b, c, p):
+    global count
+    count += 1
+
+    ab = b - a
+    ac = c - a
+    tr = np.array([ab, ac, np.cross(ab, ac)]).T
+    inv_tr = np.linalg.inv(tr)
+    loc = inv_tr @ (p - a)
+    beta = loc[0]
+    gama = loc[1]
+    alpha = 1 - beta - gama
+
+    def ret_fun(snapped_p):
         return np.linalg.norm(snapped_p - p), snapped_p
+
+    if 0 <= alpha <= 1 and 0 <= beta <= 1 and 0 <= gama <= 1:
+        # inside
+        snapped_p = a + beta * ab + gama * ac
+        return ret_fun(snapped_p)
     elif alpha > 0 and beta <= 0 and gama <= 0:
         # a
-        return np.linalg.norm(a - p), a
+        return ret_fun(a)
     elif alpha <= 0 and beta > 0 and gama <= 0:
         # b
-        return np.linalg.norm(b - p), b
+        return ret_fun(b)
     elif alpha <= 0 and beta <= 0 and gama > 0:
         # c
-        return np.linalg.norm(c - p), c
+        return ret_fun(c)
     elif alpha > 0 and beta > 0 and gama < 0:
         # ab
-        edge_proj(a, b, p)
+        return ret_fun(edge_proj(a, b, p))
     elif alpha > 0 and beta < 0 and gama > 0:
         # ac
-        edge_proj(a, c, p)
+        return ret_fun(edge_proj(a, c, p))
     elif alpha < 0 and beta > 0 and gama > 0:
         # bc
-        edge_proj(b, c, p)
+        return ret_fun(edge_proj(b, c, p))
     else:
         print("divny {}, {}, {}".format(alpha, beta, gama))
 
-    return np.linalg.norm(a - p), a
-    #return dist, snapped_p
+    return ret_fun(a)
 
 
 def edge_proj(a, b, p):
