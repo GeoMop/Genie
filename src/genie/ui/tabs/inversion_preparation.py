@@ -14,7 +14,7 @@ from ..dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
 #from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
-from genie.core.global_const import GENIE_PROJECT_FILE_NAME
+from genie.core.global_const import GENIE_PROJECT_FILE_NAME, GenieMethod
 from genie.core.config import ProjectConfig, InversionConfig
 
 from PyQt5 import QtWidgets, QtCore
@@ -137,13 +137,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
             os.makedirs(dlg.project_dir, exist_ok=True)
 
             self.genie.cfg.current_project_dir = dlg.project_dir
-            self.genie.project_cfg = ProjectConfig()
+            self.genie.project_cfg = ProjectConfig(method=self.genie.method)
 
             # first inversion
             self._add_inversion("inv_1")
             self.genie.project_cfg.curren_inversion_name = self.genie.project_cfg.inversions[0]
 
-            self._handle_import_excel_action()
+            if self.genie.method == GenieMethod.ERT:
+                self._handle_import_excel_action()
             self._handle_import_point_cloud()
 
             self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
@@ -179,11 +180,23 @@ class InversionPreparation(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(
                 self, 'Bad project version',
                 "Expected project version is {}, but opening project has {}.".format(expect_version, config["version"]))
+            return
+
+        project_cfg = ProjectConfig.deserialize(config)
+
+        # check method
+        expect_version = ProjectConfig().version
+        if project_cfg.method != self.genie.method:
+            QtWidgets.QMessageBox.critical(
+                self, 'Bad project method',
+                "Expected project method is {}, but opening project method is {}."
+                    .format(self.genie.method.name, project_cfg.method.name))
+            return
 
         self._handle_close_project_action()
 
         self.genie.cfg.current_project_dir = prj_dir
-        self.genie.project_cfg = ProjectConfig.deserialize(config)
+        self.genie.project_cfg = project_cfg
 
         self._update_el_meas()
         self.diagram_view.show_pixmap(self.genie)
@@ -449,37 +462,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dlg = EditInversionsDialog(self.genie, self)
         dlg.exec()
 
-    # def _handle_el_groupList_item_change(self):
-    #     currentItem = self.el_groupView.currentItem()
-    #     if currentItem:
-    #         self.show_electrodes(currentItem.text())
-
-    # def load_electrodes(self):
-    #     electrode_list = electrode_parser.parse("seznam souřadnic ERT bukov_finale_ff.xlsx")
-    #     return
-    #     self.electrode_dict = {e.id: e for e in electrode_list}
-    #
-    #     self.electrode_group_dict = {}
-    #     for k, v in self.electrode_dict.items():
-    #         gk = "{}, {}, {}".format(v.dilo, v.wall.name, v.height)
-    #         if gk in self.electrode_group_dict:
-    #             self.electrode_group_dict[gk].append(v)
-    #         else:
-    #             self.electrode_group_dict[gk] = [v]
-
-    # def show_electrode_groups(self):
-    #     self.el_groupView.clear()
-    #     self.el_groupView.addItems(sorted(self.electrode_group_dict.keys()))
-
-    # def show_electrodes(self, key):
-    #     self.electrodeList.clear()
-    #     self.electrodeList.addItems(sorted(["{}, {}, {}, {}, {}".format(e.id, e.metraz, e.x, e.y, e.z) for e in self.electrode_group_dict[key]]))
-
     def _handle_analyse_measurementButton(self):
         index = self.measurement_view.view.currentIndex()
         if index.row() >= 0:
             measurement = self._measurement_model._measurements[index.row()]
-            from ui.dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
+            from ..dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
             dlg = AnalyseMeasurementDlg(self._electrode_groups, measurement, self.genie, self)
             dlg.exec()
         else:
@@ -504,7 +491,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         measurements = self._measurement_model.checkedMeasurements()
         if measurements:
-            from ui.dialogs.run_inv import RunInvDlg
+            from ..dialogs.run_inv import RunInvDlg
             dlg = RunInvDlg(self._electrode_groups, measurements, self.genie, self)
             dlg.exec()
 

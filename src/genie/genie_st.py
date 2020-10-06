@@ -17,11 +17,11 @@ class Genie:
         self.cfg = GenieConfig()
         self.project_cfg = None
         self.current_inversion_cfg = None
-        self.method = GenieMethod.ERT
+        self.method = GenieMethod.ST
 
     def load_cfg(self):
         try:
-            cfg = config_file.get_config_file("genie_ert", cls=GenieConfig, extension="conf")
+            cfg = config_file.get_config_file("genie_st", cls=GenieConfig, extension="conf")
         except Exception:
             cfg = None
 
@@ -33,7 +33,7 @@ class Genie:
         self.cfg.current_project_dir = ""
 
     def save_cfg(self):
-        config_file.save_config_file("genie_ert", self.cfg, extension="conf")
+        config_file.save_config_file("genie_st", self.cfg, extension="conf")
 
 
 if __name__ == '__main__':

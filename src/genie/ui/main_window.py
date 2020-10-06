@@ -1,7 +1,8 @@
 from .menus.main_menu_bar import MainMenuBar
 from .tab_widget import TabWidget
+from genie.core.global_const import GenieMethod
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 
 import os
 
@@ -10,7 +11,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, genie):
         super().__init__()
 
-        self.setWindowTitle("Genie")
+        if genie.method == GenieMethod.ERT:
+            self.app_name = "Genie ERT"
+        elif genie.method == GenieMethod.ST:
+            self.app_name = "Genie ST"
+        else:
+            self.app_name = ""
+
+        self.setWindowTitle(self.app_name)
 
         self.resize(1200, 800)
 
@@ -39,11 +47,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if project_path:
             if name:
-                self.setWindowTitle("{} - {} - Genie".format(project_text, name))
+                self.setWindowTitle("{} - {} - {}".format(project_text, name, self.app_name))
             else:
-                self.setWindowTitle("{} - Genie".format(project_text, name))
+                self.setWindowTitle("{} - {}".format(project_text, name, self.app_name))
         else:
-            self.setWindowTitle("Genie")
+            self.setWindowTitle(self.app_name)
 
     def closeEvent(self, event):
         self.tab_wiget.inv_prep._handle_save_project_action()

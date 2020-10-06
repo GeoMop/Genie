@@ -1,6 +1,7 @@
 from xlsreader import json_data
 from .data_types import MeshCutToolParam, InversionParam
 from xlsreader.xls_parser import XlsMeasurementGroup
+from genie.core.global_const import GenieMethod
 
 from typing import List
 import attr
@@ -15,8 +16,11 @@ class InversionConfig:
 
 @json_data.jsondata
 class ProjectConfig:
-    version: str = "0.2.0-a"
+    version: str = "0.3.0-a"
 
+    method: GenieMethod = GenieMethod.ERT
+
+    # todo: dat do vlastniho souboru
     xls_measurement_groups: List[XlsMeasurementGroup] = attr.ib(factory=list)
 
     # todo: udelat strukturu

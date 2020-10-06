@@ -1,3 +1,5 @@
+from genie.core.global_const import GenieMethod
+
 from PyQt5 import QtWidgets, QtCore
 
 
@@ -18,7 +20,7 @@ class MainMenuBar(QtWidgets.QMenuBar):
         super().__init__(parent)
 
         # menus
-        self.file = FileMenu(self)
+        self.file = FileMenu(genie, self)
         self.inversions = InversionsMenu(genie, self)
 
         # add menus to main menu
@@ -27,7 +29,7 @@ class MainMenuBar(QtWidgets.QMenuBar):
 
 
 class FileMenu(QtWidgets.QMenu):
-    def __init__(self, parent=None):
+    def __init__(self, genie, parent=None):
         super().__init__(parent)
         self.setTitle("File")
 
@@ -46,7 +48,8 @@ class FileMenu(QtWidgets.QMenu):
         #self.addAction(self.actionSaveProject)
         self.addAction(self.actionCloseProject)
         self.addSeparator()
-        self.addAction(self.actionImportExcel)
+        if genie.method == GenieMethod.ERT:
+            self.addAction(self.actionImportExcel)
         self.addAction(self.actionImportPointCloud)
         #self.addSeparator()
         #self.addAction(self.actionExit)

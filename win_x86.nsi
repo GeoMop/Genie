@@ -275,10 +275,17 @@ Section "-Batch files" SecBatchFiles
     FileClose $0
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +6
-    FileOpen $0 "genie.bat" w
+    FileOpen $0 "genie_ert.bat" w
     FileWrite $0 "@echo off$\r$\n"
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
     FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie_ert.py" %*$\r$\n'
+    FileClose $0
+
+  IfFileExists "$INSTDIR\genie\genie_st.py" 0 +6
+    FileOpen $0 "genie_st.bat" w
+    FileWrite $0 "@echo off$\r$\n"
+    FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
+    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie_st.py" %*$\r$\n'
     FileClose $0
 
   FileOpen $0 "pythonw.bat" w
@@ -308,7 +315,11 @@ Section "Start Menu shortcuts" SecStartShortcuts
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortcut "$SMPROGRAMS\Genie\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+    CreateShortcut "$SMPROGRAMS\Genie\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+
+  IfFileExists "$INSTDIR\genie\genie_st.py" 0 +3
+    SetOutPath $INSTDIR\genie
+    CreateShortcut "$SMPROGRAMS\Genie\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"'
 
 SectionEnd
 
@@ -321,7 +332,11 @@ Section "Desktop icons" SecDesktopIcons
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortCut "$DESKTOP\Genie.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+    CreateShortCut "$DESKTOP\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+
+  IfFileExists "$INSTDIR\genie\genie_st.py" 0 +3
+    SetOutPath $INSTDIR\genie
+    CreateShortCut "$DESKTOP\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"'
 
 SectionEnd
 
@@ -397,7 +412,8 @@ Section "Uninstall"
 
   # Delete desktop icons.
   Delete "$DESKTOP\XLSReader.lnk"
-  Delete "$DESKTOP\Genie.lnk"
+  Delete "$DESKTOP\GenieERT.lnk"
+  Delete "$DESKTOP\GenieST.lnk"
 
   # Remove start menu shortcuts.
   RMDir /r "$SMPROGRAMS\Genie"
