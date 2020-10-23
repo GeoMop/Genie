@@ -8,10 +8,22 @@ import attr
 
 
 @json_data.jsondata
+class FirstArrival:
+    file: str = ""
+    channel: int = 0
+    time: float = 0.0
+    use: bool = True
+
+
+@json_data.jsondata
 class InversionConfig:
     mesh_cut_tool_param: MeshCutToolParam = attr.ib(factory=MeshCutToolParam)
     checked_measurements: List[str] = attr.ib(factory=list)
     inversion_param: InversionParam = attr.ib(factory=InversionParam)
+
+    # st extension
+    method: GenieMethod = GenieMethod.ERT
+    first_arrivals: List[FirstArrival] = attr.ib(factory=list)
 
 
 @json_data.jsondata

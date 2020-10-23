@@ -15,7 +15,7 @@ from ..dialogs.edit_inversions_dialog import EditInversionsDialog
 #from run_inv import RunInvDlg
 #from ui.dialogs.gen_mesh_dialog import GenerateMeshDlg
 from genie.core.global_const import GENIE_PROJECT_FILE_NAME, GenieMethod
-from genie.core.config import ProjectConfig, InversionConfig
+from genie.core.config import ProjectConfig, InversionConfig, FirstArrival
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -24,6 +24,9 @@ from ..panels.measurement_view import MeasurementGroupView
 import os
 import json
 import shutil
+
+import numpy as np
+from obspy.signal.trigger import recursive_sta_lta
 
 
 class InversionPreparation(QtWidgets.QMainWindow):
@@ -92,7 +95,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
     def _init_docks(self):
         """Initializes docks"""
-        self.edit_electrodes = QtWidgets.QDockWidget("Electrodes", self)
+        if self.genie.method == GenieMethod.ERT:
+            label = "Electrodes"
+        else:
+            label = "Sensors"
+        self.edit_electrodes = QtWidgets.QDockWidget(label, self)
         self.edit_electrodes.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.edit_electrodes)
 
@@ -143,8 +150,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self._add_inversion("inv_1")
             self.genie.project_cfg.curren_inversion_name = self.genie.project_cfg.inversions[0]
 
-            if self.genie.method == GenieMethod.ERT:
-                self._handle_import_excel_action()
+            self._handle_import_excel_action()
             self._handle_import_point_cloud()
 
             self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
@@ -207,10 +213,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._show_current_inversion()
 
     def _show_3d(self):
-        file_name = os.path.join(self.genie.cfg.current_project_dir, "inversions",
-                                 self.genie.project_cfg.curren_inversion_name, "resistivity.vtk")
-        if os.path.isfile(file_name):
-            self.tab_wiget.show_3d(file_name)
+        if self.genie.method == GenieMethod.ERT:
+            file = "resistivity.vtk"
+        else:
+            file = "velocity.vtk"
+        path = os.path.join(self.genie.cfg.current_project_dir, "inversions",
+                            self.genie.project_cfg.curren_inversion_name, file)
+        if False:#os.path.isfile(path):
+            self.tab_wiget.show_3d(path)
         else:
             self.tab_wiget.hide_3d()
 
@@ -271,6 +281,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
+
+        self.genie.current_inversion_cfg.method = self.genie.method
+        if self.genie.method == GenieMethod.ST:
+            self._init_first_arrivals()
 
         #self._save_current_inversion()
         self._handle_save_project_action()
@@ -360,7 +374,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
     #     self.genie.current_inversion_cfg.mesh_cut_tool_param = self.diagram_view._scene.mesh_cut_tool.to_mesh_cut_tool_param()
 
     def _handle_import_excel_action(self):
-        dlg = XlsReaderDialog(self, enable_import=True)
+        dlg = XlsReaderDialog(self, enable_import=True, method=self.genie.method)
         if dlg.exec():
             mgs = dlg.measurements_groups
             dir = dlg.directory
@@ -381,10 +395,16 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 if not mg.has_error:
                     for m in mg.measurements:
                         if not m.has_error:
-                            os.makedirs(os.path.join(meas_dir, m.number), exist_ok=True)
-                            shutil.copyfile(os.path.join(dir, m.number, m.file), os.path.join(meas_dir, m.number, m.file))
+                            if self.genie.method == GenieMethod.ERT:
+                                os.makedirs(os.path.join(meas_dir, m.number), exist_ok=True)
+                                shutil.copyfile(os.path.join(dir, m.number, m.file), os.path.join(meas_dir, m.number, m.file))
+                            else:
+                                shutil.copyfile(os.path.join(dir, m.file), os.path.join(meas_dir, m.file))
 
             self._update_el_meas()
+
+            if self.genie.method == GenieMethod.ST:
+                self._init_first_arrivals()
 
             self._handle_save_project_action()
 
@@ -403,8 +423,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 electrode_groups.append(eg)
             return eg
 
-        def add_electrode(group, id, offset, x, y, z):
-            group.electrodes.append(Electrode(id=id, offset=offset, x=x, y=y, z=z))
+        def add_electrode(group, id, offset, x, y, z, is_receiver):
+            group.electrodes.append(Electrode(id=id, offset=offset, x=x, y=y, z=z, is_receiver=is_receiver))
 
         cfg = self.genie.project_cfg
         for mg in cfg.xls_measurement_groups:
@@ -412,12 +432,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 meas_map = {}
                 for e in mg.electrodes:
                     eg = add_electrode_group(self._electrode_groups, e.gallery, e.wall, e.height)
-                    add_electrode(eg, e.id, 0, -abs(e.x), -abs(e.y), e.z)
+                    add_electrode(eg, e.id, 0, -abs(e.x), -abs(e.y), e.z, e.is_receiver)
 
                     meas_map[e.meas_id] = e.id
                 for m in mg.measurements:
                     if not m.has_error:
-                        meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map)
+                        meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map,
+                                           source_id=m.source_id, receiver_start=m.receiver_start,
+                                           receiver_stop=m.receiver_stop, channel_start=m.channel_start)
                         meas.load_data(self.genie)
                         self._measurements.append(meas)
 
@@ -427,6 +449,15 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.view.setModel(self._measurement_model)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
+
+    def _init_first_arrivals(self):
+        self.genie.current_inversion_cfg.first_arrivals = []
+        for meas in self._measurements:
+            if meas.data is not None:
+                for i, trace in enumerate(meas.data["data"]):
+                    cft = recursive_sta_lta(trace.data, 40, 60)
+                    t = np.argmax(cft) / trace.stats.sampling_rate
+                    self.genie.current_inversion_cfg.first_arrivals.append(FirstArrival(file=meas.file, channel=i, time=t))
 
     def _handle_import_point_cloud(self):
         prj_dir = self.genie.cfg.current_project_dir
@@ -466,9 +497,15 @@ class InversionPreparation(QtWidgets.QMainWindow):
         index = self.measurement_view.view.currentIndex()
         if index.row() >= 0:
             measurement = self._measurement_model._measurements[index.row()]
-            from ..dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
-            dlg = AnalyseMeasurementDlg(self._electrode_groups, measurement, self.genie, self)
-            dlg.exec()
+            if self.genie.method == GenieMethod.ERT:
+                from ..dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
+                dlg = AnalyseMeasurementDlg(self._electrode_groups, measurement, self.genie, self)
+                dlg.exec()
+            else:
+                from ..dialogs.first_arrival_dialog import FirstArrivalDlg
+                dlg = FirstArrivalDlg(measurement, self.genie, self)
+                dlg.exec()
+                self._save_current_inversion()
         else:
             QtWidgets.QMessageBox.information(
                 self, 'Measurement not selected',

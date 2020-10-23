@@ -2,8 +2,9 @@
 Dialog for running inversion.
 """
 
-from genie.core import ert_prepare
+from genie.core import ert_prepare, st_prepare
 from genie.core.data_types import InversionParam
+from genie.core.global_const import GenieMethod
 
 import os
 import sys
@@ -372,10 +373,22 @@ class RunInvDlg(QtWidgets.QDialog):
         # with open(file, 'w') as fd:
         #     json.dump(conf, fd, indent=4, sort_keys=True)
 
-        data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements)
-        data.save(os.path.join(self._work_dir, "input.dat"))
-        meas_info_file = os.path.join(self._work_dir, "measurements_info.json")
-        with open(meas_info_file, "w") as fd:
-            json.dump(meas_info.serialize(), fd, indent=4, sort_keys=True)
+        if self.genie.method == GenieMethod.ERT:
+            data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements)
+            data.save(os.path.join(self._work_dir, "input.dat"))
+            meas_info_file = os.path.join(self._work_dir, "measurements_info.json")
+            with open(meas_info_file, "w") as fd:
+                json.dump(meas_info.serialize(), fd, indent=4, sort_keys=True)
+        else:
+            data = st_prepare.prepare(self._electrode_groups, self._measurements, self.genie.current_inversion_cfg.first_arrivals)
+            if data.size() > 0:
+                data.save(os.path.join(self._work_dir, "input.dat"))
+            else:
+                msg_box = QtWidgets.QMessageBox(self)
+                msg_box.setWindowTitle("Error")
+                msg_box.setIcon(QtWidgets.QMessageBox.Critical)
+                msg_box.setText("Failed to start inversion. No measurement with first arrival checked to use.")
+                msg_box.exec()
+                return False
 
         return True

@@ -1,4 +1,5 @@
-from xlsreader.xls_parser import parse
+from xlsreader.xls_parser import parse_ert, parse_st
+from genie.core.global_const import GenieMethod
 
 from PyQt5 import QtWidgets, QtGui
 
@@ -6,12 +7,13 @@ import os
 
 
 class XlsReaderDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None, enable_import=False):
+    def __init__(self, parent=None, enable_import=False, method=GenieMethod.ERT):
         super().__init__(parent)
         self._log_text = ""
         self.directory = ""
         self.measurements_groups = []
         self._enable_import = enable_import
+        self._method = method
 
         self.setWindowTitle("XLSReader")
 
@@ -59,7 +61,10 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log.clear()
         self.directory = os.path.dirname(xls_file)
 
-        self.measurements_groups, log = parse(xls_file)
+        if self._method == GenieMethod.ERT:
+            self.measurements_groups, log = parse_ert(xls_file)
+        else:
+            self.measurements_groups, log = parse_st(xls_file)
         if log.items:
             text = log.to_string()
         else:

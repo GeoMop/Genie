@@ -11,6 +11,7 @@ import operator
 import json
 from xlsreader import json_data
 import pandas as pd
+import obspy
 
 
 _WHITE_SPACE_PATTERN = re.compile(r"\s")
@@ -28,6 +29,9 @@ class XlsElectrode:
     z: float = 0.0
     xls_row: int = 0
 
+    # st extension
+    is_receiver: bool = False
+
 
 @json_data.jsondata
 class XlsMeasurement:
@@ -38,6 +42,12 @@ class XlsMeasurement:
     xls_row: int = 0
     xls_col: int = 0
     has_error: bool = False
+
+    # st extension
+    source_id: int = 0
+    receiver_start: int = 0
+    receiver_stop: int = 0
+    channel_start: int = 0
 
 
 @json_data.jsondata
@@ -111,7 +121,7 @@ def _get_el_set_file(file):
     return s
 
 
-def parse(xls_file):
+def parse_ert(xls_file):
     xls_dir = os.path.dirname(xls_file)
 
     log = XlsLog()
@@ -319,6 +329,205 @@ def parse(xls_file):
     return measurements_groups, log
 
 
+def parse_st(xls_file):
+    xls_dir = os.path.dirname(xls_file)
+
+    log = XlsLog()
+
+    with pd.ExcelFile(xls_file) as xls:
+        df1 = pd.read_excel(xls, sheet_name=0, skiprows=0, header=None, dtype=object)
+        df2 = pd.read_excel(xls, sheet_name=1, skiprows=0, header=None, dtype=object)
+
+    # read sensors table
+    df1[1] = df1[1].fillna(method='ffill')
+    df1[3] = df1[3].fillna(method='ffill')
+
+    row_num = df1.shape[0]
+    col_num = df1.shape[1]
+
+    measurements_groups = [XlsMeasurementGroup(xls_row=1)]
+
+    for i in range(1, row_num):
+        if type(df1[0][i]) is not int:
+            continue
+
+        measurements_groups[0].electrodes.append(XlsElectrode(id=df1[0][i], gallery=df1[3][i],
+                                                              x=df1[4][i], y=df1[5][i], z=df1[6][i], xls_row=i,
+                                                              is_receiver=df1[1][i]))
+
+    # read measurement table
+    row_num = df2.shape[0]
+    col_num = df2.shape[1]
+
+    num = 1
+    for i in range(1, row_num):
+        if _empty_cell(df2[0][i]):
+            continue
+        number = str(num)
+        measurements_groups[0].measurements.append(XlsMeasurement(number=number, file=df2[0][i], xls_row=i, xls_col=0,
+                                                                  source_id=df2[1][i], receiver_start=df2[2][i],
+                                                                  receiver_stop=df2[3][i], channel_start=df2[4][i]))
+        num += 1
+
+    # convert types, check not empty, valid
+    for mg in measurements_groups:
+        for e in mg.electrodes:
+            if _empty_cell(e.is_receiver):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1, "Type is empty."))
+                mg.has_error = True
+                e.is_receiver = False
+            else:
+                s = str(e.is_receiver).strip().lower()
+                if not s in ["receiver", "source"]:
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1, 'Type must be "receiver" or "source".'))
+                    mg.has_error = True
+                    e.is_receiver = False
+                else:
+                    e.is_receiver = s == "receiver"
+
+            if _empty_cell(e.gallery):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3, "Gallery is empty."))
+                mg.has_error = True
+                e.gallery = ""
+            else:
+                e.gallery = str(e.gallery).strip()
+
+            if _empty_cell(e.x):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4, "X is empty."))
+                mg.has_error = True
+            elif not (type(e.x) is float) and not (type(e.x) is int):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4,
+                                        'X type must be float or int. Found "{}".'.format(type(e.x).__name__)))
+                mg.has_error = True
+            else:
+                e.x = float(e.x)
+
+            if _empty_cell(e.y):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5, "Y is empty."))
+                mg.has_error = True
+            elif not (type(e.y) is float) and not (type(e.y) is int):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5,
+                                        'Y type must be float or int. Found "{}".'.format(type(e.y).__name__)))
+                mg.has_error = True
+            else:
+                e.y = float(e.y)
+
+            if _empty_cell(e.z):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 6, "Z is empty."))
+                mg.has_error = True
+            elif not (type(e.z) is float) and not (type(e.z) is int):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 6,
+                                        'Z type must be float or int. Found "{}".'.format(type(e.z).__name__)))
+                mg.has_error = True
+            else:
+                e.z = float(e.z)
+
+        for m in mg.measurements:
+            if _empty_cell(m.file):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 0, "File name is empty."))
+                m.has_error = True
+                m.file = ""
+            else:
+                m.file = str(m.file).strip()
+                if not m.file:
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 0, "File name is empty."))
+                    m.has_error = True
+                elif _white_space_diacritics(m.file):
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 0,
+                                            'File name must not contain white space nor diacritics. Found "{}".'.format(
+                                                m.file)))
+                    m.has_error = True
+
+            if _empty_cell(m.source_id):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Source id is empty."))
+                m.has_error = True
+                m.source_id = 0
+            elif type(m.source_id) is not int:
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Source id must be int."))
+                m.has_error = True
+                m.source_id = 0
+
+            if _empty_cell(m.receiver_start):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver start id is empty."))
+                m.has_error = True
+                m.receiver_start = 0
+            elif type(m.receiver_start) is not int:
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver start id must be int."))
+                m.has_error = True
+                m.receiver_start = 0
+
+            if _empty_cell(m.receiver_stop):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver stop id is empty."))
+                m.has_error = True
+                m.receiver_stop = 0
+            elif type(m.receiver_stop) is not int:
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver stop id must be int."))
+                m.has_error = True
+                m.receiver_stop = 0
+
+            if _empty_cell(m.channel_start):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Channel start id is empty."))
+                m.has_error = True
+                m.receiver_start = 0
+            elif type(m.channel_start) is not int:
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Channel start id must be int."))
+                m.has_error = True
+                m.receiver_start = 0
+
+    # check that no duplicate electrode
+    ed = {}
+    for mg in measurements_groups:
+        for e in mg.electrodes:
+            if e.id in ed:
+                e_ed = ed[(e.id, e.is_receiver)]
+                if e.is_receiver != e_ed.is_receiver:
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 0,
+                                            'Duplicated sensors id on row {}.'.format(e_ed.xls_row)))
+                    mg.has_error = True
+            else:
+                ed[(e.id, e.is_receiver)] = e
+
+    # measurement files exist and have enough channels
+    for mg in measurements_groups:
+        for m in mg.measurements:
+            if not m.file:
+                continue
+            f = os.path.join(xls_dir, m.file)
+            if not os.path.isfile(f):
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 0, 'File "{}" does not exist.'.format(f)))
+                m.has_error = True
+            else:
+                num_channels = len(obspy.read(f))
+                req_channels = abs(m.receiver_stop - m.receiver_start) + m.channel_start
+                if req_channels > num_channels:
+                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2,
+                                            'Measurement "{}" requests {} channels but file has only {} channels.'.format(
+                                                m.number, req_channels, num_channels)))
+                    m.has_error = True
+
+    # sensors id used in measurement exist
+    for mg in measurements_groups:
+        for m in mg.measurements:
+            if (m.source_id, False) not in ed:
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, 'Source sensor "{}" does not exist in sensors table.'.format(m.source_id)))
+                m.has_error = True
+            if m.receiver_stop >= m.receiver_start:
+                for i in range(m.receiver_start, m.receiver_stop + 1):
+                    if (i, True) not in ed:
+                        log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, 'Receiver sensor "{}" does not exist in sensors table.'.format(i)))
+                        m.has_error = True
+            else:
+                for i in range(m.receiver_stop, m.receiver_start + 1):
+                    if (i, True) not in ed:
+                        log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, 'Receiver sensor "{}" does not exist in sensors table.'.format(i)))
+                        m.has_error = True
+
+    # with open("out.json", "w") as fd:
+    #     json.dump([mg.serialize() for mg in measurements_groups], fd, indent=4, sort_keys=True)
+
+    return measurements_groups, log
+
+
 if __name__ == '__main__':
-    measurements_groups, log = parse(sys.argv[1])
+    measurements_groups, log = parse_ert(sys.argv[1])
     print(log.to_string())

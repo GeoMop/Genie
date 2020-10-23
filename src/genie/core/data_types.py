@@ -1,9 +1,11 @@
 from xlsreader import ares_parser
+from genie.core.global_const import GenieMethod
 
 import os
 from typing import List, Dict, Optional
 import attr
 from xlsreader import json_data
+import obspy
 
 
 @json_data.jsondata
@@ -13,6 +15,9 @@ class Electrode:
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
+
+    # st extension
+    is_receiver: bool = False
 
 
 @json_data.jsondata
@@ -33,29 +38,42 @@ class Measurement:
     el_stop: int = 0
     meas_map: Dict[str, int] = attr.ib(factory=dict)
 
+    # st extension
+    source_id: int = 0
+    receiver_start: int = 0
+    receiver_stop: int = 0
+    channel_start: int = 0
+
     def __attrs_post_init__(self):
         self.data = None
 
     def load_data(self, genie):
         """Loads data file."""
         prj_dir = genie.cfg.current_project_dir
-        file = os.path.join(prj_dir, "measurements", self.number, self.file)
-        if file == "" or not os.path.isfile(file):
-            return
-        res = ares_parser.parse(file)
+        if genie.method == GenieMethod.ERT:
+            file = os.path.join(prj_dir, "measurements", self.number, self.file)
+            if file == "" or not os.path.isfile(file):
+                return
+            res = ares_parser.parse(file)
 
-        # remove wrong readings
-        #res["data"] = res["data"].drop(res["data"][res["data"]['V'] < 0].index)
-        # zakomentovano kvuli analyse_measurement_dialog.py
+            # remove wrong readings
+            #res["data"] = res["data"].drop(res["data"][res["data"]['V'] < 0].index)
+            # zakomentovano kvuli analyse_measurement_dialog.py
 
-        # assume that electrode indexes are integers
-        # res["data"]['ca'] = res["data"]['ca'].apply(lambda x: int(x))
-        # res["data"]['cb'] = res["data"]['cb'].apply(lambda x: int(x))
-        # res["data"]['pa'] = res["data"]['pa'].apply(lambda x: int(x))
-        # res["data"]['pb'] = res["data"]['pb'].apply(lambda x: int(x))
+            # assume that electrode indexes are integers
+            # res["data"]['ca'] = res["data"]['ca'].apply(lambda x: int(x))
+            # res["data"]['cb'] = res["data"]['cb'].apply(lambda x: int(x))
+            # res["data"]['pa'] = res["data"]['pa'].apply(lambda x: int(x))
+            # res["data"]['pb'] = res["data"]['pb'].apply(lambda x: int(x))
 
-        if not res["errors"]:
-            self.data = res
+            if not res["errors"]:
+                self.data = res
+        else:
+            file = os.path.join(prj_dir, "measurements", self.file)
+            if file == "" or not os.path.isfile(file):
+                return
+            st = obspy.read(file)
+            self.data = {"data": st}
 
 
 @json_data.jsondata

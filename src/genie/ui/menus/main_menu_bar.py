@@ -48,8 +48,7 @@ class FileMenu(QtWidgets.QMenu):
         #self.addAction(self.actionSaveProject)
         self.addAction(self.actionCloseProject)
         self.addSeparator()
-        if genie.method == GenieMethod.ERT:
-            self.addAction(self.actionImportExcel)
+        self.addAction(self.actionImportExcel)
         self.addAction(self.actionImportPointCloud)
         #self.addSeparator()
         #self.addAction(self.actionExit)

@@ -46,7 +46,7 @@ def main(max_dist=1.0):
     #     for el in snapped_electrodes:
     #         fd.write("{} {} {}\n".format(el[0], el[1], el[2]))
 
-    data = pg.DataContainerERT("input.dat", removeInvalid=False)
+    data = pg.DataContainer("input.dat", removeInvalid=False)
     for i in range(len(data.sensorPositions())):
         pos = data.sensorPosition(i)
         pos = np.array([pos[0], pos[1], pos[2]])

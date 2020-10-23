@@ -8,6 +8,7 @@ import sys
 import os
 import subprocess
 import time
+import math
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -16,11 +17,13 @@ from genie.core.config import InversionConfig
 from genie.core import mesh_gen2, mesh_gen3
 from genie.core import cut_point_cloud
 from genie.core.data_types import MeasurementsInfo
+from genie.core.global_const import GenieMethod
 from bgem.gmsh.gmsh_io import GmshIO
 
 import numpy as np
 #import pybert as pb
 import pygimli as pg
+from pygimli.physics.traveltime import Refraction
 
 
 def main():
@@ -29,6 +32,14 @@ def main():
     with open(conf_file, "r") as fd:
         conf = json.load(fd)
     inversion_conf = InversionConfig.deserialize(conf)
+
+    if inversion_conf.method == GenieMethod.ERT:
+        inv_ert(inversion_conf)
+    else:
+        inv_st(inversion_conf)
+
+
+def inv_ert(inversion_conf):
     inv_par = inversion_conf.inversion_param
     cut_par = inversion_conf.mesh_cut_tool_param
 
@@ -240,6 +251,121 @@ def main():
                 m_on_m = "         not used"
 
             fd.write("{:11} {:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:12.2f} {:6.4f} {}\n".format(item.measurement_number, item.ca, item.cb, item.pa, item.pb, item.I, item.V, item.AppRes, item.std, m_on_m))
+
+    print()
+    print_headline("Saving p3d")
+    t = time.time()
+    save_p3d(paraDomain, model.array(), cut_par, 1.0, "resistivity")
+    print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
+
+    print()
+    print("All done.")
+
+
+def inv_st(inversion_conf):
+    inv_par = inversion_conf.inversion_param
+    cut_par = inversion_conf.mesh_cut_tool_param
+
+    remove_old_files()
+
+    if not prepare(cut_par):
+        return
+    #return
+
+    # snap electrodes
+    print()
+    print_headline("Snapping electrodes")
+    snap_electrodes.main(max_dist=2.0)
+
+    print()
+    print_headline("Inversion")
+
+    # load data file
+    data = pg.DataContainer("input_snapped.dat", sensorTokens='s g', removeInvalid=False)
+
+    # remove invalid data
+    oldsize = data.size()
+    data.removeInvalid()
+    newsize = data.size()
+    if newsize < oldsize:
+        print('Removed ' + str(oldsize - newsize) + ' values.')
+
+    # create FOP
+    fop = pg.TravelTimeDijkstraModelling(verbose=inv_par.verbose)
+    fop.setThreadCount(psutil.cpu_count(logical=False))
+    fop.setData(data)
+
+    # create Inv
+    inv = pg.RInversion(verbose=inv_par.verbose, dosave=False)
+    # variables tD, tM are needed to prevent destruct objects
+    tM = pg.RTransLogLU()
+    tD = pg.RTrans()
+    inv.setTransData(tD)
+    inv.setTransModel(tM)
+    inv.setForwardOperator(fop)
+
+    # mesh
+    mesh_file = "inv_mesh.msh"
+    if mesh_file == "":
+        depth = inv_par.depth
+        if depth is None:
+            depth = pg.DCParaDepth(data)
+
+        poly = pg.meshtools.createParaMeshPLC(
+            data.sensorPositions(), paraDepth=depth, paraDX=inv_par.paraDX,
+            paraMaxCellSize=inv_par.maxCellArea, paraBoundary=2, boundary=2)
+
+        if inv_par.verbose:
+            print("creating mesh...")
+        mesh = pg.meshtools.createMesh(poly, quality=inv_par.quality, smooth=(1, 10))
+    else:
+        mesh = pg.Mesh(pg.load(mesh_file))
+
+    mesh.createNeighbourInfos()
+
+    if inv_par.verbose:
+        print(mesh)
+
+    sys.stdout.flush()  # flush before multithreading
+    fop.setMesh(mesh)
+    fop.regionManager().setConstraintType(1)
+
+    if mesh_file == "":
+        fop.createRefinedForwardMesh(True, False)
+    else:
+        fop.createRefinedForwardMesh(inv_par.refineMesh, inv_par.refineP2)
+
+    paraDomain = fop.regionManager().paraDomain()
+    inv.setForwardOperator(fop)  # necessary?
+
+    # inversion parameters
+    inv.setData(data('t'))
+    error = Refraction.estimateError(data, absoluteError=0.001, relativeError=0.001)
+    inv.setAbsoluteError(error)
+    #inv.setRelativeError(pg.RVector(data.size(), 0.03))
+    fop.regionManager().setZWeight(inv_par.zWeight)
+    inv.setLambda(inv_par.lam)
+    inv.setMaxIter(inv_par.maxIter)
+    inv.setRobustData(inv_par.robustData)
+    inv.setBlockyModel(inv_par.blockyModel)
+    inv.setRecalcJacobian(inv_par.recalcJacobian)
+
+    startModel = fop.createDefaultStartModel()
+    inv.setModel(startModel)
+
+    # Run the inversion
+    sys.stdout.flush()  # flush before multithreading
+    model = inv.run()
+    velocity = 1.0 / model(paraDomain.cellMarkers())
+    np.savetxt('velocity.vector', velocity)
+    paraDomain.addExportData('Velocity', velocity)
+    paraDomain.exportVTK('velocity')
+
+    print()
+    print_headline("Saving p3d")
+    t = time.time()
+    save_p3d(paraDomain, 1.0 / model.array(), cut_par, 1.0, "velocity")
+    print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
 
     print()
     print("All done.")

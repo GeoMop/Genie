@@ -1,5 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+from genie.core.global_const import GenieMethod
+
 
 class MeasurementModel(QtCore.QAbstractItemModel):
     def __init__(self, measurements, parent=None):
@@ -96,7 +98,11 @@ class MeasurementGroupView(QtWidgets.QWidget):
         self.view = QtWidgets.QTreeView(self)
         layout.addWidget(self.view)
 
-        self.analyse_measurementButton = QtWidgets.QPushButton("Analyse measurement")
+        if main_window.genie.method == GenieMethod.ERT:
+            label = "Analyse measurement"
+        else:
+            label = "Edit first arrivals"
+        self.analyse_measurementButton = QtWidgets.QPushButton(label)
         self.analyse_measurementButton.clicked.connect(main_window._handle_analyse_measurementButton)
         layout.addWidget(self.analyse_measurementButton)
 
