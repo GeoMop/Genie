@@ -6,6 +6,7 @@ import numpy as np
 import time
 
 from genie.core.data_types import MeshFrom
+from genie.core.global_const import GenieMethod
 
 
 def main(inv_par, project_conf, max_dist=1.0):
@@ -67,7 +68,11 @@ def main(inv_par, project_conf, max_dist=1.0):
     #     for el in snapped_electrodes:
     #         fd.write("{} {} {}\n".format(el[0], el[1], el[2]))
 
-    data = pg.DataContainer("input.dat", removeInvalid=False)
+    if project_conf.method == GenieMethod.ERT:
+        data = pg.DataContainerERT("input.dat", removeInvalid=False)
+    else:
+        data = pg.DataContainer("input.dat", sensorTokens='s g', removeInvalid=False)
+
     for i in range(len(data.sensorPositions())):
         pos = data.sensorPosition(i)
         pos = np.array([pos[0], pos[1], pos[2]])

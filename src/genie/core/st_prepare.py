@@ -10,9 +10,14 @@ def prepare(electrode_groups, measurements, first_arrivals):
     :return:
     """
     electrodes = []
+    sensor_ids = []
     s = pd.Series()
     g = pd.Series()
     t = pd.Series()
+
+    data = pg.DataContainer()
+    data.registerSensorIndex("s")
+    data.registerSensorIndex("g")
 
     for ms in measurements:
         if ms.data is None:
@@ -52,7 +57,9 @@ def prepare(electrode_groups, measurements, first_arrivals):
                     print("chyba")
                 ind = len(electrodes)
                 electrodes.append(e)
-            meas_map_sensor[meas_id] = ind
+                s_id = data.createSensor([e.x, e.y, e.z])
+                sensor_ids.append(s_id)
+            meas_map_sensor[meas_id] = sensor_ids[ind]
 
         # source
         e_id = ms.source_id
@@ -68,17 +75,14 @@ def prepare(electrode_groups, measurements, first_arrivals):
                 print("chyba")
             ind = len(electrodes)
             electrodes.append(e)
-        meas_map_sensor[meas_id] = ind
+            s_id = data.createSensor([e.x, e.y, e.z])
+            sensor_ids.append(s_id)
+        meas_map_sensor[meas_id] = sensor_ids[ind]
 
         s = s.append(pd.Series([meas_map_sensor[len(receivers_used)]] * len(receivers_used)), ignore_index=True)
         g = g.append(pd.Series([meas_map_sensor[v] for v in range(len(receivers_used))]), ignore_index=True)
         t = t.append(pd.Series(fa_list), ignore_index=True)
 
-    data = pg.DataContainer()
-    data.registerSensorIndex("s")
-    data.registerSensorIndex("g")
-    for e in electrodes:
-        data.createSensor([e.x, e.y, e.z])
     l = len(s)
     data.resize(l)
     if l > 0:

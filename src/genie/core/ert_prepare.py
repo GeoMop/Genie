@@ -135,6 +135,7 @@ def prepare(electrode_groups, measurements):
     """
     #el_offset = 0
     electrodes = []
+    sensor_ids = []
     a = pd.Series()
     b = pd.Series()
     m = pd.Series()
@@ -145,6 +146,8 @@ def prepare(electrode_groups, measurements):
     rhoa = pd.Series()
 
     meas_info = MeasurementsInfo()
+
+    data = pg.DataContainerERT()
 
     for ms in measurements:
         if ms.data is None:
@@ -168,7 +171,9 @@ def prepare(electrode_groups, measurements):
                     print("chyba")
                 ind = len(electrodes)
                 electrodes.append(e)
-            meas_map_sensor[meas_id] = ind
+                s_id = data.createSensor([e.x, e.y, e.z])
+                sensor_ids.append(s_id)
+            meas_map_sensor[meas_id] = sensor_ids[ind]
 
         a = a.append(pd.Series([meas_map_sensor[v] for v in d["ca"]]), ignore_index=True)
         b = b.append(pd.Series([meas_map_sensor[v] for v in d["cb"]]), ignore_index=True)
@@ -187,9 +192,6 @@ def prepare(electrode_groups, measurements):
                                                        I=d["I"][j], V=d["V"][j], AppRes=d["AppRes"][j], std=d["std"][j],
                                                        inv_ca=meas_map_sensor[d["ca"][j]], inv_cb=meas_map_sensor[d["cb"][j]], inv_pa=meas_map_sensor[d["pa"][j]], inv_pb=meas_map_sensor[d["pb"][j]]))
 
-    data = pg.DataContainerERT()
-    for e in electrodes:
-        data.createSensor([e.x, e.y, e.z])
     data.resize(len(a))
     data.set('a', a)
     data.set('b', b)

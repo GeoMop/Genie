@@ -193,7 +193,6 @@ class MapDialog(QtWidgets.QDialog):
         d = ex * my - ey * mx
         if d < 0:
             alpha *= -1
-        print(alpha)
         tr.rotateRadians(-alpha)
 
         tr.translate(-mp1x, -mp1y)
