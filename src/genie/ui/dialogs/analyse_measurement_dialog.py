@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import pygimli as pg
 import numpy as np
+import math
 
 
 class AnalyseMeasurementDlg(QtWidgets.QDialog):
@@ -78,8 +79,9 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
         self._analyse()
 
     def _analyse(self):
-        log = ""
+        #log = ""
         self._output_edit.clear()
+        self._output_edit.setTextColor(QtCore.Qt.black)
 
         if self._measurement.data is None:
             return
@@ -89,12 +91,15 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
 
         k = pg.geometricFactors(data)
 
-        log += "ca  cb  pa  pb  I[A]      V[V]     std    AppRes[Ohmm] AppResGimli[Ohmm] ratio\n"
-        log += "------------------------------------------------------------------------------\n"
-        print(len(d))
-        print(data.size())
+        self._output_edit.append("ca  cb  pa  pb  I[A]      V[V]     std    AppRes[Ohmm] AppResGimli[Ohmm] ratio")
+        self._output_edit.append("------------------------------------------------------------------------------")
         for i in range(data.size()):
-            log += "{:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:6.4f} {:12.2f} {:17.2f} {:5.2f}\n".format(d["ca"][i], d["cb"][i], d["pa"][i], d["pb"][i], d["I"][i], d["V"][i], d["std"][i], d["AppRes"][i], d["V"][i] / d["I"][i] * k[i], (d["V"][i] / d["I"][i] * k[i])/d["AppRes"][i])
+            AppResGimli = d["V"][i] / d["I"][i] * k[i]
+            if AppResGimli <= 1e-12 or math.isnan(AppResGimli):
+                self._output_edit.setTextColor(QtCore.Qt.red)
+            else:
+                self._output_edit.setTextColor(QtCore.Qt.black)
+            self._output_edit.append("{:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:6.4f} {:12.2f} {:17.2f} {:5.2f}".format(d["ca"][i], d["cb"][i], d["pa"][i], d["pb"][i], d["I"][i], d["V"][i], d["std"][i], d["AppRes"][i], AppResGimli, (d["V"][i] / d["I"][i] * k[i])/d["AppRes"][i]))
             # if "Electrode distance" in self._measurement.data["header"]:
             #     dis = float(self._measurement.data["header"]["Electrode distance"].split()[0])
             # def od(a, b):
@@ -106,8 +111,8 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
             # kk = 1.0 / (od('ca', 'pa') - od('pa', 'cb') - od('ca', 'pb') + od('pb', 'cb')) * 2 * np.pi
             # log += " {:6.2f}\n".format((d["V"][i] / d["I"][i] * kk)/d["AppRes"][i])
 
-        self._output_edit.moveCursor(QtGui.QTextCursor.End)
-        self._output_edit.insertPlainText(log)
+        #self._output_edit.moveCursor(QtGui.QTextCursor.End)
+        #self._output_edit.insertPlainText(log)
         self._output_edit.moveCursor(QtGui.QTextCursor.Start)
 
     def _set_status(self, status):

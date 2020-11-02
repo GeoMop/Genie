@@ -16,6 +16,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
 
         self.origin_x = 0.0
         self.origin_y = 0.0
+        self.origin_z = 0.0
 
         self.pixmap_x_min = 0.0
         self.pixmap_y_min = 0.0
@@ -44,13 +45,20 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         origin_layout.addWidget(QtWidgets.QLabel("Point cloud origin:"))
         origin_layout.addWidget(QtWidgets.QLabel("x:"))
         self._origin_x_edit = QtWidgets.QLineEdit()
+        self._origin_x_edit.setValidator(QtGui.QDoubleValidator())
         self._origin_x_edit.setText("-622000.0")
         origin_layout.addWidget(self._origin_x_edit)
         origin_layout.addWidget(QtWidgets.QLabel("y:"))
         self._origin_y_edit = QtWidgets.QLineEdit()
+        self._origin_y_edit.setValidator(QtGui.QDoubleValidator())
         self._origin_y_edit.setText("-1128000.0")
         origin_layout.addWidget(self._origin_y_edit)
-        #main_layout.addLayout(origin_layout)
+        origin_layout.addWidget(QtWidgets.QLabel("z:"))
+        self._origin_z_edit = QtWidgets.QLineEdit()
+        self._origin_z_edit.setValidator(QtGui.QDoubleValidator())
+        self._origin_z_edit.setText("0.0")
+        origin_layout.addWidget(self._origin_z_edit)
+        main_layout.addLayout(origin_layout)
 
         # button box
         read_button = QtWidgets.QPushButton("Read")
@@ -153,7 +161,8 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
             self._log.repaint()
 
         # save pixmap
-        pixmap.save(self._point_cloud_pixmap_file, "PNG")
+        tr_pixmap = pixmap.transformed(QtGui.QTransform.fromScale(1, -1))
+        tr_pixmap.save(self._point_cloud_pixmap_file, "PNG")
         self.pixmap_x_min = x_min
         self.pixmap_y_min = y_min
         self.pixmap_scale = max_min_pixmap_size
@@ -162,9 +171,6 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._log.moveCursor(QtGui.QTextCursor.End)
 
         self._log_text = self._log.toPlainText()
-
-        self.origin_x = float(self._origin_x_edit.text())
-        self.origin_y = float(self._origin_y_edit.text())
 
         if self._enable_import:
             self._import_button.setEnabled(True)
@@ -180,6 +186,10 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
                     fd.write(self._log_text)
 
     def _handle_import_action(self):
+        self.origin_x = float(self._origin_x_edit.text())
+        self.origin_y = float(self._origin_y_edit.text())
+        self.origin_z = float(self._origin_z_edit.text())
+
         self.accept()
 
     def _handle_browse_action(self):

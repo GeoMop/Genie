@@ -6,9 +6,13 @@ def cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=False):
 
     z_min, z_max = sorted([mc.z_min, mc.z_max])
 
-    base_point = np.array([mc.origin_x+622000.0, mc.origin_y+1128000.0, z_min])
-    gen_vecs = [np.array([mc.gen_vec1_x, mc.gen_vec1_y, 0.0]), np.array([mc.gen_vec2_x, mc.gen_vec2_y, 0.0]), np.array([0.0, 0.0, z_max - z_min])]
-    # todo: osetrit prehozeny vektory
+    base_point = np.array([mc.origin_x, mc.origin_y, z_min])
+
+    v1 = np.array([mc.gen_vec1_x, mc.gen_vec1_y, 0.0])
+    v2 = np.array([mc.gen_vec2_x, mc.gen_vec2_y, 0.0])
+    if v1[0] * v2[1] - v1[1] * v2[0] < 0:
+        v1, v2 = v2, v1
+    gen_vecs = [v1, v2, np.array([0.0, 0.0, z_max - z_min])]
 
     if margin:
         m = mc.margin
@@ -28,8 +32,11 @@ def tr_to_local(base_point, inv_tr_mat, point):
     return inv_tr_mat @ (point - base_point)
 
 
-def cut_ascii(in_file, out_file, mesh_cut_tool_param):
+def cut_ascii(in_file, out_file, mesh_cut_tool_param, project_conf):
     base_point, gen_vecs = cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=True)
+    base_point -= np.array([project_conf.point_cloud_origin_x,
+                            project_conf.point_cloud_origin_y,
+                            project_conf.point_cloud_origin_z])
     vs = []
     vs.append(base_point)
     vs.append(base_point + gen_vecs[0])

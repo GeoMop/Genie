@@ -2,6 +2,7 @@ from xlsreader import ares_parser
 from genie.core.global_const import GenieMethod
 
 import os
+from enum import IntEnum
 from typing import List, Dict, Optional
 import attr
 from xlsreader import json_data
@@ -78,15 +79,21 @@ class Measurement:
 
 @json_data.jsondata
 class MeshCutToolParam:
-    origin_x: float = -622365.0
-    origin_y: float = -1128832.0
-    gen_vec1_x: float = 50.0
+    origin_x: float = 0.0
+    origin_y: float = 0.0
+    gen_vec1_x: float = 40.0
     gen_vec1_y: float = 0.0
     gen_vec2_x: float = 0.0
-    gen_vec2_y: float = 23.0
-    z_min: float = 15.0
-    z_max: float = 35.0
+    gen_vec2_y: float = 20.0
+    z_min: float = 10.0
+    z_max: float = 40.0
     margin: float = 5.0
+
+
+class MeshFrom(IntEnum):
+    GALLERY_CLOUD = 1
+    SURFACE_CLOUD = 2
+    GALLERY_MESH = 3
 
 
 @json_data.jsondata
@@ -96,6 +103,9 @@ class InversionParam:
     absoluteError: float = 0.001
     relativeError: float = 0.03
     meshFile: str = ""
+    meshFrom: MeshFrom = MeshFrom.GALLERY_CLOUD
+    reconstructionDepth: int = 6
+    edgeLength: float = 1.0
     refineMesh: bool = True
     refineP2: bool = False
     omitBackground: bool = False
@@ -103,12 +113,14 @@ class InversionParam:
     quality: float = 34.0
     maxCellArea: float = 0.0
     paraDX: float = 0.3
+    snapDistance: float = 1.0
     zWeight: float = 0.7
     lam: float = 20.0
     maxIter: int = 20
     robustData: bool = False
     blockyModel: bool = False
     recalcJacobian: bool = True
+    p3dStep: float = 1.0
 
     # test params
     data_log: bool = True

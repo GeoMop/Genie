@@ -17,12 +17,45 @@ class FirstArrivalDlg(QtWidgets.QDialog):
 
         self._sampling_rate = self._measurement.data["data"][0].stats.sampling_rate
 
-        self.setWindowTitle("First arrival editor")
+        title = "First arrival editor - source: {}".format(self._measurement.source_id)
+        self.setWindowTitle(title)
 
         grid = QtWidgets.QGridLayout(self)
 
-        # plot wiget
+        # plot axis wiget
         qtg.setConfigOptions(background="w", foreground="k")
+        graphic_axis_wiget = qtg.GraphicsLayoutWidget(self)
+        plot = graphic_axis_wiget.addPlot(enableMenu=False)
+        plot.setLabel('left', "")
+        plot.setMouseEnabled(False, False)
+        x_max = len(self._measurement.data["data"][0].data) / self._sampling_rate
+        plot.setXRange(0, x_max * 1.001, padding=0)
+        plot.getAxis('bottom').setStyle(showValues=False)
+        plot.getAxis('bottom').hide()
+        plot.getAxis('left').setStyle(showValues=False)
+        plot.getAxis('left').setHeight(0)
+        plot.hideButtons()
+        plot.setLabel('top', "Time", units='s')
+        plot.getAxis('top').setStyle(showValues=True)
+        scroll = QtWidgets.QScrollArea()
+        scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        scroll.verticalScrollBar().setVisible(False)
+        scroll.setWidgetResizable(True)
+        grid.addWidget(scroll, 0, 0, 1, 6)
+        sw=QtWidgets.QWidget()
+        sw.setMaximumHeight(80)
+        scroll.setMaximumHeight(85)
+        scroll.setMinimumHeight(85)
+        scroll.setWidget(sw)
+        hbox = QtWidgets.QHBoxLayout()
+        sw.setLayout(hbox)
+        label  = QtWidgets.QLabel("Use")
+        label.setMinimumWidth(30)
+        label.setMaximumWidth(30)
+        hbox.addWidget(label)
+        hbox.addWidget(graphic_axis_wiget)
+
+        # plot wiget
         self._graphic_wiget = qtg.GraphicsLayoutWidget(self)
 
         self._plot_list = []
@@ -30,8 +63,9 @@ class FirstArrivalDlg(QtWidgets.QDialog):
         self._checkbox_list = []
 
         scroll = QtWidgets.QScrollArea()
+        scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         scroll.setWidgetResizable(True)
-        grid.addWidget(scroll, 0, 0, 4, 6)
+        grid.addWidget(scroll, 1, 0, 3, 6)
 
         sw=QtWidgets.QWidget()
         scroll.setWidget(sw)
@@ -63,13 +97,15 @@ class FirstArrivalDlg(QtWidgets.QDialog):
             trace = data[i]
 
             inc = 1 if meas.receiver_stop > meas.receiver_start else -1
-            title = "source: {}, receiver: {}".format(meas.source_id, meas.receiver_start + i * inc)
-            plot = self._graphic_wiget.addPlot(row=row, col=1, enableMenu=False, title=title)
+            title = "receiver: {}".format(meas.receiver_start + i * inc)
+            plot = self._graphic_wiget.addPlot(row=row, col=1, enableMenu=False)
+            plot.setLabel('left', title)
             plot.setMouseEnabled(False, False)
             self._plot_list.append(plot)
 
             checkbox = QtGui.QCheckBox()
-            checkbox.setMinimumSize(10, 150)
+            checkbox.setMinimumSize(30, 150)
+            checkbox.setMaximumWidth(30)
             self._checkbox_list.append(checkbox)
             self._vbox.addWidget(checkbox)
 
@@ -94,8 +130,8 @@ class FirstArrivalDlg(QtWidgets.QDialog):
                 vLine.setPos(fa.time)
                 checkbox.setChecked(fa.use)
 
-        plot.setLabel('bottom', "Time", units='s')
-        plot.getAxis('bottom').setStyle(showValues=True)
+        #plot.setLabel('bottom', "Time", units='s')
+        #plot.getAxis('bottom').setStyle(showValues=True)
 
         self._graphic_wiget.setMinimumSize(100, 150 * row)
 

@@ -10,6 +10,8 @@ from ..menus.main_menu_bar import MainMenuBar
 from ..dialogs.new_project_dialog import NewProjectDialog
 from xlsreader.xls_reader_dialog import XlsReaderDialog
 from ..dialogs.point_cloud_reader import PointCloudReaderDialog
+from ..dialogs.gallery_mesh_dialog import GalleryMeshDialog
+from ..dialogs.map_dialog import MapDialog
 from ..dialogs.edit_inversions_dialog import EditInversionsDialog
 #import ert_prepare
 #from run_inv import RunInvDlg
@@ -73,11 +75,12 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.setMaximumWidth(400)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
-        #self.diagram_view.show_laser2("/home/radek/work/Genie/laser/BUK_20160907_JTSK_zkr_1cm.txt")
+        #self.diagram_view.show_laser2("/home/radek/work/Genie/grid_data.xyz")
         #self.diagram_view.show_laser_mesh("/home/radek/work/Genie/laser/mesh.msh")
         # self.region_panel.selection_changed()
 
-        self.diagram_view.show_map()
+        #self.diagram_view.show_map()
+        self.diagram_view._scene.updata_screen_rect()
         self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
         # connect actions
@@ -88,6 +91,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionCloseProject.triggered.connect(self._handle_close_project_action)
         self.main_window.menuBar.file.actionImportExcel.triggered.connect(self._handle_import_excel_action)
         self.main_window.menuBar.file.actionImportPointCloud.triggered.connect(self._handle_import_point_cloud)
+        self.main_window.menuBar.file.actionImportGalleryMesh.triggered.connect(self._handle_import_gallery_mesh)
+        self.main_window.menuBar.file.actionImportMap.triggered.connect(self._handle_import_map)
         self.main_window.menuBar.inversions.actionEdit.triggered.connect(self._handle_inversions_edit_action)
         self.main_window.menuBar.inversions.inversion_selected.connect(self.change_current_inversion)
 
@@ -118,11 +123,15 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
     def _enable_project_ctrl(self, enable=True):
         self.main_window.menuBar.inversions.setEnabled(enable)
+        self.measurement_view.check_allButton.setEnabled(enable)
+        self.measurement_view.uncheck_allButton.setEnabled(enable)
         self.measurement_view.analyse_measurementButton.setEnabled(enable)
         self.measurement_view.run_invButton.setEnabled(enable)
         self.main_window.menuBar.file.actionCloseProject.setEnabled(enable)
         self.main_window.menuBar.file.actionImportExcel.setEnabled(enable)
         self.main_window.menuBar.file.actionImportPointCloud.setEnabled(enable)
+        self.main_window.menuBar.file.actionImportGalleryMesh.setEnabled(enable)
+        self.main_window.menuBar.file.actionImportMap.setEnabled(enable)
         self.mesh_cut_tool_panel.setEnabled(enable)
         self.diagram_view.setEnabled(enable)
 
@@ -155,6 +164,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
                 self.genie.current_inversion_cfg.mesh_cut_tool_param)
+
+            self.diagram_view._scene.updata_screen_rect()
+            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
             self._handle_save_project_action()
 
@@ -206,11 +218,16 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self._update_el_meas()
         self.diagram_view.show_pixmap(self.genie)
+        self.diagram_view.show_map(self.genie)
+        self.diagram_view.show_gallery_mesh(self.genie)
 
         self._load_current_inversion()
 
         self._enable_project_ctrl(True)
         self._show_current_inversion()
+
+        self.diagram_view._scene.updata_screen_rect()
+        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def _show_3d(self):
         if self.genie.method == GenieMethod.ERT:
@@ -219,7 +236,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
             file = "velocity.vtk"
         path = os.path.join(self.genie.cfg.current_project_dir, "inversions",
                             self.genie.project_cfg.curren_inversion_name, file)
-        if False:#os.path.isfile(path):
+        if os.path.isfile(path):
             self.tab_wiget.show_3d(path)
         else:
             self.tab_wiget.hide_3d()
@@ -259,6 +276,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._measurement_model = MeasurementModel(self._measurements)
         self.measurement_view.view.setModel(self._measurement_model)
         self.diagram_view.hide_pixmap()
+        self.diagram_view.hide_map()
         self.diagram_view.hide_electrodes()
 
         self.tab_wiget.hide_3d()
@@ -266,6 +284,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self._enable_project_ctrl(False)
         self._show_current_inversion()
+
+        self.diagram_view._scene.updata_screen_rect()
+        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def _add_inversion(self, name):
         self._save_current_inversion()
@@ -278,11 +299,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", name)
         os.makedirs(dir, exist_ok=True)
 
-        self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
+        self.mesh_cut_tool_panel.center_origin()
+        #self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
 
-        self.genie.current_inversion_cfg.method = self.genie.method
         if self.genie.method == GenieMethod.ST:
             self._init_first_arrivals()
 
@@ -401,10 +422,23 @@ class InversionPreparation(QtWidgets.QMainWindow):
                             else:
                                 shutil.copyfile(os.path.join(dir, m.file), os.path.join(meas_dir, m.file))
 
+            if dlg.apply_abs_transform:
+                for mg in mgs:
+                    for e in mg.electrodes:
+                        e.x = -abs(e.x)
+                        e.y = -abs(e.y)
+
             self._update_el_meas()
 
             if self.genie.method == GenieMethod.ST:
                 self._init_first_arrivals()
+
+            self.diagram_view._scene.updata_screen_rect()
+            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+            if cfg.empty:
+                self.mesh_cut_tool_panel.center_origin()
+                cfg.empty = False
 
             self._handle_save_project_action()
 
@@ -432,7 +466,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 meas_map = {}
                 for e in mg.electrodes:
                     eg = add_electrode_group(self._electrode_groups, e.gallery, e.wall, e.height)
-                    add_electrode(eg, e.id, 0, -abs(e.x), -abs(e.y), e.z, e.is_receiver)
+                    add_electrode(eg, e.id, 0, e.x, e.y, e.z, e.is_receiver)
 
                     meas_map[e.meas_id] = e.id
                 for m in mg.measurements:
@@ -481,17 +515,82 @@ class InversionPreparation(QtWidgets.QMainWindow):
             cfg = self.genie.project_cfg
             cfg.point_cloud_origin_x = dlg.origin_x
             cfg.point_cloud_origin_y = dlg.origin_y
+            cfg.point_cloud_origin_z = dlg.origin_z
             cfg.point_cloud_pixmap_x_min = dlg.pixmap_x_min
             cfg.point_cloud_pixmap_y_min = dlg.pixmap_y_min
             cfg.point_cloud_pixmap_scale = dlg.pixmap_scale
 
             self.diagram_view.show_pixmap(self.genie)
 
+            self.diagram_view._scene.updata_screen_rect()
+            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+            if cfg.empty:
+                self.mesh_cut_tool_panel.center_origin()
+                cfg.empty = False
+
+            self._handle_save_project_action()
+
+    def _handle_import_gallery_mesh(self):
+        prj_dir = self.genie.cfg.current_project_dir
+        dlg = GalleryMeshDialog(self, enable_import=True, work_dir=prj_dir)
+        if dlg.exec():
+            cfg = self.genie.project_cfg
+            cfg.gallery_mesh_origin_x = dlg.origin_x
+            cfg.gallery_mesh_origin_y = dlg.origin_y
+            cfg.gallery_mesh_origin_z = dlg.origin_z
+
+            self.diagram_view.show_gallery_mesh(self.genie)
+
+            self.diagram_view._scene.updata_screen_rect()
+            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+            if cfg.empty:
+                self.mesh_cut_tool_panel.center_origin()
+                cfg.empty = False
+
+            self._handle_save_project_action()
+
+    def _handle_import_map(self):
+        map_file = QtWidgets.QFileDialog.getOpenFileName(self, "Open image file", "",
+                                                         "Image Files (*.svg *.png *.jpg *.jpeg *.bmp *.gif)")[0]
+
+        if not map_file:
+            return
+
+        dlg = MapDialog(self, map_file=map_file)
+        if dlg.exec():
+            prj_dir = self.genie.cfg.current_project_dir
+            cfg = self.genie.project_cfg
+            cfg.map_file_name = "map" + os.path.splitext(map_file)[1]
+            out_file = os.path.join(prj_dir, cfg.map_file_name)
+            shutil.copyfile(map_file, out_file)
+
+            cfg = self.genie.project_cfg
+            cfg.map_transform = dlg.map_transform
+
+            self.diagram_view.show_map(self.genie)
+
+            self.diagram_view._scene.updata_screen_rect()
+            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+            if cfg.empty:
+                self.mesh_cut_tool_panel.center_origin()
+                cfg.empty = False
+
             self._handle_save_project_action()
 
     def _handle_inversions_edit_action(self):
         dlg = EditInversionsDialog(self.genie, self)
         dlg.exec()
+
+    def _handle_check_all_measurements(self):
+        self._measurement_model.checkAllMeasurements()
+        self.measurement_view.view.reset()
+
+    def _handle_uncheck_all_measurements(self):
+        self._measurement_model.checkAllMeasurements(False)
+        self.measurement_view.view.reset()
 
     def _handle_analyse_measurementButton(self):
         index = self.measurement_view.view.currentIndex()
@@ -514,10 +613,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
     def _handle_run_invButton(self):
         prj_dir = self.genie.cfg.current_project_dir
         cloud_file = os.path.join(prj_dir, "point_cloud.xyz")
-        if not os.path.exists(cloud_file):
+        mesh_file = os.path.join(prj_dir, "gallery_mesh.msh")
+        if not os.path.exists(cloud_file) and not os.path.exists(mesh_file):
             QtWidgets.QMessageBox.information(
-                self, 'No point cloud',
-                'Import point cloud first.')
+                self, 'No point cloud nor gallery mesh',
+                'Import point cloud or gallery mesh first.')
             return
 
         if not self.genie.project_cfg.curren_inversion_name:

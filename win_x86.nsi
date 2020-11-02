@@ -215,6 +215,14 @@ Section "Runtime Environment" SecRuntime
   File "${BUILD_DIR}\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"'
 
+  # Install obspy.
+  SetOutPath $INSTDIR\prerequisites
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install obspy'
+
+  # Install pyqtgraph.
+  SetOutPath $INSTDIR\prerequisites
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install pyqtgraph'
+
   # Install gmsh.
   SetOutPath $INSTDIR
   File /r "${BUILD_DIR}\gmsh"

@@ -12,6 +12,7 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log_text = ""
         self.directory = ""
         self.measurements_groups = []
+        self.apply_abs_transform = True
         self._enable_import = enable_import
         self._method = method
 
@@ -33,6 +34,10 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log.setReadOnly(True)
         self._log.setFont(QtGui.QFont("monospace"))
         main_layout.addWidget(self._log)
+
+        self._apply_abs_transform_checkbox = QtWidgets.QCheckBox("Apply transform x = -abs(x), y = -abs(y)")
+        self._apply_abs_transform_checkbox.setChecked(True)
+        main_layout.addWidget(self._apply_abs_transform_checkbox)
 
         # button box
         read_button = QtWidgets.QPushButton("Read")
@@ -93,6 +98,8 @@ class XlsReaderDialog(QtWidgets.QDialog):
                     fd.write(self._log_text)
 
     def _handle_import_action(self):
+        self.apply_abs_transform = self._apply_abs_transform_checkbox.isChecked()
+
         self.accept()
 
     def _handle_browse_action(self):

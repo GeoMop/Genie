@@ -40,6 +40,8 @@ class FileMenu(QtWidgets.QMenu):
         self.actionCloseProject = create_action(self, "Close project")
         self.actionImportExcel = create_action(self, "Import excel file...")
         self.actionImportPointCloud = create_action(self, "Import point cloud...")
+        self.actionImportGalleryMesh = create_action(self, "Import gallery mesh...")
+        self.actionImportMap = create_action(self, "Import map...")
         self.actionExit = create_action(self, "Exit", "Ctrl+Q")
 
         # add actions to menu
@@ -50,6 +52,8 @@ class FileMenu(QtWidgets.QMenu):
         self.addSeparator()
         self.addAction(self.actionImportExcel)
         self.addAction(self.actionImportPointCloud)
+        self.addAction(self.actionImportGalleryMesh)
+        self.addAction(self.actionImportMap)
         #self.addSeparator()
         #self.addAction(self.actionExit)
 

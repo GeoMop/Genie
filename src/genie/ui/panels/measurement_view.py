@@ -88,6 +88,10 @@ class MeasurementModel(QtCore.QAbstractItemModel):
         #self.dataChanged.emit()
         # todo: nevim parametry
 
+    def checkAllMeasurements(self, check=True):
+        for i in range(len(self._measurements)):
+            self._checked[i] = check
+
 
 class MeasurementGroupView(QtWidgets.QWidget):
     def __init__(self, main_window, model, parent=None):
@@ -97,6 +101,15 @@ class MeasurementGroupView(QtWidgets.QWidget):
         self.setLayout(layout)
         self.view = QtWidgets.QTreeView(self)
         layout.addWidget(self.view)
+
+        check_layout = QtWidgets.QHBoxLayout()
+        self.check_allButton = QtWidgets.QPushButton("Check all")
+        self.check_allButton.clicked.connect(main_window._handle_check_all_measurements)
+        check_layout.addWidget(self.check_allButton)
+        self.uncheck_allButton = QtWidgets.QPushButton("Uncheck all")
+        self.uncheck_allButton.clicked.connect(main_window._handle_uncheck_all_measurements)
+        check_layout.addWidget(self.uncheck_allButton)
+        layout.addLayout(check_layout)
 
         if main_window.genie.method == GenieMethod.ERT:
             label = "Analyse measurement"

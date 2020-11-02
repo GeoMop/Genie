@@ -1,6 +1,7 @@
 from bgem.gmsh.gmsh_io import GmshIO
 from bgem.bspline import brep_writer as bw
 from .cut_point_cloud import cut_tool_to_gen_vecs, inv_tr
+from genie.core.data_types import MeshFrom
 
 import numpy as np
 
@@ -8,17 +9,25 @@ import numpy as np
 bw.scalar_types = (int, float, np.int32, np.int64, np.float64)
 
 
-def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, gallery_origin):
+def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, inv_par, project_conf):
+    if inv_par.meshFrom == MeshFrom.GALLERY_CLOUD:
+        offset = np.array([project_conf.point_cloud_origin_x,
+                           project_conf.point_cloud_origin_y,
+                           project_conf.point_cloud_origin_z])
+    else:
+        offset = np.array([project_conf.gallery_mesh_origin_x,
+                           project_conf.gallery_mesh_origin_y,
+                           project_conf.gallery_mesh_origin_z])
+
+
     gallery_mesh = GmshIO(gallery_mesh_file)
 
-    gallery_origin = np.array(gallery_origin)
+    #gallery_origin = np.array(gallery_origin)
 
     for id, node in gallery_mesh.nodes.items():
         gallery_mesh.nodes[id] = gallery_mesh.nodes[id] #+ np.array([-622000.0, -1128000.0, 0.0])
 
     base_point, gen_vecs = cut_tool_to_gen_vecs(mesh_cut_tool_param)
-    base_point[0] += - 622000
-    base_point[1] += - 1128000
 
     opposite_pont = base_point + gen_vecs[0] + gen_vecs[1] + gen_vecs[2]
     planes = [
@@ -45,7 +54,7 @@ def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, gallery_origin):
     vertices_tr = {}
     vert_info = {}
     for id, node in gallery_mesh.nodes.items():
-        node += np.array([- 622000, - 1128000, 0])
+        node += offset
         #bw_vertices[id] = bw.Vertex(node + np.array([- 622000, - 1128000, 0]), tolerance=1e-3)
         bw_vertices[id] = bw.Vertex(node, tolerance=1e-3)
         vert_info[id] = VertInfo(node)
@@ -100,6 +109,8 @@ def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, gallery_origin):
 
     for id, data in gallery_mesh.elements.items():
         el_type, tags, nodes = data
+        if el_type != 2:
+            continue
         process_triangle(*nodes)
 
     # remove duplicit vertices id

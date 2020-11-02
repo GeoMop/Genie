@@ -5,9 +5,23 @@ import pygimli as pg
 import numpy as np
 import time
 
+from genie.core.data_types import MeshFrom
 
-def main(max_dist=1.0):
-    mesh_file = "gallery_mesh.msh"
+
+def main(inv_par, project_conf, max_dist=1.0):
+    if inv_par.meshFrom == MeshFrom.GALLERY_CLOUD:
+        mesh_file = "gallery_mesh.msh"
+        offset = np.array([project_conf.point_cloud_origin_x,
+                           project_conf.point_cloud_origin_y,
+                           project_conf.point_cloud_origin_z])
+    elif inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
+        mesh_file = "inv_mesh_tmp.msh"
+        offset = np.array( [0.0, 0.0, 0.0])
+    else:
+        mesh_file = "../../gallery_mesh.msh"
+        offset = np.array([project_conf.gallery_mesh_origin_x,
+                           project_conf.gallery_mesh_origin_y,
+                           project_conf.gallery_mesh_origin_z])
     mesh = GmshIO(mesh_file)
 
     #mesh.elements = {id: data for id, data in mesh.elements.items() if id not in [714, 2095]}
@@ -15,16 +29,23 @@ def main(max_dist=1.0):
     tree = bih.BIH()
     boxes = []
     mesh.elements2 = {}
-    for i, data in enumerate(mesh.elements.values()):
+    i = 0
+    for data in mesh.elements.values():
         type_, tags, nodeIDs = data
-        a = np.array(mesh.nodes[nodeIDs[0]]) + np.array([-622000.0, -1128000.0, 0.0])
-        b = np.array(mesh.nodes[nodeIDs[1]]) + np.array([-622000.0, -1128000.0, 0.0])
-        c = np.array(mesh.nodes[nodeIDs[2]]) + np.array([-622000.0, -1128000.0, 0.0])
+        if type_ != 2:
+            continue
+        # a = np.array(mesh.nodes[nodeIDs[0]]) + np.array([-622000.0, -1128000.0, 0.0])
+        # b = np.array(mesh.nodes[nodeIDs[1]]) + np.array([-622000.0, -1128000.0, 0.0])
+        # c = np.array(mesh.nodes[nodeIDs[2]]) + np.array([-622000.0, -1128000.0, 0.0])
         # a = np.array(mesh.nodes[nodeIDs[0]])
         # b = np.array(mesh.nodes[nodeIDs[1]])
         # c = np.array(mesh.nodes[nodeIDs[2]])
+        a = np.array(mesh.nodes[nodeIDs[0]]) + offset
+        b = np.array(mesh.nodes[nodeIDs[1]]) + offset
+        c = np.array(mesh.nodes[nodeIDs[2]]) + offset
         boxes.append(bih.AABB([a, b, c]))
         mesh.elements2[i] = data
+        i += 1
 
 
     tree.add_boxes(boxes)
@@ -50,13 +71,13 @@ def main(max_dist=1.0):
     for i in range(len(data.sensorPositions())):
         pos = data.sensorPosition(i)
         pos = np.array([pos[0], pos[1], pos[2]])
-        new_pos = snap_electrode(pos, mesh, tree, max_dist)
+        new_pos = snap_electrode(pos, mesh, tree, max_dist, offset)
 
         data.setSensorPosition(i, new_pos)
     data.save("input_snapped.dat")
 
 
-def snap_electrode(electrode, mesh, tree, max_dist):
+def snap_electrode(electrode, mesh, tree, max_dist, offset):
     dist_min = np.inf
     pos_min = electrode
 
@@ -70,12 +91,17 @@ def snap_electrode(electrode, mesh, tree, max_dist):
     for id in intersect_box_ids:
         data = mesh.elements2[id]
         el_type, tags, nodes = data
-        a = np.array(mesh.nodes[nodes[0]]) + np.array([-622000.0, -1128000.0, 0.0])
-        b = np.array(mesh.nodes[nodes[1]]) + np.array([-622000.0, -1128000.0, 0.0])
-        c = np.array(mesh.nodes[nodes[2]]) + np.array([-622000.0, -1128000.0, 0.0])
+        if el_type != 2:
+            continue
+        # a = np.array(mesh.nodes[nodes[0]]) + np.array([-622000.0, -1128000.0, 0.0])
+        # b = np.array(mesh.nodes[nodes[1]]) + np.array([-622000.0, -1128000.0, 0.0])
+        # c = np.array(mesh.nodes[nodes[2]]) + np.array([-622000.0, -1128000.0, 0.0])
         # a = np.array(mesh.nodes[nodes[0]])
         # b = np.array(mesh.nodes[nodes[1]])
         # c = np.array(mesh.nodes[nodes[2]])
+        a = np.array(mesh.nodes[nodes[0]]) + offset
+        b = np.array(mesh.nodes[nodes[1]]) + offset
+        c = np.array(mesh.nodes[nodes[2]]) + offset
         dist, snapped_electrode = tri_point_dist(a, b, c, electrode)
         if dist < dist_min and dist <= max_dist:
             dist_min = dist

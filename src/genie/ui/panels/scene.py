@@ -121,7 +121,7 @@ class GsPoint(QtWidgets.QGraphicsEllipseItem):
 
     def update(self):
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, False)
-        self.setPos(self.pt.xy[0], -self.pt.xy[1])
+        self.setPos(self.pt.xy[0], self.pt.xy[1])
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges)
 
         color = Region.none.color
@@ -138,7 +138,7 @@ class GsPoint(QtWidgets.QGraphicsEllipseItem):
 
     def move_to(self, x, y):
         #self.pt.set_xy(x, y)
-        displacement = np.array([x - self.pt.xy[0], -y - self.pt.xy[1]])
+        displacement = np.array([x - self.pt.xy[0], y - self.pt.xy[1]])
         if self.scene().decomposition.check_displacment([self.pt], displacement):
             self.scene().decomposition.move_points([self.pt], displacement)
 
@@ -490,7 +490,7 @@ class MeshCutTool:
     def __init__(self, scene):
         self._scene = scene
 
-        self.origin = np.array([-622340.0, -1128940.0])
+        self.origin = np.array([0.0, 0.0])
         self.gen_vec1 = np.array([40.0, 0.0])
         self.gen_vec2 = np.array([0.0, 20.0])
         self.z_min = 10.0
@@ -499,6 +499,7 @@ class MeshCutTool:
 
         pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
         pen.setCosmetic(True)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
         margin_pen = QtGui.QPen(QtGui.QColor("red"), 1.0, QtCore.Qt.SolidLine)
         margin_pen.setCosmetic(True)
         z = 30
@@ -540,41 +541,48 @@ class MeshCutTool:
 
         # margin corner points
         m = self.margin
-        g1n = self.gen_vec1 / np.linalg.norm(self.gen_vec1)
-        g2n = self.gen_vec2 / np.linalg.norm(self.gen_vec2)
+        l1 = np.linalg.norm(self.gen_vec1)
+        l2 = np.linalg.norm(self.gen_vec2)
+        if l1 < 1e-12:
+            g1n = self.gen_vec1
+        else:
+            g1n = self.gen_vec1 / l1
+        if l2 < 1e-12:
+            g2n = self.gen_vec2
+        else:
+            g2n = self.gen_vec2 / l2
         am = a - g1n * m - g2n * m
         bm = b + g1n * m - g2n * m
         cm = c + g1n * m + g2n * m
         dm = d - g1n * m + g2n * m
 
         # set new positions
-        self.line1.setLine(a[0], -a[1], b[0], -b[1])
-        self.line2.setLine(b[0], -b[1], c[0], -c[1])
-        self.line3.setLine(c[0], -c[1], d[0], -d[1])
-        self.line4.setLine(d[0], -d[1], a[0], -a[1])
-        self.point0.setPos(a[0], -a[1])
-        self.point1.setPos(b[0], -b[1])
-        self.point2.setPos(d[0], -d[1])
-        self.margin_line1.setLine(am[0], -am[1], bm[0], -bm[1])
-        self.margin_line2.setLine(bm[0], -bm[1], cm[0], -cm[1])
-        self.margin_line3.setLine(cm[0], -cm[1], dm[0], -dm[1])
-        self.margin_line4.setLine(dm[0], -dm[1], am[0], -am[1])
-
+        self.line1.setLine(a[0], a[1], b[0], b[1])
+        self.line2.setLine(b[0], b[1], c[0], c[1])
+        self.line3.setLine(c[0], c[1], d[0], d[1])
+        self.line4.setLine(d[0], d[1], a[0], a[1])
+        self.point0.setPos(a[0], a[1])
+        self.point1.setPos(b[0], b[1])
+        self.point2.setPos(d[0], d[1])
+        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
+        self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
+        self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
+        self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
 
     def point0_move_to(self, pos):
-        self.origin = np.array([pos.x(), -pos.y()])
+        self.origin = np.array([pos.x(), pos.y()])
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
 
     def point1_move_to(self, pos):
-        self.gen_vec1 = np.array([pos.x(), -pos.y()]) - self.origin
+        self.gen_vec1 = np.array([pos.x(), pos.y()]) - self.origin
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
 
     def point2_move_to(self, pos):
-        self.gen_vec2 = np.array([pos.x(), -pos.y()]) - self.origin
+        self.gen_vec2 = np.array([pos.x(), pos.y()]) - self.origin
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
@@ -732,8 +740,7 @@ class Diagram(QtWidgets.QGraphicsScene):
     # cut tool changed
 
     def __init__(self, parent):
-        rect = QtCore.QRectF(-622500, 1128600, 400, 500)
-        super().__init__(rect, parent)
+        super().__init__(parent)
         self.points = {}
         self.segments = {}
         self.polygons = {}
@@ -757,7 +764,10 @@ class Diagram(QtWidgets.QGraphicsScene):
 
         self.mesh_cut_tool = MeshCutTool(self)
 
+        self.electrode_item_list = []
         self.pixmap_item = None
+        self.map_item = None
+        self.gallery_mesh_lines = []
 
     def create_aux_segment(self):
         pt_size = GsPoint.SIZE
@@ -1034,16 +1044,36 @@ class Diagram(QtWidgets.QGraphicsScene):
         undo.stack().redo()
         self.update_scene()
 
+    def updata_screen_rect(self):
+        rect = QtCore.QRectF()
+
+        if self.electrode_item_list:
+            for e in self.electrode_item_list:
+                rect = rect.united(e.sceneBoundingRect())
+
+        if self.pixmap_item:
+            rect = rect.united(self.pixmap_item.sceneBoundingRect())
+
+        if self.map_item:
+            rect = rect.united(self.map_item.sceneBoundingRect())
+
+        if self.gallery_mesh_lines:
+            for line in self.gallery_mesh_lines:
+                rect = rect.united(line.sceneBoundingRect())
+
+        if rect.isEmpty():
+            rect = QtCore.QRectF(-100, -100, 200, 200)
+
+        self.setSceneRect(rect)
+
 
 class DiagramView(QtWidgets.QGraphicsView):
     def __init__(self):
-
         super(DiagramView, self).__init__()
-        print(self)
-
 
         self._zoom = 0
-        self._empty = True
+        self.scale(1, -1)
+        #self._empty = True
         self._scene = Diagram(self)
         self.setScene(self._scene)
 
@@ -1155,11 +1185,12 @@ class DiagramView(QtWidgets.QGraphicsView):
         for eg in electrode_groups:
             for el in eg.electrodes:
                 x = el.x
-                y = -el.y
+                y = el.y
                 gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name())
                 self._scene.addItem(gpt)
                 gpt.update()
                 self.el_map[id(el)] = gpt
+                self._scene.electrode_item_list.append(gpt)
             color_ind += 1
 
         #self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
@@ -1169,6 +1200,7 @@ class DiagramView(QtWidgets.QGraphicsView):
         for item in self.el_map.values():
             self._scene.removeItem(item)
         self.el_map.clear()
+        self._scene.electrode_item_list.clear()
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1277,7 +1309,38 @@ class DiagramView(QtWidgets.QGraphicsView):
                     self._scene.add_segment(last_gpt, gpt)
                 last_gpt = gpt
 
-    def show_map(self):
+    def show_map(self, genie):
+        self.hide_map()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+
+        if not cfg.map_file_name:
+            return
+        map_file = os.path.join(prj_dir, cfg.map_file_name)
+        if map_file.lower().endswith(".svg"):
+            map_item = QtSvg.QGraphicsSvgItem(map_file)
+        else:
+            pixmap = QtGui.QPixmap(map_file)
+            map_item = QtWidgets.QGraphicsPixmapItem(pixmap)
+
+        mtr = cfg.map_transform
+        tr = QtGui.QTransform(mtr.m11, mtr.m12, mtr.m21, mtr.m22, mtr.dx, mtr.dy)
+        map_item.setTransform(tr)
+
+        map_item.setZValue(-100)
+
+        self._scene.addItem(map_item)
+        map_item.setCursor(QtCore.Qt.CrossCursor)
+
+        self._scene.map_item = map_item
+
+    def hide_map(self):
+        if self._scene.map_item is not None:
+            self._scene.removeItem(self._scene.map_item)
+            self._scene.map_item = None
+
+    def show_map_old(self):
         file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "res", "bukov_situace.svg")
         map = QtSvg.QGraphicsSvgItem(file)
 
@@ -1297,16 +1360,18 @@ class DiagramView(QtWidgets.QGraphicsView):
 
         prj_dir = genie.cfg.current_project_dir
         cfg = genie.project_cfg
-        pixmap = QtGui.QPixmap(os.path.join(prj_dir, "point_cloud_pixmap.png"))
+        file = os.path.join(prj_dir, "point_cloud_pixmap.png")
+        if not os.path.isfile(file):
+            return
+        pixmap = QtGui.QPixmap(file)
         pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap.transformed(QtGui.QTransform.fromScale(1, -1)))
 
-        pixmap_item.setZValue(25)
+        pixmap_item.setZValue(-90)
         offset_x = cfg.point_cloud_origin_x + cfg.point_cloud_pixmap_x_min
-        offset_y = cfg.point_cloud_origin_y + (cfg.point_cloud_pixmap_y_min + pixmap.height() * cfg.point_cloud_pixmap_scale)
-        pixmap_item.setTransformOriginPoint(offset_x, -offset_y )
-        #pixmap_item.setTransform(QtGui.QTransform.fromScale(1, -1))
+        offset_y = cfg.point_cloud_origin_y + cfg.point_cloud_pixmap_y_min
+        pixmap_item.setTransformOriginPoint(offset_x, offset_y)
         pixmap_item.setScale(cfg.point_cloud_pixmap_scale)
-        pixmap_item.setOffset(offset_x, -offset_y)
+        pixmap_item.setOffset(offset_x, offset_y)
         self._scene.addItem(pixmap_item)
 
         self._scene.pixmap_item = pixmap_item
@@ -1315,6 +1380,53 @@ class DiagramView(QtWidgets.QGraphicsView):
         if self._scene.pixmap_item is not None:
             self._scene.removeItem(self._scene.pixmap_item)
             self._scene.pixmap_item = None
+
+    def show_gallery_mesh(self, genie):
+        self.hide_gallery_mesh()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+        file_name = os.path.join(prj_dir, "gallery_mesh.msh")
+        if not os.path.isfile(file_name):
+            return
+
+        pen = QtGui.QPen(QtGui.QColor("blue"), 0, QtCore.Qt.SolidLine)
+
+        mesh = GmshIO(file_name)
+
+        lines = set()
+
+        def add_line(n1, n2):
+            if (n1, n2) in lines or (n1, n2) in lines:
+                return
+            else:
+                lines.add((n1, n2))
+
+            a = mesh.nodes[n1]
+            b = mesh.nodes[n2]
+
+            line = QtWidgets.QGraphicsLineItem(a[0] + cfg.gallery_mesh_origin_x, a[1] + cfg.gallery_mesh_origin_y,
+                                               b[0] + cfg.gallery_mesh_origin_x, b[1] + cfg.gallery_mesh_origin_y)
+            line.setZValue(-80)
+            line.setPen(pen)
+            self._scene.addItem(line)
+            self._scene.gallery_mesh_lines.append(line)
+
+        for data in mesh.elements.values():
+            type_, tags, nodeIDs = data
+            if type_ != 2:
+                continue
+            a = nodeIDs[0]
+            b = nodeIDs[1]
+            c = nodeIDs[2]
+
+            add_line(a, b)
+            add_line(b, c)
+            add_line(c, a)
+
+    def hide_gallery_mesh(self):
+        for item in self._scene.gallery_mesh_lines:
+            self._scene.removeItem(item)
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ Dialog for running inversion.
 """
 
 from genie.core import ert_prepare, st_prepare
-from genie.core.data_types import InversionParam
+from genie.core.data_types import InversionParam, MeshFrom
 from genie.core.global_const import GenieMethod
 
 import os
@@ -76,8 +76,25 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
+        self._par_meshFromComboBox = QtWidgets.QComboBox()
+        prj_dir = genie.cfg.current_project_dir
+        file = os.path.join(prj_dir, "point_cloud.xyz")
+        if os.path.isfile(file):
+            self._par_meshFromComboBox.addItem("Gallery cloud", MeshFrom.GALLERY_CLOUD)
+            self._par_meshFromComboBox.addItem("Surface cloud", MeshFrom.SURFACE_CLOUD)
+        file = os.path.join(prj_dir, "gallery_mesh.msh")
+        if os.path.isfile(file):
+            self._par_meshFromComboBox.addItem("Gallery mesh", MeshFrom.GALLERY_MESH)
+        self._parameters_formLayout.addRow("meshFrom:", self._par_meshFromComboBox)
+
         self._par_meshFileLineEdit = QtWidgets.QLineEdit("mesh_out.msh")
         #self._parameters_formLayout.addRow("meshFile:", self._par_meshFileLineEdit)
+
+        self._par_reconstructionDepthLineEdit = QtWidgets.QLineEdit("6")
+        self._parameters_formLayout.addRow("reconstructionDepth:", self._par_reconstructionDepthLineEdit)
+
+        self._par_edgeLengthLineEdit = QtWidgets.QLineEdit("1.0")
+        self._parameters_formLayout.addRow("edgeLength:", self._par_edgeLengthLineEdit)
 
         self._par_refineMeshCheckBox = QtWidgets.QCheckBox()
         self._par_refineMeshCheckBox.setChecked(True)
@@ -106,6 +123,17 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_paraDXLineEdit = QtWidgets.QLineEdit("0.3")
         #self._parameters_formLayout.addRow("paraDX:", self._par_paraDXLineEdit)
 
+        if self.genie.method == GenieMethod.ERT:
+            text = "Electrodes"
+        else:
+            text = "Sensors"
+        label = QtWidgets.QLabel(text)
+        label.setFont(font)
+        self._parameters_formLayout.addRow(label)
+
+        self._par_snapDistanceLineEdit = QtWidgets.QLineEdit("1.0")
+        self._parameters_formLayout.addRow("snapDistance:", self._par_snapDistanceLineEdit)
+
         label = QtWidgets.QLabel("Inversion")
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
@@ -129,7 +157,14 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_recalcJacobianCheckBox = QtWidgets.QCheckBox()
         self._par_recalcJacobianCheckBox.setChecked(True)
-        self._parameters_formLayout.addRow("recalcJacobian:", self._par_recalcJacobianCheckBox)
+        #self._parameters_formLayout.addRow("recalcJacobian:", self._par_recalcJacobianCheckBox)
+
+        label = QtWidgets.QLabel("Output")
+        label.setFont(font)
+        self._parameters_formLayout.addRow(label)
+
+        self._par_p3dStepLineEdit = QtWidgets.QLineEdit("1.0")
+        self._parameters_formLayout.addRow("p3dStep:", self._par_p3dStepLineEdit)
 
         label = QtWidgets.QLabel("Test options")
         label.setFont(font)
@@ -165,8 +200,8 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self.setLayout(grid)
 
-        self.setMinimumSize(500, 850)
-        self.resize(700, 500)
+        self.setMinimumSize(500, 600)
+        self.resize(700, 950)
 
         self._from_inversion_param(genie.current_inversion_cfg.inversion_param)
 
@@ -215,6 +250,21 @@ class RunInvDlg(QtWidgets.QDialog):
         # save inversion config
         self.genie.current_inversion_cfg.inversion_param = self._to_inversion_param()
         self.parent()._save_current_inversion()
+
+        # p3d to big
+        if False: # todo: nastavit podminku !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            msg_box = QtWidgets.QMessageBox(self)
+            msg_box.setWindowTitle("Confirmation")
+            msg_box.setIcon(QtWidgets.QMessageBox.Question)
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Cancel)
+            button = QtWidgets.QPushButton('&Start')
+            msg_box.addButton(button, QtWidgets.QMessageBox.YesRole)
+            msg_box.setDefaultButton(button)
+            msg_box.setText("p3d file will be to big, due to small p3dStep parameter, do you want to start anyway?")
+            msg_box.exec()
+
+            if msg_box.clickedButton() != button:
+                return
 
         self._output_edit.clear()
 
@@ -278,6 +328,14 @@ class RunInvDlg(QtWidgets.QDialog):
             param.relativeError = float(self._par_relativeErrorLineEdit.text())
 
             param.meshFile = self._par_meshFileLineEdit.text()
+            param.meshFrom = self._par_meshFromComboBox.currentData()
+            d = int(self._par_reconstructionDepthLineEdit.text())
+            if d < 4:
+                d = 4
+            elif d > 10:
+                d = 10
+            param.reconstructionDepth = d
+            param.edgeLength = float(self._par_edgeLengthLineEdit.text())
             param.refineMesh = self._par_refineMeshCheckBox.isChecked()
             param.refineP2 = self._par_refineP2CheckBox.isChecked()
             param.omitBackground = self._par_omitBackgroundCheckBox.isChecked()
@@ -290,12 +348,16 @@ class RunInvDlg(QtWidgets.QDialog):
             param.maxCellArea = float(self._par_maxCellAreaLineEdit.text())
             param.paraDX = float(self._par_paraDXLineEdit.text())
 
+            param.snapDistance = float(self._par_snapDistanceLineEdit.text())
+
             param.zWeight = float(self._par_zWeightLineEdit.text())
             param.lam = float(self._par_lamLineEdit.text())
             param.maxIter = int(self._par_maxIterLineEdit.text())
             param.robustData = self._par_robustDataCheckBox.isChecked()
             param.blockyModel = self._par_blockyModelCheckBox.isChecked()
             param.recalcJacobian = self._par_recalcJacobianCheckBox.isChecked()
+
+            param.p3dStep = float(self._par_p3dStepLineEdit.text())
 
             param.data_log = self._par_data_logCheckBox.isChecked()
             param.k_ones = self._par_k_onesCheckBox.isChecked()
@@ -313,6 +375,12 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_relativeErrorLineEdit.setText(str(param.relativeError))
 
         self._par_meshFileLineEdit.setText(param.meshFile)
+        ind = self._par_meshFromComboBox.findData(param.meshFrom)
+        if ind < 0:
+            ind = 0
+        self._par_meshFromComboBox.setCurrentIndex(ind)
+        self._par_reconstructionDepthLineEdit.setText(str(param.reconstructionDepth))
+        self._par_edgeLengthLineEdit.setText(str(param.edgeLength))
         self._par_refineMeshCheckBox.setChecked(param.refineMesh)
         self._par_refineP2CheckBox.setChecked(param.refineP2)
         self._par_omitBackgroundCheckBox.setChecked(param.omitBackground)
@@ -324,12 +392,16 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_maxCellAreaLineEdit.setText(str(param.maxCellArea))
         self._par_paraDXLineEdit.setText(str(param.paraDX))
 
+        self._par_snapDistanceLineEdit.setText(str(param.snapDistance))
+
         self._par_zWeightLineEdit.setText(str(param.zWeight))
         self._par_lamLineEdit.setText(str(param.lam))
         self._par_maxIterLineEdit.setText(str(param.maxIter))
         self._par_robustDataCheckBox.setChecked(param.robustData)
         self._par_blockyModelCheckBox.setChecked(param.blockyModel)
         self._par_recalcJacobianCheckBox.setChecked(param.recalcJacobian)
+
+        self._par_p3dStepLineEdit.setText(str(param.p3dStep))
 
         self._par_data_logCheckBox.setChecked(param.data_log)
         self._par_k_onesCheckBox.setChecked(param.k_ones)

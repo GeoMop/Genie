@@ -106,7 +106,7 @@ class EditInversionsDialog(QtWidgets.QDialog):
 
         self.resize(600, 500)
 
-        self._inversion_list_reload()
+        self._inversion_list_reload(self.genie.project_cfg.curren_inversion_name)
 
     def _inversion_list_reload(self, preferred_inversion=""):
         self.inversionsListTreeWidget.clear()

@@ -13,10 +13,10 @@ import math
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from genie.core import snap_electrodes
-from genie.core.config import InversionConfig
-from genie.core import mesh_gen2, mesh_gen3
+from genie.core.config import InversionConfig, ProjectConfig
+from genie.core import mesh_gen2, mesh_gen3, mesh_surf, meshlab_script_gen
 from genie.core import cut_point_cloud
-from genie.core.data_types import MeasurementsInfo
+from genie.core.data_types import MeasurementsInfo, MeshFrom
 from genie.core.global_const import GenieMethod
 from bgem.gmsh.gmsh_io import GmshIO
 
@@ -33,26 +33,31 @@ def main():
         conf = json.load(fd)
     inversion_conf = InversionConfig.deserialize(conf)
 
-    if inversion_conf.method == GenieMethod.ERT:
-        inv_ert(inversion_conf)
+    prj_conf_file = "../../genie.prj"
+    with open(prj_conf_file, "r") as fd:
+        prj_conf = json.load(fd)
+    project_conf = ProjectConfig.deserialize(prj_conf)
+
+    if project_conf.method == GenieMethod.ERT:
+        inv_ert(inversion_conf, project_conf)
     else:
-        inv_st(inversion_conf)
+        inv_st(inversion_conf, project_conf)
 
 
-def inv_ert(inversion_conf):
+def inv_ert(inversion_conf, project_conf):
     inv_par = inversion_conf.inversion_param
     cut_par = inversion_conf.mesh_cut_tool_param
 
     remove_old_files()
 
-    if not prepare(cut_par):
+    if not prepare(cut_par, inv_par, project_conf):
         return
     #return
 
     # snap electrodes
     print()
     print_headline("Snapping electrodes")
-    snap_electrodes.main(max_dist=1.0)
+    snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance)
 
     #ball_mesh("inv_mesh.msh", "inv_mesh2.msh", [-622342, -1128822, 22], 5.0)
     #return
@@ -91,6 +96,7 @@ def inv_ert(inversion_conf):
     tolerance = 1e-12
     #data.markValid(np.abs(data('rhoa')) > tolerance)
     data.markValid(data('rhoa') > tolerance)
+    data.markInvalid(data('rhoa') <= tolerance) # udelat poradne
 
     # remove invalid data
     oldsize = data.size()
@@ -262,20 +268,20 @@ def inv_ert(inversion_conf):
     print("All done.")
 
 
-def inv_st(inversion_conf):
+def inv_st(inversion_conf, project_conf):
     inv_par = inversion_conf.inversion_param
     cut_par = inversion_conf.mesh_cut_tool_param
 
     remove_old_files()
 
-    if not prepare(cut_par):
+    if not prepare(cut_par, inv_par, project_conf):
         return
     #return
 
     # snap electrodes
     print()
     print_headline("Snapping electrodes")
-    snap_electrodes.main(max_dist=2.0)
+    snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance)
 
     print()
     print_headline("Inversion")
@@ -406,7 +412,7 @@ def save_csv(paraDomain, model, file_name):
                     fd.write("{},{},{},{}\n".format(x, y, z, r))
 
 
-def save_p3d(paraDomain, model, mesh_cut_tool_param, step, file_name):
+def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
     """Saves result as .p3d file."""
     base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param)
     base_point[0] += - 622000
@@ -422,7 +428,6 @@ def save_p3d(paraDomain, model, mesh_cut_tool_param, step, file_name):
 
     grid = [[[0.0] * x_nodes for _ in range(y_nodes)] for _ in range(z_nodes)]
 
-    m = model.array()
     inv_tr_mat = cut_point_cloud.inv_tr(gen_vecs)
     for i in range(paraDomain.cellCount()):
         cell = paraDomain.cell(i)
@@ -483,7 +488,7 @@ def save_p3d(paraDomain, model, mesh_cut_tool_param, step, file_name):
             else:
                 break
 
-        r = m[cell.id()]
+        r = model_array[cell.id()]
 
         shape = cell.shape()
         for k in range(z_s, z_e):
@@ -630,6 +635,12 @@ def remove_old_files():
         "inv_mesh.msh",
         "resistivity.vector",
         "resistivity.vtk",
+        "resistivity.p3d",
+        "resistivity.q",
+        "velocity.vector",
+        "velocity.vtk",
+        "velocity.p3d",
+        "velocity.q",
         "measurements_model.txt"
     ]
 
@@ -652,42 +663,55 @@ def print_headline(text):
     print()
 
 
-def prepare(mesh_cut_tool_param):
+def prepare(mesh_cut_tool_param, inv_par, project_conf):
     #print("prepare !!!")
-
-    print_headline("Cutting point cloud")
-    t = time.time()
-    cut_point_cloud.cut_ascii(os.path.join("..", "..", "point_cloud.xyz"), "point_cloud_cut.xyz", mesh_cut_tool_param)
-    #cut_point_cloud.cut_ascii("point_cloud_cut_x.xyz", "point_cloud_cut.xyz", mesh_cut_tool_param)
-    print("cutting elapsed time: {:0.3f} s".format(time.time() - t))
-    #return
-
-    # meshlab
-    t = time.time()
-    print()
-    print_headline("Creating gallery mesh")
-    meshlabserver_path = '/tmp/.mount_MeshLa3FLiBB'
-    os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
-    meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
-    if not os.path.exists(meshlabserver_path):
-        meshlabserver_path = "meshlabserver"
-    run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", os.path.join(os.path.dirname(os.path.realpath(__file__)), "core", "meshlab_script.mlx")])
-    print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
-    #return
 
     gmsh_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "gmsh", "gmsh.exe")
     if not os.path.exists(gmsh_path):
         gmsh_path = "gmsh"
-    run_process([gmsh_path, "-format", "msh2", "-save", "gallery_mesh.ply"])
+
+    if inv_par.meshFrom == MeshFrom.GALLERY_CLOUD:
+        print_headline("Cutting point cloud")
+        t = time.time()
+        cut_point_cloud.cut_ascii(os.path.join("..", "..", "point_cloud.xyz"), "point_cloud_cut.xyz", mesh_cut_tool_param, project_conf)
+        #cut_point_cloud.cut_ascii("point_cloud_cut_x.xyz", "point_cloud_cut.xyz", mesh_cut_tool_param)
+        print("cutting elapsed time: {:0.3f} s".format(time.time() - t))
+        #return
+
+        # meshlab
+        t = time.time()
+        print()
+        print_headline("Creating gallery mesh")
+        #meshlabserver_path = '/home/radek/apps/meshlab'
+        #os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
+        meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
+        if not os.path.exists(meshlabserver_path):
+            meshlabserver_path = "meshlabserver"
+        meshlab_script_gen.gen("meshlab_script.mlx", inv_par.reconstructionDepth, inv_par.edgeLength)
+        run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", "meshlab_script.mlx"])
+        print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
+        #return
+
+        print()
+        print_headline("Converting gallery mesh")
+        run_process([gmsh_path, "-format", "msh2", "-save", "gallery_mesh.ply"])
 
 
     #return
     print()
     print_headline("Creating inversion mesh")
-    #mesh_gen2.gen(mesh_cut_tool_param)
-    if not mesh_gen3.gen("gallery_mesh.msh", "inv_mesh_tmp.brep", mesh_cut_tool_param, [-622000.0, -1128000.0, 0.0]):
-        print("Error in mesh generation")
-        return False
+    if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
+        if not mesh_surf.gen(os.path.join("..", "..", "point_cloud.xyz"), "inv_mesh_tmp.brep", mesh_cut_tool_param):
+            return False
+    else:
+        if inv_par.meshFrom == MeshFrom.GALLERY_CLOUD:
+            gallery_mesh_file = "gallery_mesh.msh"
+        elif inv_par.meshFrom == MeshFrom.GALLERY_MESH:
+            gallery_mesh_file = "../../gallery_mesh.msh"
+        #mesh_gen2.gen(mesh_cut_tool_param)
+        if not mesh_gen3.gen(gallery_mesh_file, "inv_mesh_tmp.brep", mesh_cut_tool_param, inv_par, project_conf):
+            print("Error in mesh generation")
+            return False
 
     run_process([gmsh_path, "-3", "-format", "msh2", "inv_mesh_tmp.brep"])
     #run_process([gmsh_path, "inv_mesh_tmp.msh"])

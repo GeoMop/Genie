@@ -29,7 +29,7 @@ Add path to pygimli to PYTHONPATH.
 
 #### download Meshlab
 Download Meshlab from <https://github.com/cnr-isti-vclab/meshlab/releases/download/Meshlab-2020.02/MeshLab2020.02-linux.zip>.
-We need exact version MeshLab-2020.02, due to scrip version which we use.
+We need exact version MeshLab-2020.02, due to script version which we use.
 Extract archive to some directory and add it to PATH.
 
 #### clone project repository
