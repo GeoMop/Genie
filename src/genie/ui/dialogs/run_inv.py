@@ -144,6 +144,10 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_lamLineEdit = QtWidgets.QLineEdit("20.0")
         self._parameters_formLayout.addRow("lambda:", self._par_lamLineEdit)
 
+        self._par_optimizeLambdaCheckBox = QtWidgets.QCheckBox()
+        self._par_optimizeLambdaCheckBox.setChecked(False)
+        self._parameters_formLayout.addRow("optimizeLambda:", self._par_optimizeLambdaCheckBox)
+
         self._par_maxIterLineEdit = QtWidgets.QLineEdit("20")
         self._parameters_formLayout.addRow("maxIter:", self._par_maxIterLineEdit)
 
@@ -352,6 +356,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
             param.zWeight = float(self._par_zWeightLineEdit.text())
             param.lam = float(self._par_lamLineEdit.text())
+            param.optimizeLambda = self._par_optimizeLambdaCheckBox.isChecked()
             param.maxIter = int(self._par_maxIterLineEdit.text())
             param.robustData = self._par_robustDataCheckBox.isChecked()
             param.blockyModel = self._par_blockyModelCheckBox.isChecked()
@@ -396,6 +401,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_zWeightLineEdit.setText(str(param.zWeight))
         self._par_lamLineEdit.setText(str(param.lam))
+        self._par_optimizeLambdaCheckBox.setChecked(param.optimizeLambda)
         self._par_maxIterLineEdit.setText(str(param.maxIter))
         self._par_robustDataCheckBox.setChecked(param.robustData)
         self._par_blockyModelCheckBox.setChecked(param.blockyModel)

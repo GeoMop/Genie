@@ -116,6 +116,7 @@ class InversionParam:
     snapDistance: float = 1.0
     zWeight: float = 0.7
     lam: float = 20.0
+    optimizeLambda: bool = False
     maxIter: int = 20
     robustData: bool = False
     blockyModel: bool = False
