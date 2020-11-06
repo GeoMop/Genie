@@ -60,7 +60,8 @@ This value is integer from 4 to 10.
 
 ## Inversion parameters
 
-**lambda** - Float, global regularization parameter. Higher values leads to smoother result, lower values to overfitting. Default value is 20. 
+**minResistivity, maxResistivity** - Minimal resp. maximal value of resistivity allowed in model.
+**lambda** - Float, global regularization parameter. Higher values leads to smoother result, lower values to overfitting. Default value is 20.
 **robustData** - Boolean, if set to 1, the [L1 minimization scheme](https://library.seg.org/doi/abs/10.1190/1.1440378) is used. Can be benefitial in the case of significant outliers in the data, but 
 not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.
 **zWeight** Float, anisotropic regularization parameter. Default value 1 prescribes an isometric regularization. For the values less then 1 the regularization in the vertical direction (Z-axis) is
@@ -118,8 +119,6 @@ Columns meas_number, ca, cb, pa, pb, I, V, AppRes, std are from measurement file
   after first inversion computation is possible to import to project file inversions/inversion_name/point_cloud_cut.xyz,
   which contains cut point cloud
 - in installation are included softwares Meshlab and Gmsh, which can be used for showing and editing of point clouds and meshes
-- if inversion ends with error "response for model with negative or zero resistivity is not defined" try increase value "lambda",
-this occurs when inversion problem has much variables but little measurements data
 
 ## Description of files in inversion directory
 - inv.conf - configuration of inversin

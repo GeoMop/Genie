@@ -138,6 +138,20 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
+        if self.genie.method == GenieMethod.ERT:
+            text = "minResistivity:"
+        else:
+            text = "minVelocity:"
+        self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
+        self._parameters_formLayout.addRow(text, self._par_minModelLineEdit)
+
+        if self.genie.method == GenieMethod.ERT:
+            text = "maxResistivity:"
+        else:
+            text = "maxVelocity:"
+        self._par_maxModelLineEdit = QtWidgets.QLineEdit("100000.0")
+        self._parameters_formLayout.addRow(text, self._par_maxModelLineEdit)
+
         self._par_zWeightLineEdit = QtWidgets.QLineEdit("0.7")
         self._parameters_formLayout.addRow("zWeight:", self._par_zWeightLineEdit)
 
@@ -354,6 +368,8 @@ class RunInvDlg(QtWidgets.QDialog):
 
             param.snapDistance = float(self._par_snapDistanceLineEdit.text())
 
+            param.minModel = float(self._par_minModelLineEdit.text())
+            param.maxModel = float(self._par_maxModelLineEdit.text())
             param.zWeight = float(self._par_zWeightLineEdit.text())
             param.lam = float(self._par_lamLineEdit.text())
             param.optimizeLambda = self._par_optimizeLambdaCheckBox.isChecked()
@@ -399,6 +415,8 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_snapDistanceLineEdit.setText(str(param.snapDistance))
 
+        self._par_minModelLineEdit.setText(str(param.minModel))
+        self._par_maxModelLineEdit.setText(str(param.maxModel))
         self._par_zWeightLineEdit.setText(str(param.zWeight))
         self._par_lamLineEdit.setText(str(param.lam))
         self._par_optimizeLambdaCheckBox.setChecked(param.optimizeLambda)
