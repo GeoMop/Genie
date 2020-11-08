@@ -30,6 +30,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         label = QtWidgets.QLabel("Point cloud file:")
         file_layout.addWidget(label)
         self._file_edit = QtWidgets.QLineEdit()
+        self._file_edit.returnPressed.connect(self._handle_read_action)
         file_layout.addWidget(self._file_edit)
         browse_button = QtWidgets.QPushButton("Browse...")
         browse_button.clicked.connect(self._handle_browse_action)
@@ -193,8 +194,14 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self.accept()
 
     def _handle_browse_action(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self, "Open point cloud file", "", "Point Cloud Files (*)")
-        self._file_edit.setText(file[0])
+        file = QtWidgets.QFileDialog.getOpenFileName(self, "Open point cloud file", "", "Point Cloud Files (*)")[0]
+        if file:
+            self._file_edit.setText(file)
+
+            app = QtWidgets.QApplication.instance()
+            app.processEvents(QtCore.QEventLoop.AllEvents, 0)
+
+            self._handle_read_action()
 
     def reject(self):
         # remove tmp files
@@ -204,6 +211,11 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
             os.remove(self._point_cloud_pixmap_file)
 
         super().reject()
+
+    def keyPressEvent(self, evt):
+        if evt.key() == QtCore.Qt.Key_Enter or evt.key() == QtCore.Qt.Key_Return:
+            return
+        super().keyPressEvent(evt)
 
 
 if __name__ == '__main__':

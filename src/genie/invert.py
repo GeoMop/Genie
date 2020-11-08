@@ -199,8 +199,7 @@ def inv_ert(inversion_conf, project_conf):
     #inv.setRelativeError(pg.RVector(data.size(), 0.03))
     fop.regionManager().setZWeight(inv_par.zWeight)
     inv.setLambda(inv_par.lam)
-    if inv_par.optimizeLambda:
-        inv.setOptimizeLambda(True)
+    inv.setOptimizeLambda(inv_par.optimizeLambda)
     inv.setMaxIter(inv_par.maxIter)
     inv.setRobustData(inv_par.robustData)
     inv.setBlockyModel(inv_par.blockyModel)
@@ -353,8 +352,7 @@ def inv_st(inversion_conf, project_conf):
     #inv.setRelativeError(pg.RVector(data.size(), 0.03))
     fop.regionManager().setZWeight(inv_par.zWeight)
     inv.setLambda(inv_par.lam)
-    if inv_par.optimizeLambda:
-        inv.setOptimizeLambda(True)
+    inv.setOptimizeLambda(inv_par.optimizeLambda)
     inv.setMaxIter(inv_par.maxIter)
     inv.setRobustData(inv_par.robustData)
     inv.setBlockyModel(inv_par.blockyModel)

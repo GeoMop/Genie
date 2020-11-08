@@ -525,10 +525,10 @@ class MeshCutTool:
         self.line2 = MeshCutToolLine(pen, z)
         self.line3 = MeshCutToolLine(pen, z)
         self.line4 = MeshCutToolLine(pen, z)
-        self.margin_line1 = MeshCutToolLine(margin_pen, z)
-        self.margin_line2 = MeshCutToolLine(margin_pen, z)
-        self.margin_line3 = MeshCutToolLine(margin_pen, z)
-        self.margin_line4 = MeshCutToolLine(margin_pen, z)
+        # self.margin_line1 = MeshCutToolLine(margin_pen, z)
+        # self.margin_line2 = MeshCutToolLine(margin_pen, z)
+        # self.margin_line3 = MeshCutToolLine(margin_pen, z)
+        # self.margin_line4 = MeshCutToolLine(margin_pen, z)
 
         # add items to scene
         self._scene.addItem(self.line1)
@@ -538,10 +538,10 @@ class MeshCutTool:
         self._scene.addItem(self.point0)
         self._scene.addItem(self.point1)
         self._scene.addItem(self.point2)
-        self._scene.addItem(self.margin_line1)
-        self._scene.addItem(self.margin_line2)
-        self._scene.addItem(self.margin_line3)
-        self._scene.addItem(self.margin_line4)
+        # self._scene.addItem(self.margin_line1)
+        # self._scene.addItem(self.margin_line2)
+        # self._scene.addItem(self.margin_line3)
+        # self._scene.addItem(self.margin_line4)
 
         self.update()
 
@@ -577,10 +577,10 @@ class MeshCutTool:
         self.point0.setPos(a[0], a[1])
         self.point1.setPos(b[0], b[1])
         self.point2.setPos(d[0], d[1])
-        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
-        self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
-        self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
-        self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
+        # self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
+        # self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
+        # self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
+        # self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
 
     def point0_move_to(self, pos):
         self.origin = np.array([pos.x(), pos.y()])
@@ -1076,6 +1076,10 @@ class Diagram(QtWidgets.QGraphicsScene):
 
         if rect.isEmpty():
             rect = QtCore.QRectF(-100, -100, 200, 200)
+
+        w = rect.width()
+        h = rect.height()
+        rect = rect.marginsAdded(QtCore.QMarginsF(w/2, h/2, w/2, h/2))
 
         self.setSceneRect(rect)
 

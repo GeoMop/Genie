@@ -15,10 +15,12 @@ def cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=False):
     gen_vecs = [v1, v2, np.array([0.0, 0.0, z_max - z_min])]
 
     if margin:
-        m = mc.margin
-        gn = [v / np.linalg.norm(v) for v in gen_vecs]
-        base_point -= sum(gn) * m
-        gen_vecs = [v + n * (m * 2) for v, n in zip(gen_vecs, gn)]
+        # m = mc.margin
+        # gn = [v / np.linalg.norm(v) for v in gen_vecs]
+        # base_point -= sum(gn) * m
+        # gen_vecs = [v + n * (m * 2) for v, n in zip(gen_vecs, gn)]
+        base_point -= sum(gen_vecs) / 2
+        gen_vecs = [v * 2 for v in gen_vecs]
 
     return base_point, gen_vecs
 

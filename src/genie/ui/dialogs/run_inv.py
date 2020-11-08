@@ -56,11 +56,11 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_worDirLabel = QtWidgets.QLabel(self._work_dir)
-        self._parameters_formLayout.addRow("workDir:", self._par_worDirLabel)
+        self._parameters_formLayout.addRow("Work dir:", self._par_worDirLabel)
 
         self._par_verboseCheckBox = QtWidgets.QCheckBox()
         self._par_verboseCheckBox.setChecked(True)
-        self._parameters_formLayout.addRow("verbose:", self._par_verboseCheckBox)
+        self._parameters_formLayout.addRow("Verbose:", self._par_verboseCheckBox)
 
         label = QtWidgets.QLabel("Error")
         label.setFont(font)
@@ -85,24 +85,27 @@ class RunInvDlg(QtWidgets.QDialog):
         file = os.path.join(prj_dir, "gallery_mesh.msh")
         if os.path.isfile(file):
             self._par_meshFromComboBox.addItem("Gallery mesh", MeshFrom.GALLERY_MESH)
-        self._parameters_formLayout.addRow("meshFrom:", self._par_meshFromComboBox)
+        self._par_meshFromComboBox.setToolTip("Defines how it is created inversion mesh.")
+        self._parameters_formLayout.addRow("Mesh from:", self._par_meshFromComboBox)
 
         self._par_meshFileLineEdit = QtWidgets.QLineEdit("mesh_out.msh")
         #self._parameters_formLayout.addRow("meshFile:", self._par_meshFileLineEdit)
 
         self._par_reconstructionDepthLineEdit = QtWidgets.QLineEdit("6")
-        self._parameters_formLayout.addRow("reconstructionDepth:", self._par_reconstructionDepthLineEdit)
+        self._par_reconstructionDepthLineEdit.setToolTip('In case that previous option is "Gallery cloud", define how much details will be reconstructed from point cloud. Bigger value means more details. This value is integer from 4 to 10.')
+        self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
 
         self._par_edgeLengthLineEdit = QtWidgets.QLineEdit("1.0")
-        self._parameters_formLayout.addRow("edgeLength:", self._par_edgeLengthLineEdit)
+        self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length.")
+        self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
         self._par_refineMeshCheckBox = QtWidgets.QCheckBox()
         self._par_refineMeshCheckBox.setChecked(True)
-        self._parameters_formLayout.addRow("refineMesh:", self._par_refineMeshCheckBox)
+        self._parameters_formLayout.addRow("Refine mesh:", self._par_refineMeshCheckBox)
 
         self._par_refineP2CheckBox = QtWidgets.QCheckBox()
         self._par_refineP2CheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("refineP2:", self._par_refineP2CheckBox)
+        self._parameters_formLayout.addRow("Refine P2:", self._par_refineP2CheckBox)
 
         self._par_refineMeshCheckBox.stateChanged.connect(self._handle_refine_checkbox_changed)
         self._handle_refine_checkbox_changed()
@@ -132,46 +135,60 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_snapDistanceLineEdit = QtWidgets.QLineEdit("1.0")
-        self._parameters_formLayout.addRow("snapDistance:", self._par_snapDistanceLineEdit)
+        self._par_snapDistanceLineEdit.setToolTip("Electrodes are snapped to gallery surface, this parameter determine maximal snap distance.")
+        self._parameters_formLayout.addRow("Snap distance:", self._par_snapDistanceLineEdit)
 
         label = QtWidgets.QLabel("Inversion")
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
         if self.genie.method == GenieMethod.ERT:
-            text = "minResistivity:"
+            text = "Min resistivity:"
         else:
-            text = "minVelocity:"
+            text = "Min relocity:"
         self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
+        self._par_minModelLineEdit.setToolTip("Minimal value of resistivity/velocity allowed in model.")
         self._parameters_formLayout.addRow(text, self._par_minModelLineEdit)
 
         if self.genie.method == GenieMethod.ERT:
-            text = "maxResistivity:"
+            text = "Max resistivity:"
         else:
-            text = "maxVelocity:"
+            text = "Max velocity:"
         self._par_maxModelLineEdit = QtWidgets.QLineEdit("100000.0")
+        self._par_maxModelLineEdit.setToolTip("Maximal value of resistivity/velocity allowed in model.")
         self._parameters_formLayout.addRow(text, self._par_maxModelLineEdit)
 
         self._par_zWeightLineEdit = QtWidgets.QLineEdit("0.7")
-        self._parameters_formLayout.addRow("zWeight:", self._par_zWeightLineEdit)
+        self._par_zWeightLineEdit.setToolTip("Float, anisotropic regularization parameter. Default value 1 prescribes an isometric regularization. For the values less then 1 the regularization in the vertical direction (Z-axis) is diminished, which can lead to better result for verticaly layered geological structures.")
+        self._parameters_formLayout.addRow("Z weight:", self._par_zWeightLineEdit)
 
         self._par_lamLineEdit = QtWidgets.QLineEdit("20.0")
-        self._parameters_formLayout.addRow("lambda:", self._par_lamLineEdit)
+        self._par_lamLineEdit.setToolTip("Float, global regularization parameter. Higher values leads to smoother result, lower values to overfitting. Default value is 20.")
+        self._parameters_formLayout.addRow("Lambda:", self._par_lamLineEdit)
 
         self._par_optimizeLambdaCheckBox = QtWidgets.QCheckBox()
-        self._par_optimizeLambdaCheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("optimizeLambda:", self._par_optimizeLambdaCheckBox)
+        self._par_optimizeLambdaCheckBox.setChecked(True)
+        self._par_optimizeLambdaCheckBox.setToolTip("If true lambda will be optimized by Lcurve.")
+        self._parameters_formLayout.addRow("Optimize lambda:", self._par_optimizeLambdaCheckBox)
 
         self._par_maxIterLineEdit = QtWidgets.QLineEdit("20")
-        self._parameters_formLayout.addRow("maxIter:", self._par_maxIterLineEdit)
+        self._par_maxIterLineEdit.setToolTip("Maximal number of iterations.")
+        self._parameters_formLayout.addRow("Max iter:", self._par_maxIterLineEdit)
 
         self._par_robustDataCheckBox = QtWidgets.QCheckBox()
         self._par_robustDataCheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("robustData:", self._par_robustDataCheckBox)
+        self._par_robustDataCheckBox.setToolTip("Boolean, if set to 1, the L1 minimization scheme is used. Can be benefitial in the case of significant outliers in the data, but not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.")
+        self._parameters_formLayout.addRow("Robust data:", self._par_robustDataCheckBox)
 
         self._par_blockyModelCheckBox = QtWidgets.QCheckBox()
         self._par_blockyModelCheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("blockyModel:", self._par_blockyModelCheckBox)
+        self._par_blockyModelCheckBox.setToolTip("Boolean, L1 minimization scheme for the regulaization term. Allow non-smooth transitions in the resistivity.")
+        self._parameters_formLayout.addRow("Blocky model:", self._par_blockyModelCheckBox)
+
+        self._par_data_logCheckBox = QtWidgets.QCheckBox()
+        self._par_data_logCheckBox.setChecked(True)
+        self._par_data_logCheckBox.setToolTip("Use logarithmic transformation in data.")
+        self._parameters_formLayout.addRow("Data log:", self._par_data_logCheckBox)
 
         self._par_recalcJacobianCheckBox = QtWidgets.QCheckBox()
         self._par_recalcJacobianCheckBox.setChecked(True)
@@ -182,19 +199,16 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_p3dStepLineEdit = QtWidgets.QLineEdit("1.0")
-        self._parameters_formLayout.addRow("p3dStep:", self._par_p3dStepLineEdit)
+        self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points.")
+        self._parameters_formLayout.addRow("p3d step:", self._par_p3dStepLineEdit)
 
         label = QtWidgets.QLabel("Test options")
         label.setFont(font)
-        self._parameters_formLayout.addRow(label)
-
-        self._par_data_logCheckBox = QtWidgets.QCheckBox()
-        self._par_data_logCheckBox.setChecked(True)
-        self._parameters_formLayout.addRow("data_log:", self._par_data_logCheckBox)
+        #self._parameters_formLayout.addRow(label)
 
         self._par_k_onesCheckBox = QtWidgets.QCheckBox()
         self._par_k_onesCheckBox.setChecked(False)
-        self._parameters_formLayout.addRow("k_ones:", self._par_k_onesCheckBox)
+        #self._parameters_formLayout.addRow("k_ones:", self._par_k_onesCheckBox)
 
         # process
         self._proc = QtCore.QProcess(self)

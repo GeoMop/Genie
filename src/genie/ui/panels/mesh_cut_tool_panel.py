@@ -34,6 +34,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("y:"))
         layout.addWidget(self.origin_y_edit)
         self.center_origin_button = QtWidgets.QPushButton("+")
+        self.center_origin_button.setToolTip("Move origin point to center of area defined by points cloud, electrode positions and map.")
         self.center_origin_button.clicked.connect(self.center_origin)
         self.center_origin_button.setMaximumWidth(20)
         layout.addWidget(self.center_origin_button)
@@ -48,6 +49,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("y:"))
         layout.addWidget(self.gen_vec1_y_edit)
         self.gvp1_button = QtWidgets.QPushButton("L")
+        self.gvp1_button.setToolTip("Sets gen vector perpendicular to other vector.")
         self.gvp1_button.clicked.connect(self.qvp1)
         self.gvp1_button.setMaximumWidth(20)
         layout.addWidget(self.gvp1_button)
@@ -62,6 +64,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("y:"))
         layout.addWidget(self.gen_vec2_y_edit)
         self.gvp2_button = QtWidgets.QPushButton("L")
+        self.gvp2_button.setToolTip("Sets gen vector perpendicular to other vector.")
         self.gvp2_button.clicked.connect(self.qvp2)
         self.gvp2_button.setMaximumWidth(20)
         layout.addWidget(self.gvp2_button)
@@ -79,7 +82,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
 
         # margin
         self.margin_edit = MeshCutToolPanelEdit(self.editing_finished)
-        formLayout.addRow("Margin:", self.margin_edit)
+        #formLayout.addRow("Margin:", self.margin_edit)
 
         self.setLayout(formLayout)
         self.setFixedHeight(self.minimumSizeHint().height())

@@ -29,6 +29,7 @@ import shutil
 
 import numpy as np
 from obspy.signal.trigger import recursive_sta_lta
+import pygimli
 
 
 class InversionPreparation(QtWidgets.QMainWindow):
@@ -612,6 +613,18 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._measurement_model.checkAllMeasurements(False)
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
+
+    def _meas_view_double_click(self, index):
+        measurement = self._measurement_model._measurements[index.row()]
+        if self.genie.method == GenieMethod.ERT:
+            from ..dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
+            dlg = AnalyseMeasurementDlg(self._electrode_groups, measurement, self.genie, self)
+            dlg.exec()
+        else:
+            from ..dialogs.first_arrival_dialog import FirstArrivalDlg
+            dlg = FirstArrivalDlg(measurement, self.genie, self)
+            dlg.exec()
+            self._save_current_inversion()
 
     def _handle_analyse_measurementButton(self):
         index = self.measurement_view.view.currentIndex()

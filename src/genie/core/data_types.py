@@ -120,7 +120,7 @@ class InversionParam:
     maxModel: float = 1e+5
     zWeight: float = 0.7
     lam: float = 20.0
-    optimizeLambda: bool = False
+    optimizeLambda: bool = True
     maxIter: int = 20
     robustData: bool = False
     blockyModel: bool = False

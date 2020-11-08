@@ -1,7 +1,7 @@
 from xlsreader.xls_parser import parse_ert, parse_st
 from genie.core.global_const import GenieMethod
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 import os
 
@@ -24,6 +24,7 @@ class XlsReaderDialog(QtWidgets.QDialog):
         label = QtWidgets.QLabel("Excel file:")
         file_layout.addWidget(label)
         self._file_edit = QtWidgets.QLineEdit()
+        self._file_edit.returnPressed.connect(self._handle_read_action)
         file_layout.addWidget(self._file_edit)
         browse_button = QtWidgets.QPushButton("Browse...")
         browse_button.clicked.connect(self._handle_browse_action)
@@ -103,5 +104,16 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self.accept()
 
     def _handle_browse_action(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self, "Open excel file", "", "Excel Files (*.xlsx)")
-        self._file_edit.setText(file[0])
+        file = QtWidgets.QFileDialog.getOpenFileName(self, "Open excel file", "", "Excel Files (*.xlsx)")[0]
+        if file:
+            self._file_edit.setText(file)
+
+            app = QtWidgets.QApplication.instance()
+            app.processEvents(QtCore.QEventLoop.AllEvents, 0)
+
+            self._handle_read_action()
+
+    def keyPressEvent(self, evt):
+        if evt.key() == QtCore.Qt.Key_Enter or evt.key() == QtCore.Qt.Key_Return:
+            return
+        super().keyPressEvent(evt)

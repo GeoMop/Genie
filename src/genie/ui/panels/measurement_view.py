@@ -117,7 +117,7 @@ class MeasurementGroupView(QtWidgets.QWidget):
             label = "Edit first arrivals"
         self.analyse_measurementButton = QtWidgets.QPushButton(label)
         self.analyse_measurementButton.clicked.connect(main_window._handle_analyse_measurementButton)
-        layout.addWidget(self.analyse_measurementButton)
+        #layout.addWidget(self.analyse_measurementButton)
 
         self.run_invButton = QtWidgets.QPushButton("Run inversion")
         self.run_invButton.clicked.connect(main_window._handle_run_invButton)
@@ -126,3 +126,5 @@ class MeasurementGroupView(QtWidgets.QWidget):
         self.view.setRootIsDecorated(False)
         self.view.setModel(model)
         #self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+
+        self.view.doubleClicked.connect(main_window._meas_view_double_click)
