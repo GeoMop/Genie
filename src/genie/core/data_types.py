@@ -27,6 +27,7 @@ class ElectrodeGroup:
     wall: str = ""
     height: str = ""
     electrodes: List[Electrode] = attr.ib(factory=list)
+    measurement_ids: List[int] = attr.ib(factory=list)
 
 
 @json_data.jsondata
@@ -38,6 +39,7 @@ class Measurement:
     el_start: int = 0
     el_stop: int = 0
     meas_map: Dict[str, int] = attr.ib(factory=dict)
+    eg_ids: List[int] = attr.ib(factory=list)
 
     # st extension
     source_id: int = 0

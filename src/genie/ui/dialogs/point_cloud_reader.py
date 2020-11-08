@@ -141,7 +141,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
             pixmap = QtGui.QPixmap(x_max_min / max_min_pixmap_size, y_max_min / max_min_pixmap_size)
             pixmap.fill(QtCore.Qt.transparent)
             painter = QtGui.QPainter(pixmap)
-            pen = QtGui.QPen(QtGui.QColor("green"))
+            pen = QtGui.QPen(QtGui.QColor("black"))
             painter.setPen(pen)
             with open(self._out_file, "w") as fd_out:
                 fd.seek(0)

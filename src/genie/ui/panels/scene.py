@@ -40,10 +40,13 @@ class Cursor:
 class Region:
     # _cols = ["cyan", "magenta", "red", "darkRed", "darkCyan", "darkMagenta",
     #          "green", "darkBlue", "yellow","blue"]
-    _cols = ["cyan", "magenta", "darkRed", "darkCyan", "darkMagenta",
-             "darkBlue", "yellow","blue"]
+    # _cols = ["cyan", "magenta", "darkRed", "darkCyan", "darkMagenta",
+    #          "darkBlue", "yellow","blue"]
     # red and green is used for cut tool resp. cloud pixmap
+    _cols = ["darkRed", "darkGreen", "darkBlue", "darkCyan", "darkMagenta", "#808000"]
+    _cols_sel = ["red", "green", "blue", "cyan", "magenta", "yellow"]
     colors = [ QtGui.QColor(col) for col in _cols]
+    colors_selected = [QtGui.QColor(col) for col in _cols_sel]
     id_next = 1
 
 
@@ -201,10 +204,13 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
         brush_pen = cls.__pen_table.setdefault(color, cls.make_pen(QtGui.QColor(color)))
         return brush_pen
 
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color, color_selected, el_group):
         self.my_x = x
         self.my_y = y
         self.color = color
+        self.color_selected = color_selected
+        self.selected = False
+        self.el_group = el_group
         super().__init__(-self.SIZE, -self.SIZE, 2*self.SIZE, 2*self.SIZE, )
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         # do not scale points whenzooming
@@ -214,20 +220,27 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
 
     def paint(self, painter, option, widget):
         if self.scene().selection.is_selected(self):
-            painter.setBrush(GsPoint.no_brush)
+            painter.setBrush(GsPoint2.no_brush)
             painter.setPen(self.region_pen)
         else:
             painter.setBrush(self.region_brush)
-            painter.setPen(GsPoint.no_pen)
+            painter.setPen(GsPoint2.no_pen)
         painter.drawEllipse(self.rect())
 
     def update(self):
         self.setPos(self.my_x, self.my_y)
 
-        self.region_brush, self.region_pen = GsPoint.pen_table(self.color)
+        if self.selected:
+            self.region_brush, self.region_pen = GsPoint2.pen_table(self.color_selected)
+        else:
+            self.region_brush, self.region_pen = GsPoint2.pen_table(self.color)
 
         self.setZValue(self.STD_ZVALUE)
         super().update()
+
+    def set_selected(self, selected=True):
+        self.selected = selected
+        self.update()
 
 
 class GsSegment(QtWidgets.QGraphicsLineItem):
@@ -1186,7 +1199,9 @@ class DiagramView(QtWidgets.QGraphicsView):
             for el in eg.electrodes:
                 x = el.x
                 y = el.y
-                gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name())
+                gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name(),
+                               Region.colors_selected[color_ind % len(Region.colors)].name(),
+                               (eg.gallery, eg.wall, eg.height))
                 self._scene.addItem(gpt)
                 gpt.update()
                 self.el_map[id(el)] = gpt
@@ -1201,6 +1216,10 @@ class DiagramView(QtWidgets.QGraphicsView):
             self._scene.removeItem(item)
         self.el_map.clear()
         self._scene.electrode_item_list.clear()
+
+    def update_selected_electrodes(self, selected_groups):
+        for item in self._scene.electrode_item_list:
+            item.set_selected(item.el_group in selected_groups)
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1367,6 +1386,7 @@ class DiagramView(QtWidgets.QGraphicsView):
         pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap.transformed(QtGui.QTransform.fromScale(1, -1)))
 
         pixmap_item.setZValue(-90)
+        pixmap_item.setOpacity(0.5)
         offset_x = cfg.point_cloud_origin_x + cfg.point_cloud_pixmap_x_min
         offset_y = cfg.point_cloud_origin_y + cfg.point_cloud_pixmap_y_min
         pixmap_item.setTransformOriginPoint(offset_x, offset_y)
@@ -1390,7 +1410,7 @@ class DiagramView(QtWidgets.QGraphicsView):
         if not os.path.isfile(file_name):
             return
 
-        pen = QtGui.QPen(QtGui.QColor("blue"), 0, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor("black"), 0, QtCore.Qt.SolidLine)
 
         mesh = GmshIO(file_name)
 

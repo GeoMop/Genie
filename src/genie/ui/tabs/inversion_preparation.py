@@ -74,7 +74,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.setMinimumWidth(200)
         self.measurement_view.setMaximumWidth(400)
 
-        self.diagram_view.show_electrodes(self._electrode_groups)
+        #self.diagram_view.show_electrodes(self._electrode_groups)
         #self.diagram_view.show_laser2("/home/radek/work/Genie/grid_data.xyz")
         #self.diagram_view.show_laser_mesh("/home/radek/work/Genie/laser/mesh.msh")
         # self.region_panel.selection_changed()
@@ -303,6 +303,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         #self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
+        self._meas_model_data_changed()
 
         if self.genie.method == GenieMethod.ST:
             self._init_first_arrivals()
@@ -363,6 +364,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
+        self._meas_model_data_changed()
 
         self._show_3d()
         self._show_meas_model()
@@ -448,14 +450,16 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         def add_electrode_group(electrode_groups, gallery, wall, height):
             eg = None
-            for item in electrode_groups:
+            for i, item in enumerate(electrode_groups):
                 if item.gallery == gallery and item.wall == wall and item.height == height:
                     eg = item
+                    eg_id = i
                     break
             if eg is None:
                 eg = ElectrodeGroup(gallery=gallery, wall=wall, height=height)
+                eg_id = len(electrode_groups)
                 electrode_groups.append(eg)
-            return eg
+            return eg, eg_id
 
         def add_electrode(group, id, offset, x, y, z, is_receiver):
             group.electrodes.append(Electrode(id=id, offset=offset, x=x, y=y, z=z, is_receiver=is_receiver))
@@ -464,25 +468,40 @@ class InversionPreparation(QtWidgets.QMainWindow):
         for mg in cfg.xls_measurement_groups:
             if not mg.has_error:
                 meas_map = {}
+                eg_ids = []
                 for e in mg.electrodes:
-                    eg = add_electrode_group(self._electrode_groups, e.gallery, e.wall, e.height)
+                    eg, eg_id = add_electrode_group(self._electrode_groups, e.gallery, e.wall, e.height)
+                    eg_ids.append(eg_id)
                     add_electrode(eg, e.id, 0, e.x, e.y, e.z, e.is_receiver)
 
                     meas_map[e.meas_id] = e.id
                 for m in mg.measurements:
                     if not m.has_error:
-                        meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map,
+                        meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map, eg_ids=eg_ids,
                                            source_id=m.source_id, receiver_start=m.receiver_start,
                                            receiver_stop=m.receiver_stop, channel_start=m.channel_start)
                         meas.load_data(self.genie)
+                        m_id = len(self._measurements)
+                        for i in eg_ids:
+                            self._electrode_groups[i].measurement_ids.append(m_id)
                         self._measurements.append(meas)
 
         self._electrode_group_model = ElectrodeGroupModel(self._electrode_groups)
         self.el_group_view.view.setModel(self._electrode_group_model)
         self._measurement_model = MeasurementModel(self._measurements)
+        self._measurement_model.dataChanged.connect(self._meas_model_data_changed)
         self.measurement_view.view.setModel(self._measurement_model)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
+
+    def _meas_model_data_changed(self):
+        checked_eg = set()
+        for i, meas in enumerate(self._measurements):
+            if self._measurement_model._checked[i]:
+                for j in meas.eg_ids:
+                    eg = self._electrode_groups[j]
+                    checked_eg.add((eg.gallery, eg.wall, eg.height))
+        self.diagram_view.update_selected_electrodes(list(checked_eg))
 
     def _init_first_arrivals(self):
         self.genie.current_inversion_cfg.first_arrivals = []
@@ -587,10 +606,12 @@ class InversionPreparation(QtWidgets.QMainWindow):
     def _handle_check_all_measurements(self):
         self._measurement_model.checkAllMeasurements()
         self.measurement_view.view.reset()
+        self._meas_model_data_changed()
 
     def _handle_uncheck_all_measurements(self):
         self._measurement_model.checkAllMeasurements(False)
         self.measurement_view.view.reset()
+        self._meas_model_data_changed()
 
     def _handle_analyse_measurementButton(self):
         index = self.measurement_view.view.currentIndex()
