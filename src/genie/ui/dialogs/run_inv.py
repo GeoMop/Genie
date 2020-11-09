@@ -145,7 +145,7 @@ class RunInvDlg(QtWidgets.QDialog):
         if self.genie.method == GenieMethod.ERT:
             text = "Min resistivity:"
         else:
-            text = "Min relocity:"
+            text = "Min velocity:"
         self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
         self._par_minModelLineEdit.setToolTip("Minimal value of resistivity/velocity allowed in model.")
         self._parameters_formLayout.addRow(text, self._par_minModelLineEdit)
