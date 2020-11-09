@@ -40,13 +40,13 @@ class Cursor:
 class Region:
     # _cols = ["cyan", "magenta", "red", "darkRed", "darkCyan", "darkMagenta",
     #          "green", "darkBlue", "yellow","blue"]
-    # _cols = ["cyan", "magenta", "darkRed", "darkCyan", "darkMagenta",
-    #          "darkBlue", "yellow","blue"]
-    # red and green is used for cut tool resp. cloud pixmap
-    _cols = ["darkRed", "darkGreen", "darkBlue", "darkCyan", "darkMagenta", "#808000"]
-    _cols_sel = ["red", "green", "blue", "cyan", "magenta", "yellow"]
+    _cols = ["cyan", "magenta", "darkRed", "darkCyan", "darkMagenta",
+             "green", "darkBlue", "yellow","blue"]
+    # red is used for cut tool
+    # _cols = ["darkRed", "darkGreen", "darkBlue", "darkCyan", "darkMagenta", "#808000"]
+    # _cols_sel = ["red", "green", "blue", "cyan", "magenta", "yellow"]
     colors = [ QtGui.QColor(col) for col in _cols]
-    colors_selected = [QtGui.QColor(col) for col in _cols_sel]
+    colors_selected = [QtGui.QColor(col) for col in _cols]
     id_next = 1
 
 
@@ -184,9 +184,10 @@ class GsPoint(QtWidgets.QGraphicsEllipseItem):
 
 
 class GsPoint2(QtWidgets.QGraphicsEllipseItem):
-    SIZE = 6
-    STD_ZVALUE = 20+7
-    SELECTED_ZVALUE = 21+7
+    SIZE = 2
+    SIZE_SELECTED = 6
+    STD_ZVALUE = 21+7
+    SELECTED_ZVALUE = 20+7
     __pen_table={}
 
     no_brush = QtGui.QBrush(QtCore.Qt.NoBrush)
@@ -211,7 +212,7 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
         self.color_selected = color_selected
         self.selected = False
         self.el_group = el_group
-        super().__init__(-self.SIZE, -self.SIZE, 2*self.SIZE, 2*self.SIZE, )
+        super().__init__()
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         # do not scale points whenzooming
         #self.setCursor(Cursor.point)
@@ -232,10 +233,13 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
 
         if self.selected:
             self.region_brush, self.region_pen = GsPoint2.pen_table(self.color_selected)
+            self.setRect(-self.SIZE_SELECTED, -self.SIZE_SELECTED, 2 * self.SIZE_SELECTED, 2 * self.SIZE_SELECTED)
+            self.setZValue(self.SELECTED_ZVALUE)
         else:
             self.region_brush, self.region_pen = GsPoint2.pen_table(self.color)
+            self.setRect(-self.SIZE, -self.SIZE, 2 * self.SIZE, 2 * self.SIZE)
+            self.setZValue(self.STD_ZVALUE)
 
-        self.setZValue(self.STD_ZVALUE)
         super().update()
 
     def set_selected(self, selected=True):
