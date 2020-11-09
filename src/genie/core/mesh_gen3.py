@@ -82,13 +82,22 @@ def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, inv_par, project_
     def process_triangle(id0, id1, id2):
         for i in range(6):
             if vert_info[id0].plane_pos[i] <= 0 or vert_info[id1].plane_pos[i] <= 0 or vert_info[id2].plane_pos[i] <= 0:
+                id_out = set()
+                for j in range(6):
+                    if j == i:
+                        continue
+                    # todo: zbytecne resi protilehlou stranu
+                    for k in [id0, id1, id2]:
+                        if vert_info[k].plane_pos[j] <= 0:
+                            id_out.add(k)
+                if len(id_out) >= 3:
+                    return
                 id_inside = []
                 for j in [id0, id1, id2]:
                     if vert_info[j].plane_pos[i] > 0:
                         vids_to_move[i].append(j)
                         id_inside.append(j)
                 if len(id_inside) == 2:
-                    # todo: asi vznikaji edge, ktere nejsou v bw_edges
                     edge = (id_inside[0], id_inside[1])
                     if edge in plane_edges[i]:
                         plane_edges[i].remove(edge)
@@ -133,6 +142,8 @@ def gen(gallery_mesh_file, out_brep_file, mesh_cut_tool_param, inv_par, project_
         two_side = []
         for id, data in gallery_mesh.elements.items():
             el_type, tags, nodes = data
+            if el_type != 2:
+                continue
             count = 0
             for n in nodes:
                 if n in vids_to_move_set[i]:
