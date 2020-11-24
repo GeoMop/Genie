@@ -417,8 +417,6 @@ def save_csv(paraDomain, model, file_name):
 def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
     """Saves result as .p3d file."""
     base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param)
-    base_point[0] += - 622000
-    base_point[1] += - 1128000
 
     x_nodes = math.floor(np.linalg.norm(gen_vecs[0]) / step) + 1
     y_nodes = math.floor(np.linalg.norm(gen_vecs[1]) / step) + 1
@@ -525,7 +523,7 @@ def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
             fd_p3d.write("{} {} {}\n".format(x_nodes, y_nodes, z_nodes))
 
             fd_q.write("{} {} {}\n".format(x_nodes, y_nodes, z_nodes))
-            fd_q.write("{} {} {} {}\n".format(0.0, 0.0, 0.0, 0.0))
+            fd_q.write("{:.10g} {:.10g} {:.10g} {:.10g}\n".format(0.0, 0.0, 0.0, 0.0))
 
             x_list = []
             y_list = []
@@ -551,7 +549,7 @@ def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
             for v in z_list:
                 p3d_write("{:.10g}".format(v))
 
-            s = "{}".format(0.0)
+            s = "{:.10g}".format(0.0)
             for _ in range(x_nodes * y_nodes * z_nodes * 4):
                 q_write(s)
 
