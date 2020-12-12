@@ -14,11 +14,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class RunInvDlg(QtWidgets.QDialog):
     def __init__(self, electrode_groups, measurements, genie, parent=None):
-        super().__init__(parent)
+        super().__init__()
 
         self._electrode_groups = electrode_groups
         self._measurements = measurements
         self.genie = genie
+        self._parent = parent
 
         #self._work_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "work_dir")
         #self._work_dir = "/home/radek/work/Genie/projects/prj2/inversions/inv_1"
@@ -27,7 +28,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self.setWindowTitle("Run inversion")
 
-        grid = QtWidgets.QGridLayout(self)
+        main_layout = QtWidgets.QVBoxLayout()
 
         # edit for process output
         self._output_edit = QtWidgets.QTextEdit()
@@ -35,17 +36,17 @@ class RunInvDlg(QtWidgets.QDialog):
         font = QtGui.QFont("monospace")
         font.setStyleHint(QtGui.QFont.TypeWriter)
         self._output_edit.setFont(font)
-        grid.addWidget(self._output_edit, 0, 0, 4, 6)
+        main_layout.addWidget(self._output_edit)
 
         # label for showing status
         self._status_label = QtWidgets.QLabel()
         self._set_status("Ready")
         self._status_label.setMaximumHeight(40)
-        grid.addWidget(self._status_label, 4, 0, 1, 1)
+        main_layout.addWidget(self._status_label)
 
         # parameters form
         self._parameters_formLayout = QtWidgets.QFormLayout()
-        grid.addLayout(self._parameters_formLayout, 5, 0)
+        main_layout.addLayout(self._parameters_formLayout)
 
         font = QtGui.QFont()
         font.setPointSize(10)
@@ -219,18 +220,20 @@ class RunInvDlg(QtWidgets.QDialog):
         self._proc.error.connect(self._proc_error)
 
         # buttons
+        button_box = QtWidgets.QDialogButtonBox()
         self._start_button = QtWidgets.QPushButton("Start", self)
         self._start_button.clicked.connect(self._start)
-        grid.addWidget(self._start_button, 6, 3)
+        button_box.addButton(self._start_button, QtWidgets.QDialogButtonBox.ActionRole)
         self._kill_button = QtWidgets.QPushButton("Kill", self)
         self._kill_button.clicked.connect(self._proc.kill)
         self._kill_button.setEnabled(False)
-        grid.addWidget(self._kill_button, 6, 4)
+        button_box.addButton(self._kill_button, QtWidgets.QDialogButtonBox.DestructiveRole)
         self._close_button = QtWidgets.QPushButton("Close", self)
         self._close_button.clicked.connect(self.reject)
-        grid.addWidget(self._close_button, 6, 5)
+        button_box.addButton(self._close_button, QtWidgets.QDialogButtonBox.RejectRole)
+        main_layout.addWidget(button_box)
 
-        self.setLayout(grid)
+        self.setLayout(main_layout)
 
         self.setMinimumSize(500, 600)
         self.resize(700, 950)
@@ -281,7 +284,7 @@ class RunInvDlg(QtWidgets.QDialog):
     def _start(self):
         # save inversion config
         self.genie.current_inversion_cfg.inversion_param = self._to_inversion_param()
-        self.parent()._save_current_inversion()
+        self._parent._save_current_inversion()
 
         # p3d to big
         if False: # todo: nastavit podminku !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -345,7 +348,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         # save inversion config
         self.genie.current_inversion_cfg.inversion_param = self._to_inversion_param()
-        self.parent()._save_current_inversion()
+        self._parent._save_current_inversion()
 
         super().reject()
 
