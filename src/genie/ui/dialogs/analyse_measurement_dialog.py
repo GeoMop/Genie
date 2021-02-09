@@ -4,6 +4,7 @@ Dialog for analysing measurement.
 
 from genie.core import ert_prepare
 from genie.core.data_types import InversionParam
+from genie.core import misc
 
 import os
 import sys
@@ -89,7 +90,7 @@ class AnalyseMeasurementDlg(QtWidgets.QDialog):
 
         data, meas_info = ert_prepare.prepare(self._electrode_groups, [self._measurement])
 
-        k = pg.geometricFactors(data)
+        k = misc.geometricFactors(data)
 
         self._output_edit.append("ca  cb  pa  pb  I[A]      V[V]     std    AppRes[Ohmm] AppResGimli[Ohmm] ratio")
         self._output_edit.append("------------------------------------------------------------------------------")

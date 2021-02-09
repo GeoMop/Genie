@@ -18,6 +18,7 @@ from genie.core import mesh_gen2, mesh_gen3, mesh_surf, meshlab_script_gen
 from genie.core import cut_point_cloud
 from genie.core.data_types import MeasurementsInfo, MeshFrom
 from genie.core.global_const import GenieMethod
+from genie.core import misc
 from bgem.gmsh.gmsh_io import GmshIO
 
 import numpy as np
@@ -88,10 +89,10 @@ def inv_ert(inversion_conf, project_conf):
     if inv_par.k_ones:
         data.set("k", np.ones(data.size()))
     else:
-        data.set("k", pg.geometricFactors(data))
+        data.set("k", misc.geometricFactors(data))
     #data.set("err", pb.Resistivity.estimateError(data, absoluteUError=0.0001, relativeError=0.03))
     #data.set("k", np.ones(data.size()))
-    #data.set("k", pg.geometricFactors(data))
+    #data.set("k", misc.geometricFactors(data))
     data.set("rhoa", data("u") / data("i") * data("k"))
     tolerance = 1e-12
     #data.markValid(np.abs(data('rhoa')) > tolerance)
@@ -208,7 +209,7 @@ def inv_ert(inversion_conf, project_conf):
     pc = fop.regionManager().parameterCount()
     if inv_par.k_ones:
         # hack of gimli hack
-        v = pg.RVector(pg.RVector(pc, pg.median(data('rhoa') * pg.geometricFactors(data))))
+        v = pg.RVector(pg.RVector(pc, pg.median(data('rhoa') * misc.geometricFactors(data))))
         v[0] += tolerance * 2
         startModel = v
     else:
