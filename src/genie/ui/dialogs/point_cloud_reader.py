@@ -305,7 +305,6 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
                 self._post_thread()
 
     def reject(self):
-        print("reject")
         if self._thread is not None:
             self._stop_thread = True
             self._closing = True

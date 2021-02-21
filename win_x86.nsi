@@ -195,7 +195,7 @@ Section "Runtime Environment" SecRuntime
   File "${BUILD_DIR}\gmsh_sdk-4.5.6.post1-py3-none-any.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh_sdk-4.5.6.post1-py3-none-any.whl"'
   File "${BUILD_DIR}\bgem-0.2.0-py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bgem-0.2.0-py3-none-any.whl"'
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bgem-0.2.0_test-py3-none-any.whl"'
 
   # Install vtk.
   SetOutPath $INSTDIR\prerequisites

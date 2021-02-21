@@ -16,7 +16,7 @@ def main(inv_par, project_conf, max_dist=1.0):
                            project_conf.point_cloud_origin_y,
                            project_conf.point_cloud_origin_z])
     elif inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
-        mesh_file = "inv_mesh_tmp.msh"
+        mesh_file = "inv_mesh_tmp.msh2"
         offset = np.array( [0.0, 0.0, 0.0])
     else:
         mesh_file = "../../gallery_mesh.msh"

@@ -53,7 +53,7 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
         v7s = bw_surface._bs_surface.eval(v7l[0], v7l[1])
     except IndexError:
         print("Error: Mesh cut area must be inside surface point cloud.")
-        return False
+        return False, bw_surface
 
     v2h = v2s[2] - base_point[2]
     v3h = v3s[2] - base_point[2]
@@ -85,20 +85,20 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     faces = []
 
     # top
-    e2.attach_to_plane(bw_surface, (v2l[0], v2l[1]), (v3l[0], v3l[1]))
-    e11.attach_to_plane(bw_surface, (v3l[0], v3l[1]), (v7l[0], v7l[1]))
-    e6.attach_to_plane(bw_surface, (v6l[0], v6l[1]), (v7l[0], v7l[1]))
-    e10.attach_to_plane(bw_surface, (v2l[0], v2l[1]), (v6l[0], v6l[1]))
+    e2.attach_to_surface(bw_surface, (v2l[0], v2l[1]), (v3l[0], v3l[1]))
+    e11.attach_to_surface(bw_surface, (v3l[0], v3l[1]), (v7l[0], v7l[1]))
+    e6.attach_to_surface(bw_surface, (v6l[0], v6l[1]), (v7l[0], v7l[1]))
+    e10.attach_to_surface(bw_surface, (v2l[0], v2l[1]), (v6l[0], v6l[1]))
 
     faces.append(bw.Face([bw.Wire([e2, e11, e6, e10])], surface=bw_surface))
 
     # bottom
     surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[0], v5.point + gen_vecs[1]])
 
-    e4.attach_to_plane(surf, (1, 1), (1, 0))
-    e9.attach_to_plane(surf, (1, 0), (0, 0))
-    e8.attach_to_plane(surf, (0, 1), (0, 0))
-    e12.attach_to_plane(surf, (1, 1), (0, 1))
+    e4.attach_to_surface(surf, (1, 1), (1, 0))
+    e9.attach_to_surface(surf, (1, 0), (0, 0))
+    e8.attach_to_surface(surf, (0, 1), (0, 0))
+    e12.attach_to_surface(surf, (1, 1), (0, 1))
 
     faces.append(bw.Face([bw.Wire([e4, e9, e8, e12])], surface=surf))
 
@@ -106,10 +106,10 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     surf, vtxs_uv = bw.Approx.plane([v1.point, v1.point + gen_vecs[1], v1.point + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e1.attach_to_plane(surf, (0, 0), (0, v2h))
-    e2.attach_to_plane(surf, (0, v2h), (1, v3h))
-    e3.attach_to_plane(surf, (1, v3h), (1, 0))
-    e4.attach_to_plane(surf, (1, 0), (0, 0))
+    e1.attach_to_surface(surf, (0, 0), (0, v2h))
+    e2.attach_to_surface(surf, (0, v2h), (1, v3h))
+    e3.attach_to_surface(surf, (1, v3h), (1, 0))
+    e4.attach_to_surface(surf, (1, 0), (0, 0))
 
     faces.append(bw.Face([bw.Wire([e1, e2, e3, e4])], surface=surf))
 
@@ -117,10 +117,10 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[0], v5.point + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e1.attach_to_plane(surf, (1, 0), (1, v2h))
-    e10.attach_to_plane(surf, (1, v2h), (0, v6h))
-    e5.attach_to_plane(surf, (0, 0), (0, v6h))
-    e9.attach_to_plane(surf, (1, 0), (0, 0))
+    e1.attach_to_surface(surf, (1, 0), (1, v2h))
+    e10.attach_to_surface(surf, (1, v2h), (0, v6h))
+    e5.attach_to_surface(surf, (0, 0), (0, v6h))
+    e9.attach_to_surface(surf, (1, 0), (0, 0))
 
     faces.append(bw.Face([bw.Wire([e1, e10, e5, e9])], surface=surf))
 
@@ -128,10 +128,10 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     surf, vtxs_uv = bw.Approx.plane([v8.point, v8.point + gen_vecs[0], v8.point + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e3.attach_to_plane(surf, (1, v3h), (1, 0) )
-    e12.attach_to_plane(surf, (1, 0), (0, 0) )
-    e7.attach_to_plane(surf, (0, v7h), (0, 0) )
-    e11.attach_to_plane(surf, (1, v3h), (0, v7h) )
+    e3.attach_to_surface(surf, (1, v3h), (1, 0) )
+    e12.attach_to_surface(surf, (1, 0), (0, 0) )
+    e7.attach_to_surface(surf, (0, v7h), (0, 0) )
+    e11.attach_to_surface(surf, (1, v3h), (0, v7h) )
 
     faces.append(bw.Face([bw.Wire([e3, e12, e7, e11])], surface=surf))
 
@@ -139,10 +139,10 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[1], v5.point + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e5.attach_to_plane(surf, (0, 0), (0, v6h))
-    e6.attach_to_plane(surf, (0, v6h), (1, v7h))
-    e7.attach_to_plane(surf, (1, v7h), (1, 0))
-    e8.attach_to_plane(surf, (1, 0), (0, 0))
+    e5.attach_to_surface(surf, (0, 0), (0, v6h))
+    e6.attach_to_surface(surf, (0, v6h), (1, v7h))
+    e7.attach_to_surface(surf, (1, v7h), (1, 0))
+    e8.attach_to_surface(surf, (1, 0), (0, 0))
 
     faces.append(bw.Face([bw.Wire([e5, e6, e7, e8])], surface=surf))
 
@@ -154,6 +154,6 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     c1 = bw.Compound([s1])
 
     with open(out_brep_file, "w") as f:
-        bw.write_model(f, c1, bw.Location())
+        bw.write_model(f, c1)
 
-    return True
+    return True, bw_surface
