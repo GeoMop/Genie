@@ -192,8 +192,10 @@ Section "Runtime Environment" SecRuntime
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pybind11-2.5.0-py2.py3-none-any.whl"'
   File "${BUILD_DIR}\bih-1.0.1-cp37-cp37m-win_amd64.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bih-1.0.1-cp37-cp37m-win_amd64.whl"'
-  File "${BUILD_DIR}\gmsh_sdk-4.5.6.post1-py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh_sdk-4.5.6.post1-py3-none-any.whl"'
+  #File "${BUILD_DIR}\gmsh_sdk-4.5.6.post1-py3-none-any.whl"
+  #ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh_sdk-4.5.6.post1-py3-none-any.whl"'
+  File "${BUILD_DIR}\gmsh-4.7.1-py3-none-any.whl"
+  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh-4.7.1-py3-none-any.whl"'
   File "${BUILD_DIR}\bgem-0.2.0_test-py3-none-any.whl"
   ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bgem-0.2.0_test-py3-none-any.whl"'
 
