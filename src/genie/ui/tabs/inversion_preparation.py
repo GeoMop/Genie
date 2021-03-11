@@ -99,6 +99,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self._enable_project_ctrl(False)
 
+        self._selection_disable = False
+
     def _init_docks(self):
         """Initializes docks"""
         if self.genie.method == GenieMethod.ERT:
@@ -124,8 +126,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
     def _enable_project_ctrl(self, enable=True):
         self.main_window.menuBar.inversions.setEnabled(enable)
-        self.measurement_view.check_allButton.setEnabled(enable)
-        self.measurement_view.uncheck_allButton.setEnabled(enable)
+        self.measurement_view.select_allButton.setEnabled(enable)
+        self.measurement_view.addButton.setEnabled(enable)
+        self.measurement_view.removeButton.setEnabled(enable)
         self.measurement_view.analyse_measurementButton.setEnabled(enable)
         self.measurement_view.run_invButton.setEnabled(enable)
         self.main_window.menuBar.file.actionCloseProject.setEnabled(enable)
@@ -478,7 +481,18 @@ class InversionPreparation(QtWidgets.QMainWindow):
                     meas_map[e.meas_id] = e.id
                 for m in mg.measurements:
                     if not m.has_error:
+                        if self.genie.method == GenieMethod.ERT:
+                            el_ids = list(meas_map.values())
+                            el_rec_ids = []
+                        else:
+                            el_ids = [m.source_id]
+                            if m.receiver_stop >= m.receiver_start:
+                                el_rec_ids = list(range(m.receiver_start, m.receiver_stop + 1))
+                            else:
+                                el_rec_ids = list(range(m.receiver_start, m.receiver_stop - 1, -1))
+
                         meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map, eg_ids=eg_ids,
+                                           el_ids=el_ids, el_rec_ids=el_rec_ids,
                                            source_id=m.source_id, receiver_start=m.receiver_start,
                                            receiver_stop=m.receiver_stop, channel_start=m.channel_start)
                         meas.load_data(self.genie)
@@ -489,20 +503,68 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self._electrode_group_model = ElectrodeGroupModel(self._electrode_groups)
         self.el_group_view.view.setModel(self._electrode_group_model)
+        sel = self.el_group_view.view.selectionModel()
+        sel.selectionChanged.connect(self._el_group_view_sel_change)
         self._measurement_model = MeasurementModel(self._measurements)
         self._measurement_model.dataChanged.connect(self._meas_model_data_changed)
         self.measurement_view.view.setModel(self._measurement_model)
+        sel = self.measurement_view.view.selectionModel()
+        sel.selectionChanged.connect(self._meas_view_sel_change)
 
         self.diagram_view.show_electrodes(self._electrode_groups)
 
     def _meas_model_data_changed(self):
-        checked_eg = set()
+        checked_el_ids = set()
+        checked_el_rec_ids = set()
         for i, meas in enumerate(self._measurements):
             if self._measurement_model._checked[i]:
-                for j in meas.eg_ids:
-                    eg = self._electrode_groups[j]
-                    checked_eg.add((eg.gallery, eg.wall, eg.height))
-        self.diagram_view.update_selected_electrodes(list(checked_eg))
+                checked_el_ids = checked_el_ids.union(set(meas.el_ids))
+                checked_el_rec_ids = checked_el_rec_ids.union(set(meas.el_rec_ids))
+        self.diagram_view.update_selected_electrodes(list(checked_el_ids), list(checked_el_rec_ids))
+
+    def _el_group_view_sel_change(self, selected, deselected):
+        if self._selection_disable:
+            return
+
+        sm = self.el_group_view.view.selectionModel()
+        rows = [r.row() for r in sm.selectedRows()]
+
+        m_ids = set()
+        for r in rows:
+            m_ids = m_ids.union(set(self._electrode_groups[r].measurement_ids))
+
+        sm = self.measurement_view.view.selectionModel()
+        self._selection_disable = True
+        sm.clear()
+        for i in m_ids:
+            column_count = self._measurement_model.columnCount()
+            topLeft = self._measurement_model.index(i, 0)
+            bottomRight = self._measurement_model.index(i, column_count - 1)
+            selection = QtCore.QItemSelection(topLeft, bottomRight)
+            sm.select(selection, QtCore.QItemSelectionModel.Select)
+        self._selection_disable = False
+
+    def _meas_view_sel_change(self, selected, deselected):
+        if self._selection_disable:
+            return
+
+        sm = self.measurement_view.view.selectionModel()
+        rows = [r.row() for r in sm.selectedRows()]
+
+        eg_ids = set()
+        for r in rows:
+            eg_ids = eg_ids.union(set(self._measurements[r].eg_ids))
+
+        sm = self.el_group_view.view.selectionModel()
+        self._selection_disable = True
+        sm.clear()
+        for i in eg_ids:
+            column_count = self._electrode_group_model.columnCount()
+            topLeft = self._electrode_group_model.index(i, 0)
+            bottomRight = self._electrode_group_model.index(i, column_count - 1)
+            selection = QtCore.QItemSelection(topLeft, bottomRight)
+            sm.select(selection, QtCore.QItemSelectionModel.Select)
+        self._selection_disable = False
 
     def _init_first_arrivals(self):
         self.genie.current_inversion_cfg.first_arrivals = []
@@ -604,14 +666,32 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dlg = EditInversionsDialog(self.genie, self)
         dlg.exec()
 
-    def _handle_check_all_measurements(self):
-        self._measurement_model.checkAllMeasurements()
+    def _handle_select_all_measurements(self):
+        row_count = self._measurement_model.rowCount()
+        column_count = self._measurement_model.columnCount()
+        topLeft = self._measurement_model.index(0, 0)
+        bottomRight = self._measurement_model.index(row_count - 1, column_count - 1)
+        selection = QtCore.QItemSelection(topLeft, bottomRight)
+        self.measurement_view.view.selectionModel().select(selection, QtCore.QItemSelectionModel.Select)
+
+    def _handle_add_measurements(self):
+        sm = self.measurement_view.view.selectionModel()
+        sel = sm.selection()
+        rows = [r.row() for r in sm.selectedRows()]
+        for r in rows:
+            self._measurement_model._checked[r] = True
         self.measurement_view.view.reset()
+        sm.select(sel, QtCore.QItemSelectionModel.ClearAndSelect)
         self._meas_model_data_changed()
 
-    def _handle_uncheck_all_measurements(self):
-        self._measurement_model.checkAllMeasurements(False)
+    def _handle_remove_measurements(self):
+        sm = self.measurement_view.view.selectionModel()
+        sel = sm.selection()
+        rows = [r.row() for r in sm.selectedRows()]
+        for r in rows:
+            self._measurement_model._checked[r] = False
         self.measurement_view.view.reset()
+        sm.select(sel, QtCore.QItemSelectionModel.ClearAndSelect)
         self._meas_model_data_changed()
 
     def _meas_view_double_click(self, index):

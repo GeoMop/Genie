@@ -40,6 +40,8 @@ class Measurement:
     el_stop: int = 0
     meas_map: Dict[str, int] = attr.ib(factory=dict)
     eg_ids: List[int] = attr.ib(factory=list)
+    el_ids: List[int] = attr.ib(factory=list)
+    el_rec_ids: List[int] = attr.ib(factory=list)
 
     # st extension
     source_id: int = 0

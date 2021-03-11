@@ -19,6 +19,10 @@ class MeasurementModel(QtCore.QAbstractItemModel):
                 return QtCore.QVariant(self._measurements[index.row()].number)
             elif index.column() == 1:
                 return QtCore.QVariant(self._measurements[index.row()].file)
+            elif index.column() == 2:
+                s = self._measurements[index.row()].date.split()
+                text = s[0] if s else ""
+                return QtCore.QVariant(text)
 
         elif role == QtCore.Qt.CheckStateRole:
             if index.column() == 0:
@@ -68,10 +72,10 @@ class MeasurementModel(QtCore.QAbstractItemModel):
         if parent.isValid():
             return 0
         else:
-            return 2
+            return 3
 
     def headerData(self, section, orientation, role):
-        headers = ["Number", "File"]
+        headers = ["Number", "File", "Date"]
 
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole and section < len(headers):
             return QtCore.QVariant(headers[section])
@@ -103,12 +107,15 @@ class MeasurementGroupView(QtWidgets.QWidget):
         layout.addWidget(self.view)
 
         check_layout = QtWidgets.QHBoxLayout()
-        self.check_allButton = QtWidgets.QPushButton("Check all")
-        self.check_allButton.clicked.connect(main_window._handle_check_all_measurements)
-        check_layout.addWidget(self.check_allButton)
-        self.uncheck_allButton = QtWidgets.QPushButton("Uncheck all")
-        self.uncheck_allButton.clicked.connect(main_window._handle_uncheck_all_measurements)
-        check_layout.addWidget(self.uncheck_allButton)
+        self.select_allButton = QtWidgets.QPushButton("Select all")
+        self.select_allButton.clicked.connect(main_window._handle_select_all_measurements)
+        check_layout.addWidget(self.select_allButton)
+        self.addButton = QtWidgets.QPushButton("Add")
+        self.addButton.clicked.connect(main_window._handle_add_measurements)
+        check_layout.addWidget(self.addButton)
+        self.removeButton = QtWidgets.QPushButton("Remove")
+        self.removeButton.clicked.connect(main_window._handle_remove_measurements)
+        check_layout.addWidget(self.removeButton)
         layout.addLayout(check_layout)
 
         if main_window.genie.method == GenieMethod.ERT:
@@ -125,6 +132,6 @@ class MeasurementGroupView(QtWidgets.QWidget):
 
         self.view.setRootIsDecorated(False)
         self.view.setModel(model)
-        #self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
         self.view.doubleClicked.connect(main_window._meas_view_double_click)

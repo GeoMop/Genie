@@ -84,3 +84,4 @@ class ElectrodeGroupView(QtWidgets.QWidget):
 
         self.view.setRootIsDecorated(False)
         self.view.setModel(model)
+        self.view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
