@@ -526,6 +526,7 @@ class MeshCutTool:
         self.point0 = MeshCutToolPoint(pen, z, self.point0_move_to)
         self.point1 = MeshCutToolPoint2(pen, z, self.point1_move_to)
         self.point2 = MeshCutToolPoint2(pen, z, self.point2_move_to)
+        self.point3 = MeshCutToolPoint2(pen, z, self.point3_move_to)
         self.line1 = MeshCutToolLine(pen, z)
         self.line2 = MeshCutToolLine(pen, z)
         self.line3 = MeshCutToolLine(pen, z)
@@ -540,6 +541,7 @@ class MeshCutTool:
         self._scene.addItem(self.line2)
         self._scene.addItem(self.line3)
         self._scene.addItem(self.line4)
+        self._scene.addItem(self.point3)
         self._scene.addItem(self.point0)
         self._scene.addItem(self.point1)
         self._scene.addItem(self.point2)
@@ -558,21 +560,21 @@ class MeshCutTool:
         d = a + self.gen_vec2
 
         # margin corner points
-        m = self.margin
-        l1 = np.linalg.norm(self.gen_vec1)
-        l2 = np.linalg.norm(self.gen_vec2)
-        if l1 < 1e-12:
-            g1n = self.gen_vec1
-        else:
-            g1n = self.gen_vec1 / l1
-        if l2 < 1e-12:
-            g2n = self.gen_vec2
-        else:
-            g2n = self.gen_vec2 / l2
-        am = a - g1n * m - g2n * m
-        bm = b + g1n * m - g2n * m
-        cm = c + g1n * m + g2n * m
-        dm = d - g1n * m + g2n * m
+        # m = self.margin
+        # l1 = np.linalg.norm(self.gen_vec1)
+        # l2 = np.linalg.norm(self.gen_vec2)
+        # if l1 < 1e-12:
+        #     g1n = self.gen_vec1
+        # else:
+        #     g1n = self.gen_vec1 / l1
+        # if l2 < 1e-12:
+        #     g2n = self.gen_vec2
+        # else:
+        #     g2n = self.gen_vec2 / l2
+        # am = a - g1n * m - g2n * m
+        # bm = b + g1n * m - g2n * m
+        # cm = c + g1n * m + g2n * m
+        # dm = d - g1n * m + g2n * m
 
         # set new positions
         self.line1.setLine(a[0], a[1], b[0], b[1])
@@ -582,6 +584,7 @@ class MeshCutTool:
         self.point0.setPos(a[0], a[1])
         self.point1.setPos(b[0], b[1])
         self.point2.setPos(d[0], d[1])
+        self.point3.setPos(c[0], c[1])
         # self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
         # self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
         # self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
@@ -601,6 +604,22 @@ class MeshCutTool:
 
     def point2_move_to(self, pos):
         self.gen_vec2 = np.array([pos.x(), pos.y()]) - self.origin
+        self.update()
+        #self.print_pos()
+        self._scene.mesh_cut_tool_changed.emit()
+
+    def point3_move_to(self, pos):
+        if np.abs(np.linalg.det(np.array([self.gen_vec1, self.gen_vec2]))) > 1e-12:
+            g1n = self.gen_vec1 / np.linalg.norm(self.gen_vec1)
+            g2n = self.gen_vec2 / np.linalg.norm(self.gen_vec2)
+            ac = np.array([pos.x(), pos.y()]) - self.origin
+
+            tr = np.array([g1n, g2n]).T
+            inv_tr = np.linalg.inv(tr)
+            ac_tr = inv_tr @ ac
+
+            self.gen_vec1 = g1n * ac_tr[0]
+            self.gen_vec2 = g2n * ac_tr[1]
         self.update()
         #self.print_pos()
         self._scene.mesh_cut_tool_changed.emit()
