@@ -100,6 +100,9 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length.")
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
+        self._par_meshFromComboBox.currentTextChanged.connect(self._handle_mesh_from_combobox_changed)
+        self._handle_mesh_from_combobox_changed()
+
         self._par_refineMeshCheckBox = QtWidgets.QCheckBox()
         self._par_refineMeshCheckBox.setChecked(True)
         self._parameters_formLayout.addRow("Refine mesh:", self._par_refineMeshCheckBox)
@@ -199,9 +202,22 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
+        self._par_local_coordCheckBox = QtWidgets.QCheckBox()
+        self._par_local_coordCheckBox.setChecked(False)
+        self._par_local_coordCheckBox.setToolTip("Use local coordinates in output.")
+        self._parameters_formLayout.addRow("Local coordinates:", self._par_local_coordCheckBox)
+
+        self._par_p3dCheckBox = QtWidgets.QCheckBox()
+        self._par_p3dCheckBox.setChecked(False)
+        self._par_p3dCheckBox.setToolTip("Create p3d output.")
+        self._parameters_formLayout.addRow("p3d:", self._par_p3dCheckBox)
+
         self._par_p3dStepLineEdit = QtWidgets.QLineEdit("1.0")
         self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points.")
         self._parameters_formLayout.addRow("p3d step:", self._par_p3dStepLineEdit)
+
+        self._par_p3dCheckBox.stateChanged.connect(self._handle_p3d_checkbox_changed)
+        self._handle_p3d_checkbox_changed()
 
         label = QtWidgets.QLabel("Test options")
         label.setFont(font)
@@ -249,11 +265,25 @@ class RunInvDlg(QtWidgets.QDialog):
             self._output_edit.insertPlainText(log)
             self._output_edit.moveCursor(QtGui.QTextCursor.Start)
 
+    def _handle_mesh_from_combobox_changed(self):
+        if self._par_meshFromComboBox.currentText() == "Gallery cloud":
+            self._par_reconstructionDepthLineEdit.setEnabled(True)
+            self._par_edgeLengthLineEdit.setEnabled(True)
+        else:
+            self._par_reconstructionDepthLineEdit.setEnabled(False)
+            self._par_edgeLengthLineEdit.setEnabled(False)
+
     def _handle_refine_checkbox_changed(self, state=None):
         if self._par_refineMeshCheckBox.isChecked():
             self._par_refineP2CheckBox.setEnabled(True)
         else:
             self._par_refineP2CheckBox.setEnabled(False)
+
+    def _handle_p3d_checkbox_changed(self, state=None):
+        if self._par_p3dCheckBox.isChecked():
+            self._par_p3dStepLineEdit.setEnabled(True)
+        else:
+            self._par_p3dStepLineEdit.setEnabled(False)
 
     def _proc_started(self):
         self._start_button.setEnabled(False)
@@ -395,6 +425,8 @@ class RunInvDlg(QtWidgets.QDialog):
             param.blockyModel = self._par_blockyModelCheckBox.isChecked()
             param.recalcJacobian = self._par_recalcJacobianCheckBox.isChecked()
 
+            param.local_coord = self._par_local_coordCheckBox.isChecked()
+            param.p3d = self._par_p3dCheckBox.isChecked()
             param.p3dStep = float(self._par_p3dStepLineEdit.text())
 
             param.data_log = self._par_data_logCheckBox.isChecked()
@@ -442,6 +474,8 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_blockyModelCheckBox.setChecked(param.blockyModel)
         self._par_recalcJacobianCheckBox.setChecked(param.recalcJacobian)
 
+        self._par_local_coordCheckBox.setChecked(param.local_coord)
+        self._par_p3dCheckBox.setChecked(param.p3d)
         self._par_p3dStepLineEdit.setText(str(param.p3dStep))
 
         self._par_data_logCheckBox.setChecked(param.data_log)

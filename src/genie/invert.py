@@ -244,7 +244,17 @@ def inv_ert(inversion_conf, project_conf):
     paraDomain.addExportData('Resistivity', resistivity)
     #paraDomain.addExportData('Resistivity (log10)', np.log10(resistivity))
     #paraDomain.addExportData('Coverage', coverageDC(fop, inv, paraDomain))
-    paraDomain.exportVTK('resistivity')
+    #paraDomain.exportVTK('resistivity')
+
+    # output in local coordinates
+    if inv_par.local_coord:
+        base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(cut_par)
+        localparaDomain = pg.Mesh(paraDomain)
+        localparaDomain.translate(pg.RVector3(-base_point))
+        localparaDomain.rotate(pg.RVector3(0, 0, -math.atan2(gen_vecs[0][1], gen_vecs[0][0])))
+        localparaDomain.exportVTK('resistivity')
+    else:
+        paraDomain.exportVTK('resistivity')
 
     # measurements on model
     print()
@@ -278,11 +288,12 @@ def inv_ert(inversion_conf, project_conf):
 
             fd.write("{:11} {:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:12.2f} {:6.4f} {}\n".format(item.measurement_number, item.ca, item.cb, item.pa, item.pb, item.I, item.V, item.AppRes, item.std, m_on_m))
 
-    print()
-    print_headline("Saving p3d")
-    t = time.time()
-    save_p3d(paraDomain, model.array(), cut_par, inv_par.p3dStep, "resistivity")
-    print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
+    if inv_par.p3d:
+        print()
+        print_headline("Saving p3d")
+        t = time.time()
+        save_p3d(paraDomain, model.array(), cut_par, inv_par.p3dStep, "resistivity", inv_par.local_coord)
+        print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
 
     print()
     print("All done.")
@@ -406,13 +417,24 @@ def inv_st(inversion_conf, project_conf):
     velocity = 1.0 / model(paraDomain.cellMarkers())
     np.savetxt('velocity.vector', velocity)
     paraDomain.addExportData('Velocity', velocity)
-    paraDomain.exportVTK('velocity')
+    #paraDomain.exportVTK('velocity')
 
-    print()
-    print_headline("Saving p3d")
-    t = time.time()
-    save_p3d(paraDomain, 1.0 / model.array(), cut_par, inv_par.p3dStep, "velocity")
-    print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
+    # output in local coordinates
+    if inv_par.local_coord:
+        base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(cut_par)
+        localparaDomain = pg.Mesh(paraDomain)
+        localparaDomain.translate(pg.RVector3(-base_point))
+        localparaDomain.rotate(pg.RVector3(0, 0, -math.atan2(gen_vecs[0][1], gen_vecs[0][0])))
+        localparaDomain.exportVTK('velocity')
+    else:
+        paraDomain.exportVTK('velocity')
+
+    if inv_par.p3d:
+        print()
+        print_headline("Saving p3d")
+        t = time.time()
+        save_p3d(paraDomain, 1.0 / model.array(), cut_par, inv_par.p3dStep, "velocity", inv_par.local_coord)
+        print("save_p3d elapsed time: {:0.3f} s".format(time.time() - t))
 
     print()
     print("All done.")
@@ -453,7 +475,7 @@ def save_csv(paraDomain, model, file_name):
                     fd.write("{},{},{},{}\n".format(x, y, z, r))
 
 
-def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
+def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name, local_coord=False):
     """Saves result as .p3d file."""
     base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param)
 
@@ -556,6 +578,14 @@ def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name):
                 fd.write("\n")
 
         return write, finalize
+
+    if local_coord:
+        base_point = np.array([0.0, 0.0, 0.0])
+        l0 = np.linalg.norm(gen_vecs[0])
+        l1 = np.linalg.norm(gen_vecs[1])
+        phi = math.acos((gen_vecs[0][0] * gen_vecs[1][0] + gen_vecs[0][1] * gen_vecs[1][1]) / (l0 * l1))
+        gen_vecs[0] = np.array([l0, 0.0, 0.0])
+        gen_vecs[1] = np.array([l1 * math.cos(phi), l1 * math.sin(phi), 0.0])
 
     with open(file_name + ".p3d", "w") as fd_p3d:
         with open(file_name + ".q", "w") as fd_q:

@@ -127,6 +127,8 @@ class InversionParam:
     robustData: bool = False
     blockyModel: bool = False
     recalcJacobian: bool = True
+    local_coord: bool = False
+    p3d: bool = False
     p3dStep: float = 1.0
 
     # test params

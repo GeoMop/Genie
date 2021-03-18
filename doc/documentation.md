@@ -77,7 +77,9 @@ on the related SW Bert [Chapter 2.2](http://www.resistivity.net/download/bert-tu
 
 ## Output options
 
-**p3d step** - Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points.
+**Local coordinates** - Save outputs in local coordinates.
+**p3d** - If checked inversion result is also saved in p3d format suitable for software Voxler.
+**p3d step** - Defines step between individual points.
 
 ## Mesh cut tool
 Mesh cut tool sets area of interest, either in text edits or using red shape on right side,
@@ -135,7 +137,6 @@ Columns meas_number, ca, cb, pa, pb, I, V, AppRes, std are from measurement file
 - resistivity.q - second file of p3d format
 
 ## Known issues
-- dialog PointCloudReader is irresponsive until reading ends
 - some measuremens have to small current, it may cause inaccuracy in computation, currently this is not solved in any way
 
 ## Genie ST
