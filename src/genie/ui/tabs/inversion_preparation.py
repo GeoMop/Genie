@@ -230,8 +230,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._enable_project_ctrl(True)
         self._show_current_inversion()
 
-        self.diagram_view._scene.updata_screen_rect()
-        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        # self.diagram_view._scene.updata_screen_rect()
+        # self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def _show_3d(self):
         if self.genie.method == GenieMethod.ERT:
@@ -281,6 +281,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.view.setModel(self._measurement_model)
         self.diagram_view.hide_pixmap()
         self.diagram_view.hide_map()
+        self.diagram_view.hide_gallery_mesh()
         self.diagram_view.hide_electrodes()
 
         self.tab_wiget.hide_3d()
@@ -303,8 +304,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", name)
         os.makedirs(dir, exist_ok=True)
 
+        self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
+            self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self.mesh_cut_tool_panel.center_origin()
-        #self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
@@ -318,6 +320,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.tab_wiget.hide_3d()
         self.tab_wiget.hide_meas_model()
         self._show_current_inversion()
+
+        self.diagram_view._scene.updata_screen_rect()
+        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def _copy_inversion(self, name, new_name):
         self._save_current_inversion()
@@ -373,6 +378,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._show_3d()
         self._show_meas_model()
         self._show_current_inversion()
+
+        self.diagram_view._scene.updata_screen_rect()
+        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def _save_current_inversion(self):
         if not self.genie.project_cfg.curren_inversion_name:

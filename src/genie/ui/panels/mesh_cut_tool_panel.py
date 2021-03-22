@@ -1,3 +1,5 @@
+from genie.core.data_types import MeshCutToolParam
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 import numpy as np
@@ -22,6 +24,8 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         super().__init__(parent)
 
         self._diagram = diagram
+        self.genie = parent.genie
+        self.diagram_view = parent.diagram_view
 
         formLayout = QtWidgets.QFormLayout()
 
@@ -84,6 +88,16 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         self.margin_edit = MeshCutToolPanelEdit(self.editing_finished)
         #formLayout.addRow("Margin:", self.margin_edit)
 
+        # reset buttons
+        layout = QtWidgets.QHBoxLayout()
+        self.reset_viewButton = QtWidgets.QPushButton("Reset view")
+        self.reset_viewButton.clicked.connect(self.reset_view)
+        self.reset_cutButton = QtWidgets.QPushButton("Reset cut")
+        self.reset_cutButton.clicked.connect(self.reset_cut)
+        layout.addWidget(self.reset_viewButton)
+        layout.addWidget(self.reset_cutButton)
+        formLayout.addRow(layout)
+
         self.setLayout(formLayout)
         self.setFixedHeight(self.minimumSizeHint().height())
 
@@ -115,6 +129,16 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         self.origin_y_edit.setText("{:.2f}".format(p.y()))
 
         self.editing_finished()
+
+    def reset_view(self):
+        self._diagram.updata_screen_rect()
+        self.diagram_view.fitInView(self._diagram.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+    def reset_cut(self):
+        self.genie.current_inversion_cfg.mesh_cut_tool_param = MeshCutToolParam()
+        self._diagram.mesh_cut_tool.from_mesh_cut_tool_param(
+            self.genie.current_inversion_cfg.mesh_cut_tool_param)
+        self.center_origin()
 
     def qvp1(self):
         gen_vec1 = np.array([float(self.gen_vec1_x_edit.text()), float(self.gen_vec1_y_edit.text())])
