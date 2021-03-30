@@ -514,6 +514,7 @@ class MeshCutTool:
         self.z_min = 10.0
         self.z_max = 40.0
         self.margin = 5.0
+        self.no_inv_factor = 2.0
 
         pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
         pen.setCosmetic(True)
@@ -531,10 +532,10 @@ class MeshCutTool:
         self.line2 = MeshCutToolLine(pen, z)
         self.line3 = MeshCutToolLine(pen, z)
         self.line4 = MeshCutToolLine(pen, z)
-        # self.margin_line1 = MeshCutToolLine(margin_pen, z)
-        # self.margin_line2 = MeshCutToolLine(margin_pen, z)
-        # self.margin_line3 = MeshCutToolLine(margin_pen, z)
-        # self.margin_line4 = MeshCutToolLine(margin_pen, z)
+        self.margin_line1 = MeshCutToolLine(margin_pen, z)
+        self.margin_line2 = MeshCutToolLine(margin_pen, z)
+        self.margin_line3 = MeshCutToolLine(margin_pen, z)
+        self.margin_line4 = MeshCutToolLine(margin_pen, z)
 
         # add items to scene
         self._scene.addItem(self.line1)
@@ -545,10 +546,10 @@ class MeshCutTool:
         self._scene.addItem(self.point0)
         self._scene.addItem(self.point1)
         self._scene.addItem(self.point2)
-        # self._scene.addItem(self.margin_line1)
-        # self._scene.addItem(self.margin_line2)
-        # self._scene.addItem(self.margin_line3)
-        # self._scene.addItem(self.margin_line4)
+        self._scene.addItem(self.margin_line1)
+        self._scene.addItem(self.margin_line2)
+        self._scene.addItem(self.margin_line3)
+        self._scene.addItem(self.margin_line4)
 
         self.update()
 
@@ -576,6 +577,15 @@ class MeshCutTool:
         # cm = c + g1n * m + g2n * m
         # dm = d - g1n * m + g2n * m
 
+        # no inv corner points
+        g1 = self.gen_vec1
+        g2 = self.gen_vec2
+        k = (self.no_inv_factor - 1) * 0.5
+        am = a - g1 * k - g2 * k
+        bm = b + g1 * k - g2 * k
+        cm = c + g1 * k + g2 * k
+        dm = d - g1 * k + g2 * k
+
         # set new positions
         self.line1.setLine(a[0], a[1], b[0], b[1])
         self.line2.setLine(b[0], b[1], c[0], c[1])
@@ -585,10 +595,10 @@ class MeshCutTool:
         self.point1.setPos(b[0], b[1])
         self.point2.setPos(d[0], d[1])
         self.point3.setPos(c[0], c[1])
-        # self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
-        # self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
-        # self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
-        # self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
+        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
+        self.margin_line2.setLine(bm[0], bm[1], cm[0], cm[1])
+        self.margin_line3.setLine(cm[0], cm[1], dm[0], dm[1])
+        self.margin_line4.setLine(dm[0], dm[1], am[0], am[1])
 
     def point0_move_to(self, pos):
         self.origin = np.array([pos.x(), pos.y()])
@@ -638,6 +648,7 @@ class MeshCutTool:
         self.z_min = param.z_min
         self.z_max = param.z_max
         self.margin = param.margin
+        self.no_inv_factor = param.no_inv_factor
 
         self.update()
 
@@ -651,7 +662,7 @@ class MeshCutTool:
         cut_tool.gen_vec2_y = self.gen_vec2[1]
         cut_tool.z_min = self.z_min
         cut_tool.z_max = self.z_max
-        cut_tool.margin = self.margin
+        cut_tool.no_inv_factor = self.no_inv_factor
         return cut_tool
 
 

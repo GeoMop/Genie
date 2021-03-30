@@ -92,6 +92,7 @@ class MeshCutToolParam:
     z_min: float = 10.0
     z_max: float = 40.0
     margin: float = 5.0
+    no_inv_factor: float = 2.0
 
 
 class MeshFrom(IntEnum):

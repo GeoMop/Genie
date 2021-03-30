@@ -88,6 +88,11 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         self.margin_edit = MeshCutToolPanelEdit(self.editing_finished)
         #formLayout.addRow("Margin:", self.margin_edit)
 
+        # no inv factor
+        self.factor_edit = MeshCutToolPanelEdit(self.editing_finished)
+        #self.factor_edit.validator().setBottom(1.0)
+        formLayout.addRow("No inv factor:", self.factor_edit)
+
         # reset buttons
         layout = QtWidgets.QHBoxLayout()
         self.reset_viewButton = QtWidgets.QPushButton("Reset view")
@@ -112,6 +117,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         self.z_min_edit.setText("{:.2f}".format(cut_tool.z_min))
         self.z_max_edit.setText("{:.2f}".format(cut_tool.z_max))
         self.margin_edit.setText("{:.2f}".format(cut_tool.margin))
+        self.factor_edit.setText("{:.2f}".format(cut_tool.no_inv_factor))
 
     def editing_finished(self):
         cut_tool = self._diagram.mesh_cut_tool
@@ -121,6 +127,13 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         cut_tool.z_min = float(self.z_min_edit.text())
         cut_tool.z_max = float(self.z_max_edit.text())
         cut_tool.margin = float(self.margin_edit.text())
+
+        v = float(self.factor_edit.text())
+        if v < 1.0:
+            v = 1.0
+            self.factor_edit.setText("1.00")
+        cut_tool.no_inv_factor = v
+
         cut_tool.update()
 
     def center_origin(self):

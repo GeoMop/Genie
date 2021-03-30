@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=False):
+def cut_tool_to_gen_vecs(mesh_cut_tool_param, only_inv = False, margin=False):
     mc = mesh_cut_tool_param
 
     z_min, z_max = sorted([mc.z_min, mc.z_max])
@@ -13,6 +13,10 @@ def cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=False):
     if v1[0] * v2[1] - v1[1] * v2[0] < 0:
         v1, v2 = v2, v1
     gen_vecs = [v1, v2, np.array([0.0, 0.0, z_max - z_min])]
+
+    if not only_inv:
+        base_point -= sum(gen_vecs) * ((mc.no_inv_factor - 1) * 0.5)
+        gen_vecs = [v * mc.no_inv_factor for v in gen_vecs]
 
     if margin:
         # m = mc.margin

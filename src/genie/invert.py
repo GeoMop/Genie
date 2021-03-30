@@ -74,7 +74,7 @@ def inv_ert(inversion_conf, project_conf):
 
     print()
     print_headline("Modify mesh")
-    modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh")
+    modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh", cut_par)
 
     if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
         print()
@@ -187,10 +187,9 @@ def inv_ert(inversion_conf, project_conf):
     # print(fop.regionManager().region(1).cellMarkers())
     # return
 
-    # we have only one region
-    # if not inv_par.omitBackground:
-    #     if fop.regionManager().regionCount() > 1:
-    #         fop.regionManager().region(1).setBackground(True)
+    if not inv_par.omitBackground:
+        if fop.regionManager().regionCount() > 1:
+            fop.regionManager().region(1).setBackground(True)
 
     if mesh_file == "":
         fop.createRefinedForwardMesh(True, False)
@@ -198,6 +197,7 @@ def inv_ert(inversion_conf, project_conf):
         fop.createRefinedForwardMesh(inv_par.refineMesh, inv_par.refineP2)
 
     paraDomain = fop.regionManager().paraDomain()
+    #paraDomain = fop.regionManager().mesh()
     inv.setForwardOperator(fop)  # necessary?
 
     # in_ball = find_markers_in_ball(paraDomain, [-622342, -1128822, 22], 5.0)
@@ -327,7 +327,7 @@ def inv_st(inversion_conf, project_conf):
 
     print()
     print_headline("Modify mesh")
-    modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh")
+    modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh", cut_par)
 
     if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
         print()
@@ -386,6 +386,10 @@ def inv_st(inversion_conf, project_conf):
     sys.stdout.flush()  # flush before multithreading
     fop.setMesh(mesh)
     fop.regionManager().setConstraintType(1)
+
+    if not inv_par.omitBackground:
+        if fop.regionManager().regionCount() > 1:
+            fop.regionManager().region(1).setBackground(True)
 
     if mesh_file == "":
         fop.createRefinedForwardMesh(True, False)
@@ -650,9 +654,12 @@ def mesh_from_brep(brep_file, mesh_file, project_conf):
     model.write_mesh(mesh_file, gmsh.MeshFormat.msh2)
 
 
-def modify_mesh(in_file, out_file):
-    """Keeps only elements of dim 2 and 3. Sets physical id to 2."""
+def modify_mesh(in_file, out_file, mesh_cut_tool_param):
+    """Keeps only elements of dim 2 and 3. Sets physical id to 2 for inversion region and 1 for no inversion region."""
     el_type_to_dim = {15: 0, 1: 1, 2: 2, 4: 3}
+
+    base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param, only_inv=True)
+    inv_tr_mat = cut_point_cloud.inv_tr(gen_vecs)
 
     mesh = GmshIO(in_file)
 
@@ -663,6 +670,15 @@ def modify_mesh(in_file, out_file):
         if dim not in [2, 3]:
             continue
         physical_id = 2
+        if dim == 3:
+            n_inside = 0
+            for n in nodes:
+                nn = mesh.nodes[n]
+                nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([nn[0], nn[1], nn[2]]))
+                if 0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1:
+                    n_inside += 1
+            if n_inside < 4:
+                physical_id = 1
         tags[0] = physical_id
         new_elements[id] = (el_type, tags, nodes)
     mesh.elements = new_elements
