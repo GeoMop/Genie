@@ -1,8 +1,10 @@
 import pandas as pd
 #import pybert as pb
 import pygimli as pg
+import numpy as np
 
 from .data_types import MeasurementInfoItem, MeasurementsInfo
+from genie.core import cut_point_cloud
 
 
 def prepare_old(electrode_groups, measurements):
@@ -126,7 +128,7 @@ def prepare_old2(electrode_groups, measurements):
     return data
 
 
-def prepare(electrode_groups, measurements):
+def prepare(electrode_groups, measurements, mesh_cut_tool_param=None):
     """
     Prepares data for GIMLI inversion.
     :param electrode_groups:
@@ -149,10 +151,27 @@ def prepare(electrode_groups, measurements):
 
     data = pg.DataContainerERT()
 
+    if mesh_cut_tool_param is not None:
+        base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param, only_inv=True)
+        inv_tr_mat = cut_point_cloud.inv_tr(gen_vecs)
+
     for ms in measurements:
         if ms.data is None:
             continue
         d = ms.data["data"]
+
+        # remove measurements outside inversion region
+        if mesh_cut_tool_param is not None:
+            ind_to_rem = set()
+            for j in range(d.shape[0]):
+                for col in ["ca", "cb", "pa", "pb"]:
+                    e = _find_el(electrode_groups, ms.meas_map[d[col][j]])
+                    nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([e.x, e.y, e.z]))
+                    if not (0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1):
+                        ind_to_rem.add(j)
+                        break
+
+            d = d.drop(d.index[list(ind_to_rem)])
 
         meas_map_sensor = {}
         for meas_id, e_id in ms.meas_map.items():
@@ -186,7 +205,7 @@ def prepare(electrode_groups, measurements):
 
         #el_offset += len(ms.meas_map)
 
-        for j in range(len(d)):
+        for j in d.index:
             meas_info.items.append(MeasurementInfoItem(measurement_number=ms.number,
                                                        ca=d["ca"][j], cb=d["cb"][j], pa=d["pa"][j], pb=d["pb"][j],
                                                        I=d["I"][j], V=d["V"][j], AppRes=d["AppRes"][j], std=d["std"][j],

@@ -76,10 +76,10 @@ def inv_ert(inversion_conf, project_conf):
     print_headline("Modify mesh")
     modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh", cut_par)
 
-    if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
-        print()
-        print_headline("Snapping electrodes final")
-        snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance)
+    #if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
+    print()
+    print_headline("Snapping electrodes final")
+    snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance, final=True)
 
     print()
     print_headline("Inversion")
@@ -329,10 +329,10 @@ def inv_st(inversion_conf, project_conf):
     print_headline("Modify mesh")
     modify_mesh("inv_mesh_tmp.msh2", "inv_mesh.msh", cut_par)
 
-    if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
-        print()
-        print_headline("Snapping electrodes final")
-        snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance)
+    #if inv_par.meshFrom == MeshFrom.SURFACE_CLOUD:
+    print()
+    print_headline("Snapping electrodes final")
+    snap_electrodes.main(inv_par, project_conf, max_dist=inv_par.snapDistance, final=True)
 
     print()
     print_headline("Inversion")
@@ -632,9 +632,9 @@ def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name, loca
 
 def mesh_from_brep(brep_file, mesh_file, project_conf):
     if project_conf.method == GenieMethod.ERT:
-        data = pg.DataContainerERT("input.dat", removeInvalid=False)
+        data = pg.DataContainerERT("input_snapped.dat", removeInvalid=False)
     else:
-        data = pg.DataContainer("input.dat", sensorTokens='s g', removeInvalid=False)
+        data = pg.DataContainer("input_snapped.dat", sensorTokens='s g', removeInvalid=False)
 
     el_pos = []
     for i in range(len(data.sensorPositions())):

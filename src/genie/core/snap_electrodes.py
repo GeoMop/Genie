@@ -9,7 +9,7 @@ from genie.core.data_types import MeshFrom
 from genie.core.global_const import GenieMethod
 
 
-def main(inv_par, project_conf, max_dist=1.0):
+def main(inv_par, project_conf, max_dist=1.0, final=False):
     if inv_par.meshFrom == MeshFrom.GALLERY_CLOUD:
         mesh_file = "gallery_mesh.msh"
         offset = np.array([project_conf.point_cloud_origin_x,
@@ -23,6 +23,11 @@ def main(inv_par, project_conf, max_dist=1.0):
         offset = np.array([project_conf.gallery_mesh_origin_x,
                            project_conf.gallery_mesh_origin_y,
                            project_conf.gallery_mesh_origin_z])
+
+    if final:
+        mesh_file = "inv_mesh_tmp.msh2"
+        offset = np.array( [0.0, 0.0, 0.0])
+
     mesh = GmshIO(mesh_file)
 
     #mesh.elements = {id: data for id, data in mesh.elements.items() if id not in [714, 2095]}

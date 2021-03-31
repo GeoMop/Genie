@@ -1,8 +1,11 @@
 import pandas as pd
 import pygimli as pg
+import numpy as np
+
+from genie.core import cut_point_cloud
 
 
-def prepare(electrode_groups, measurements, first_arrivals):
+def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=None):
     """
     Prepares data for GIMLI inversion.
     :param electrode_groups:
@@ -19,6 +22,10 @@ def prepare(electrode_groups, measurements, first_arrivals):
     data.registerSensorIndex("s")
     data.registerSensorIndex("g")
 
+    if mesh_cut_tool_param is not None:
+        base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param, only_inv=True)
+        inv_tr_mat = cut_point_cloud.inv_tr(gen_vecs)
+
     for ms in measurements:
         if ms.data is None:
             continue
@@ -31,6 +38,22 @@ def prepare(electrode_groups, measurements, first_arrivals):
             receivers = list(range(ms.receiver_start, ms.receiver_stop + 1))
         else:
             receivers = list(range(ms.receiver_start, ms.receiver_stop - 1, -1))
+
+        # remove measurements outside inversion region
+        if mesh_cut_tool_param is not None:
+            e = _find_el(electrode_groups, ms.source_id, False)
+            nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([e.x, e.y, e.z]))
+            if not (0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1):
+                continue
+
+            ind_to_rem = set()
+            for j, r in enumerate(receivers):
+                e = _find_el(electrode_groups, r, True)
+                nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([e.x, e.y, e.z]))
+                if not (0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1):
+                    ind_to_rem.add(j)
+
+            receivers = [r for r in receivers if r not in ind_to_rem]
 
         receivers_used = []
         for meas_id, e_id in enumerate(receivers):

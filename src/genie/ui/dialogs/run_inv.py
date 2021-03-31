@@ -521,13 +521,16 @@ class RunInvDlg(QtWidgets.QDialog):
         #     json.dump(conf, fd, indent=4, sort_keys=True)
 
         if self.genie.method == GenieMethod.ERT:
-            data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements)
+            data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements,
+                                                  self.genie.current_inversion_cfg.mesh_cut_tool_param)
             data.save(os.path.join(self._work_dir, "input.dat"))
             meas_info_file = os.path.join(self._work_dir, "measurements_info.json")
             with open(meas_info_file, "w") as fd:
                 json.dump(meas_info.serialize(), fd, indent=4, sort_keys=True)
         else:
-            data = st_prepare.prepare(self._electrode_groups, self._measurements, self.genie.current_inversion_cfg.first_arrivals)
+            data = st_prepare.prepare(self._electrode_groups, self._measurements,
+                                      self.genie.current_inversion_cfg.first_arrivals,
+                                      self.genie.current_inversion_cfg.mesh_cut_tool_param)
             if data.size() > 0:
                 data.save(os.path.join(self._work_dir, "input.dat"))
             else:
