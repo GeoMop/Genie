@@ -135,6 +135,7 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         cut_tool.no_inv_factor = v
 
         cut_tool.update()
+        self.diagram_view.side_view._scene.side_mesh_cut_tool.update()
 
     def center_origin(self):
         p = self._diagram.sceneRect().center()
@@ -145,7 +146,13 @@ class MeshCutToolPanel(QtWidgets.QWidget):
 
     def reset_view(self):
         self._diagram.updata_screen_rect()
-        self.diagram_view.fitInView(self._diagram.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.diagram_view.side_view._scene.updata_screen_rect()
+
+        self.diagram_view.fitInView(self._diagram.mySceneRect(), QtCore.Qt.KeepAspectRatio)
+
+        self.diagram_view.side_view.no_scroll = True
+        self.diagram_view.side_view.setTransform(self.diagram_view.transform())
+        self.diagram_view.side_view.no_scroll = False
 
     def reset_cut(self):
         self.genie.current_inversion_cfg.mesh_cut_tool_param = MeshCutToolParam()

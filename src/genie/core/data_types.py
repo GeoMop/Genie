@@ -95,6 +95,14 @@ class MeshCutToolParam:
     no_inv_factor: float = 2.0
 
 
+@json_data.jsondata
+class SideViewToolParam:
+    origin_x: float = 0.0
+    origin_y: float = 0.0
+    dir_vec_x: float = 0.0
+    dir_vec_y: float = 20.0
+
+
 class MeshFrom(IntEnum):
     GALLERY_CLOUD = 1
     SURFACE_CLOUD = 2

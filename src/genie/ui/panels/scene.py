@@ -6,11 +6,11 @@ from bgem.external import undo
 from . import mouse
 from bgem.polygons.polygons import PolygonDecomposition, enable_undo
 from bgem.gmsh.gmsh_io import GmshIO
-from genie.core.data_types import MeshCutToolParam
+from genie.core.data_types import MeshCutToolParam, SideViewToolParam
 
 import random
 import os
-
+import math
 
 enable_undo()
 
@@ -246,6 +246,44 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
     def set_selected(self, selected=True):
         self.selected = selected
         self.update()
+
+
+class GsPointCloud(QtWidgets.QGraphicsEllipseItem):
+    SIZE = 2
+    STD_ZVALUE = -90
+    __pen_table={}
+
+    no_brush = QtGui.QBrush(QtCore.Qt.NoBrush)
+    no_pen = QtGui.QPen(QtCore.Qt.NoPen)
+    add_brush = QtGui.QBrush(QtCore.Qt.darkGreen, QtCore.Qt.SolidPattern)
+
+    @classmethod
+    def make_pen(cls, color):
+        brush = QtGui.QBrush(color, QtCore.Qt.SolidPattern)
+        pen = QtGui.QPen(color, 1.4, QtCore.Qt.SolidLine)
+        return (brush, pen)
+
+    @classmethod
+    def pen_table(cls, color):
+        brush_pen = cls.__pen_table.setdefault(color, cls.make_pen(QtGui.QColor(color)))
+        return brush_pen
+
+    def __init__(self, x, y, color):
+        self.my_x = x
+        self.my_y = y
+        self.color = color
+        super().__init__()
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
+        self.setAcceptedMouseButtons(QtCore.Qt.LeftButton | QtCore.Qt.RightButton)
+        self.region_brush, self.region_pen = GsPointCloud.pen_table(self.color)
+        self.setRect(-self.SIZE, -self.SIZE, 2 * self.SIZE, 2 * self.SIZE)
+        self.setBrush(self.region_brush)
+        self.setPen(GsPointCloud.no_pen)
+        self.update()
+
+    def update(self):
+        self.setPos(self.my_x, self.my_y)
+        super().update()
 
 
 class GsSegment(QtWidgets.QGraphicsLineItem):
@@ -666,6 +704,85 @@ class MeshCutTool:
         return cut_tool
 
 
+class SideViewTool:
+    def __init__(self, scene):
+        self._scene = scene
+
+        self.origin = np.array([0.0, 0.0])
+        self.dir_vec = np.array([0.0, 20.0])
+
+        pen = QtGui.QPen(QtGui.QColor("blue"), 3.0, QtCore.Qt.SolidLine)
+        pen.setCosmetic(True)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        margin_pen = QtGui.QPen(QtGui.QColor("blue"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen.setCosmetic(True)
+        z = 31
+
+        # create items
+        self.point0 = MeshCutToolPoint(pen, z, self.point0_move_to)
+        self.point1 = MeshCutToolPoint2(pen, z, self.point1_move_to)
+        self.line1 = MeshCutToolLine(pen, z)
+        self.margin_line1 = MeshCutToolLine(margin_pen, z)
+
+        # add items to scene
+        self._scene.addItem(self.line1)
+        self._scene.addItem(self.point0)
+        self._scene.addItem(self.point1)
+        self._scene.addItem(self.margin_line1)
+
+        self.update()
+
+    def update(self):
+        # corner points
+        a = self.origin
+        b = a + self.dir_vec
+
+        l = np.linalg.norm(self.dir_vec)
+        if l < 1e-12:
+            n = np.array([0.0, 1.0])
+        else:
+            n = self.dir_vec / l
+        am = a + np.array([n[1], -n[0]]) * 1e3
+        bm = a + np.array([-n[1], n[0]]) * 1e3
+
+        # set new positions
+        self.line1.setLine(a[0], a[1], b[0], b[1])
+        self.point0.setPos(a[0], a[1])
+        self.point1.setPos(b[0], b[1])
+        self.margin_line1.setLine(am[0], am[1], bm[0], bm[1])
+
+    def point0_move_to(self, pos):
+        self.origin = np.array([pos.x(), pos.y()])
+        self.update()
+        self._scene.side_view_tool_changed.emit()
+
+    def point1_move_to(self, pos):
+        self.dir_vec = np.array([pos.x(), pos.y()]) - self.origin
+        self.update()
+        self._scene.side_view_tool_changed.emit()
+
+    def from_side_view_tool_param(self, param):
+        self.origin = np.array([param.origin_x, param.origin_y])
+        self.dir_vec = np.array([param.dir_vec_x, param.dir_vec_y])
+
+        self.update()
+
+    def to_side_view_tool_param(self):
+        cut_tool = SideViewToolParam()
+        cut_tool.origin_x = self.origin[0]
+        cut_tool.origin_y = self.origin[1]
+        cut_tool.dir_vec_x = self.dir_vec[0]
+        cut_tool.dir_vec_y = self.dir_vec[1]
+        return cut_tool
+
+    def transform(self, x, y, z, nd):
+        xt = self.origin[0] + (x - self.origin[0]) * nd[1] - (y - self.origin[1]) * nd[0]
+        yt = z
+        zt = (y - self.origin[1]) * nd[1] + (x - self.origin[0]) * nd[0]
+
+        return xt, yt, zt
+
+
 class Selection():
     def __init__(self, diagram):
         self._diagram = diagram
@@ -786,6 +903,8 @@ class Diagram(QtWidgets.QGraphicsScene):
     # selection has changed
     mesh_cut_tool_changed = QtCore.pyqtSignal()
     # cut tool changed
+    side_view_tool_changed = QtCore.pyqtSignal()
+    # side view tool changed
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -811,11 +930,15 @@ class Diagram(QtWidgets.QGraphicsScene):
         """Decomposition of the a plane into polygons."""
 
         self.mesh_cut_tool = MeshCutTool(self)
+        self.side_view_tool = SideViewTool(self)
 
         self.electrode_item_list = []
         self.pixmap_item = None
+        self.point_cloud_item_list = []
         self.map_item = None
         self.gallery_mesh_lines = []
+
+        self.my_scene_rect = QtCore.QRect()
 
     def create_aux_segment(self):
         pt_size = GsPoint.SIZE
@@ -1095,33 +1218,42 @@ class Diagram(QtWidgets.QGraphicsScene):
     def updata_screen_rect(self):
         rect = QtCore.QRectF()
 
-        if self.electrode_item_list:
-            for e in self.electrode_item_list:
-                rect = rect.united(e.sceneBoundingRect())
+        for e in self.electrode_item_list:
+            rect = rect.united(e.sceneBoundingRect())
 
-        if self.pixmap_item:
-            rect = rect.united(self.pixmap_item.sceneBoundingRect())
+        # if self.pixmap_item:
+        #     rect = rect.united(self.pixmap_item.sceneBoundingRect())
+
+        for p in self.point_cloud_item_list:
+            rect = rect.united(p.sceneBoundingRect())
 
         if self.map_item:
             rect = rect.united(self.map_item.sceneBoundingRect())
 
-        if self.gallery_mesh_lines:
-            for line in self.gallery_mesh_lines:
-                rect = rect.united(line.sceneBoundingRect())
+        for line in self.gallery_mesh_lines:
+            rect = rect.united(line.sceneBoundingRect())
 
         if rect.isEmpty():
             rect = QtCore.QRectF(-100, -100, 200, 200)
 
+        self.my_scene_rect = rect
+
         w = rect.width()
         h = rect.height()
-        rect = rect.marginsAdded(QtCore.QMarginsF(w/2, h/2, w/2, h/2))
+        rect = rect.marginsAdded(QtCore.QMarginsF(w, h, w, h))
 
         self.setSceneRect(rect)
 
+    def mySceneRect(self):
+        return self.my_scene_rect
+
 
 class DiagramView(QtWidgets.QGraphicsView):
-    def __init__(self):
+    def __init__(self, side_view):
         super(DiagramView, self).__init__()
+
+        self.side_view = side_view
+        self.side_view.diagram_view = self
 
         self._zoom = 0
         self.scale(1, -1)
@@ -1140,6 +1272,9 @@ class DiagramView(QtWidgets.QGraphicsView):
         self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
 
         self.el_map = {}
+
+        self.no_scroll = False
+        self.y_center = 0.0
 
 
 
@@ -1191,6 +1326,8 @@ class DiagramView(QtWidgets.QGraphicsView):
     #     self.fitInView()
 
     def wheelEvent(self, event):
+        self.side_view.no_scroll = True
+
         if event.angleDelta().y() > 0:
             factor = 1.25
             self._zoom += 1
@@ -1200,6 +1337,27 @@ class DiagramView(QtWidgets.QGraphicsView):
         self.scale(factor, factor)
 
         self._scene.update_zoom(self.transform().m11())
+
+        self.side_view.save_y_center()
+        self.side_view.setTransform(self.transform())
+
+        self.side_view.no_scroll = False
+
+    def scrollContentsBy(self, dx, dy):
+        super().scrollContentsBy(dx, dy)
+        if not self.no_scroll:
+            no_scroll = self.side_view.no_scroll
+            self.side_view.no_scroll = True
+            dcx = self.mapToScene(self.viewport().geometry().center()).x()
+            self.side_view.centerOn(dcx, self.side_view.y_center)
+            self.side_view.no_scroll = no_scroll
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        self.side_view.save_y_center()
+
+    def save_y_center(self):
+        self.y_center = self.mapToScene(self.viewport().geometry().center()).y()
 
     # def toggleDragMode(self):
     #     if self.dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
@@ -1232,7 +1390,6 @@ class DiagramView(QtWidgets.QGraphicsView):
     def show_electrodes(self, electrode_groups):
         self.hide_electrodes()
 
-        reg_id = self._scene.regions.add_region(dim=1)
         color_ind = 0
         for eg in electrode_groups:
             for el in eg.electrodes:
@@ -1247,8 +1404,7 @@ class DiagramView(QtWidgets.QGraphicsView):
                 self._scene.electrode_item_list.append(gpt)
             color_ind += 1
 
-        #self.fitInView(self.scene().itemsBoundingRect(), Qt.KeepAspectRatio)
-        #self._scene.update_scene()
+        self.side_view.show_electrodes(electrode_groups)
 
     def hide_electrodes(self):
         for item in self.el_map.values():
@@ -1256,11 +1412,15 @@ class DiagramView(QtWidgets.QGraphicsView):
         self.el_map.clear()
         self._scene.electrode_item_list.clear()
 
+        self.side_view.hide_electrodes()
+
     def update_selected_electrodes(self, selected_el, selected_el_rec):
         el = set(selected_el)
         el_rec = set(selected_el_rec)
         for item in self._scene.electrode_item_list:
             item.set_selected(item.el_id in el_rec if item.is_receiver else item.el_id in el)
+
+        self.side_view.update_selected_electrodes(selected_el, selected_el_rec)
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1442,6 +1602,40 @@ class DiagramView(QtWidgets.QGraphicsView):
             self._scene.removeItem(self._scene.pixmap_item)
             self._scene.pixmap_item = None
 
+    def show_point_cloud(self, genie):
+        self.hide_point_cloud()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+        file = os.path.join(prj_dir, "point_cloud_red.xyz")
+        if not os.path.isfile(file):
+            return
+
+        with open(file) as fd:
+            for line in fd:
+                s = line.split()
+                if len(s) < 3:
+                    continue
+
+                x = float(s[0]) + cfg.point_cloud_origin_x
+                y = float(s[1]) + cfg.point_cloud_origin_y
+
+                gpt = GsPointCloud(x, y, "black")
+                self._scene.addItem(gpt)
+                gpt.setZValue(-90)
+                gpt.setOpacity(0.5)
+                gpt.update()
+                self._scene.point_cloud_item_list.append(gpt)
+
+        self.side_view.show_point_cloud(genie)
+
+    def hide_point_cloud(self):
+        for item in self._scene.point_cloud_item_list:
+            self._scene.removeItem(item)
+        self._scene.point_cloud_item_list.clear()
+
+        self.side_view.hide_point_cloud()
+
     def show_gallery_mesh(self, genie):
         self.hide_gallery_mesh()
 
@@ -1485,9 +1679,469 @@ class DiagramView(QtWidgets.QGraphicsView):
             add_line(b, c)
             add_line(c, a)
 
+        self.side_view.show_gallery_mesh(genie)
+
     def hide_gallery_mesh(self):
         for item in self._scene.gallery_mesh_lines:
             self._scene.removeItem(item)
+        self._scene.gallery_mesh_lines.clear()
+
+        self.side_view.hide_gallery_mesh()
+
+
+class SideMeshCutTool:
+    def __init__(self, scene):
+        self._scene = scene
+
+        pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
+        pen.setCosmetic(True)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        margin_pen = QtGui.QPen(QtGui.QColor("red"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen.setCosmetic(True)
+        z = 30
+
+        # create items
+        self.point0 = MeshCutToolPoint(pen, z, self.point0_move_to)
+        self.point1 = MeshCutToolPoint(pen, z, self.point1_move_to)
+        self.line1 = MeshCutToolLine(pen, z)
+        self.line2 = MeshCutToolLine(pen, z)
+        self.line3 = MeshCutToolLine(pen, z)
+        self.line4 = MeshCutToolLine(pen, z)
+        self.line1_b = MeshCutToolLine(pen, z)
+        self.line2_b = MeshCutToolLine(pen, z)
+        self.line3_b = MeshCutToolLine(pen, z)
+        self.line4_b = MeshCutToolLine(pen, z)
+        self.line_a = MeshCutToolLine(pen, z)
+        self.line_b = MeshCutToolLine(pen, z)
+        self.line_c = MeshCutToolLine(pen, z)
+        self.line_d = MeshCutToolLine(pen, z)
+        self.margin_line1 = MeshCutToolLine(margin_pen, z)
+        self.margin_line2 = MeshCutToolLine(margin_pen, z)
+        self.margin_line3 = MeshCutToolLine(margin_pen, z)
+        self.margin_line4 = MeshCutToolLine(margin_pen, z)
+        self.margin_line1_b = MeshCutToolLine(margin_pen, z)
+        self.margin_line2_b = MeshCutToolLine(margin_pen, z)
+        self.margin_line3_b = MeshCutToolLine(margin_pen, z)
+        self.margin_line4_b = MeshCutToolLine(margin_pen, z)
+        self.margin_line_a = MeshCutToolLine(margin_pen, z)
+        self.margin_line_b = MeshCutToolLine(margin_pen, z)
+        self.margin_line_c = MeshCutToolLine(margin_pen, z)
+        self.margin_line_d = MeshCutToolLine(margin_pen, z)
+
+        # add items to scene
+        self._scene.addItem(self.line1)
+        self._scene.addItem(self.line2)
+        self._scene.addItem(self.line3)
+        self._scene.addItem(self.line4)
+        self._scene.addItem(self.line1_b)
+        self._scene.addItem(self.line2_b)
+        self._scene.addItem(self.line3_b)
+        self._scene.addItem(self.line4_b)
+        self._scene.addItem(self.line_a)
+        self._scene.addItem(self.line_b)
+        self._scene.addItem(self.line_c)
+        self._scene.addItem(self.line_d)
+        self._scene.addItem(self.point0)
+        self._scene.addItem(self.point1)
+        self._scene.addItem(self.margin_line1)
+        self._scene.addItem(self.margin_line2)
+        self._scene.addItem(self.margin_line3)
+        self._scene.addItem(self.margin_line4)
+        self._scene.addItem(self.margin_line1_b)
+        self._scene.addItem(self.margin_line2_b)
+        self._scene.addItem(self.margin_line3_b)
+        self._scene.addItem(self.margin_line4_b)
+        self._scene.addItem(self.margin_line_a)
+        self._scene.addItem(self.margin_line_b)
+        self._scene.addItem(self.margin_line_c)
+        self._scene.addItem(self.margin_line_d)
+
+        self.update()
+
+    def update(self):
+        if self._scene.diagram is None:
+            return
+        mct = self._scene.diagram.mesh_cut_tool
+        svt = self._scene.diagram.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        # corner points
+        a = mct.origin
+        b = a + mct.gen_vec1
+        c = b + mct.gen_vec2
+        d = a + mct.gen_vec2
+
+        ax, _, _ = svt.transform(a[0], a[1], 0, nd)
+        bx, _, _ = svt.transform(b[0], b[1], 0, nd)
+        cx, _, _ = svt.transform(c[0], c[1], 0, nd)
+        dx, _, _ = svt.transform(d[0], d[1], 0, nd)
+
+        # no inv corner points
+        g1 = mct.gen_vec1
+        g2 = mct.gen_vec2
+        k = (mct.no_inv_factor - 1) * 0.5
+        am = a - g1 * k - g2 * k
+        bm = b + g1 * k - g2 * k
+        cm = c + g1 * k + g2 * k
+        dm = d - g1 * k + g2 * k
+
+        amx, _, _ = svt.transform(am[0], am[1], 0, nd)
+        bmx, _, _ = svt.transform(bm[0], bm[1], 0, nd)
+        cmx, _, _ = svt.transform(cm[0], cm[1], 0, nd)
+        dmx, _, _ = svt.transform(dm[0], dm[1], 0, nd)
+
+        # z points
+        z = (a + c) / 2
+        z_x, _, _ = svt.transform(z[0], z[1], 0, nd)
+
+        # set new positions
+        self.line1.setLine(ax, mct.z_max, bx, mct.z_max)
+        self.line2.setLine(bx, mct.z_max, cx, mct.z_max)
+        self.line3.setLine(cx, mct.z_max, dx, mct.z_max)
+        self.line4.setLine(dx, mct.z_max, ax, mct.z_max)
+        self.line1_b.setLine(ax, mct.z_min, bx, mct.z_min)
+        self.line2_b.setLine(bx, mct.z_min, cx, mct.z_min)
+        self.line3_b.setLine(cx, mct.z_min, dx, mct.z_min)
+        self.line4_b.setLine(dx, mct.z_min, ax, mct.z_min)
+        self.line_a.setLine(ax, mct.z_min, ax, mct.z_max)
+        self.line_b.setLine(bx, mct.z_min, bx, mct.z_max)
+        self.line_c.setLine(cx, mct.z_min, cx, mct.z_max)
+        self.line_d.setLine(dx, mct.z_min, dx, mct.z_max)
+        self.point0.setPos(z_x, mct.z_max)
+        self.point1.setPos(z_x, mct.z_min)
+        self.margin_line1.setLine(amx, mct.z_max, bmx, mct.z_max)
+        self.margin_line2.setLine(bmx, mct.z_max, cmx, mct.z_max)
+        self.margin_line3.setLine(cmx, mct.z_max, dmx, mct.z_max)
+        self.margin_line4.setLine(dmx, mct.z_max, amx, mct.z_max)
+        self.margin_line1_b.setLine(amx, mct.z_min, bmx, mct.z_min)
+        self.margin_line2_b.setLine(bmx, mct.z_min, cmx, mct.z_min)
+        self.margin_line3_b.setLine(cmx, mct.z_min, dmx, mct.z_min)
+        self.margin_line4_b.setLine(dmx, mct.z_min, amx, mct.z_min)
+        self.margin_line_a.setLine(amx, mct.z_min, amx, mct.z_max)
+        self.margin_line_b.setLine(bmx, mct.z_min, bmx, mct.z_max)
+        self.margin_line_c.setLine(cmx, mct.z_min, cmx, mct.z_max)
+        self.margin_line_d.setLine(dmx, mct.z_min, dmx, mct.z_max)
+
+    def point0_move_to(self, pos):
+        if self._scene.diagram is None:
+            return
+        mct = self._scene.diagram.mesh_cut_tool
+        mct.z_max = pos.y()
+        self.update()
+        self._scene.diagram.mesh_cut_tool_changed.emit()
+
+    def point1_move_to(self, pos):
+        if self._scene.diagram is None:
+            return
+        mct = self._scene.diagram.mesh_cut_tool
+        mct.z_min = pos.y()
+        self.update()
+        self._scene.diagram.mesh_cut_tool_changed.emit()
+
+
+class SideScene(QtWidgets.QGraphicsScene):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.diagram = None
+
+        self.side_mesh_cut_tool = SideMeshCutTool(self)
+
+        self.selection = Selection(self)
+
+        self.electrode_item_list = []
+        self.electrode_pos_list = []
+        self.point_cloud_item_list = []
+        self.point_cloud_pos_list = []
+        self.pixmap_item = None
+        self.map_item = None
+        self.gallery_mesh_lines = []
+        self.gallery_mesh_pos_list = []
+
+    def updata_screen_rect(self):
+        rect = QtCore.QRectF()
+
+        for e in self.electrode_item_list:
+            rect = rect.united(e.sceneBoundingRect())
+
+        for p in self.point_cloud_item_list:
+            rect = rect.united(p.sceneBoundingRect())
+
+        if self.diagram.map_item:
+            svt = self.diagram.side_view_tool
+            nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+            r = self.diagram.map_item.sceneBoundingRect()
+
+            def tr(p):
+                x, _, _ = svt.transform(p.x(), p.y(), 0, nd)
+                return QtCore.QRectF(x, rect.top(), 0, 0)
+
+            rect = rect.united(tr(r.topLeft()))
+            rect = rect.united(tr(r.topRight()))
+            rect = rect.united(tr(r.bottomLeft()))
+            rect = rect.united(tr(r.bottomRight()))
+
+        for line in self.gallery_mesh_lines:
+            rect = rect.united(line.sceneBoundingRect())
+
+        if rect.isEmpty():
+            rect = QtCore.QRectF(-100, -100, 200, 200)
+
+        w = rect.width()
+        h = rect.height()
+        rect = rect.marginsAdded(QtCore.QMarginsF(w, h, w, h))
+
+        self.setSceneRect(rect)
+
+
+class SideView(QtWidgets.QGraphicsView):
+    def __init__(self):
+        super().__init__()
+
+        self.diagram_view = None
+
+        self._scene = SideScene(self)
+        self.setScene(self._scene)
+
+        self.scale(1, -1)
+
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+
+        self.el_map = {}
+
+        self.no_scroll = False
+        self.y_center = 0.0
+
+    def show_electrodes(self, electrode_groups):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        self.hide_electrodes()
+
+        color_ind = 0
+        for eg in electrode_groups:
+            for el in eg.electrodes:
+                x, y, _ = svt.transform(el.x, el.y, el.z, nd)
+                gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name(),
+                               Region.colors_selected[color_ind % len(Region.colors)].name(),
+                               el.id, el.is_receiver)
+                self._scene.addItem(gpt)
+                gpt.update()
+                self.el_map[id(el)] = gpt
+                self._scene.electrode_item_list.append(gpt)
+                self._scene.electrode_pos_list.append((el.x, el.y, el.z))
+            color_ind += 1
+
+    def hide_electrodes(self):
+        for item in self.el_map.values():
+            self._scene.removeItem(item)
+        self.el_map.clear()
+        self._scene.electrode_item_list.clear()
+        self._scene.electrode_pos_list.clear()
+
+    def update_selected_electrodes(self, selected_el, selected_el_rec):
+        el = set(selected_el)
+        el_rec = set(selected_el_rec)
+        for item in self._scene.electrode_item_list:
+            item.set_selected(item.el_id in el_rec if item.is_receiver else item.el_id in el)
+
+    def update_electrodes_pos(self):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        for i in range(len(self._scene.electrode_item_list)):
+            gpt = self._scene.electrode_item_list[i]
+            pos = self._scene.electrode_pos_list[i]
+            gpt.my_x, gpt.my_y, z = svt.transform(pos[0], pos[1], pos[2], nd)
+            gpt.setVisible(z >= 0)
+            gpt.update()
+
+    def show_point_cloud(self, genie):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        self.hide_point_cloud()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+        file = os.path.join(prj_dir, "point_cloud_red.xyz")
+        if not os.path.isfile(file):
+            return
+
+        with open(file) as fd:
+            for line in fd:
+                s = line.split()
+                if len(s) < 3:
+                    continue
+
+                x = float(s[0]) + cfg.point_cloud_origin_x
+                y = float(s[1]) + cfg.point_cloud_origin_y
+                z = float(s[2]) + cfg.point_cloud_origin_z
+
+                xt, yt, zt = svt.transform(x, y, z, nd)
+
+                gpt = GsPointCloud(xt, yt, "black")
+                self._scene.addItem(gpt)
+                gpt.setZValue(-90)
+                gpt.setOpacity(0.5)
+                gpt.update()
+                self._scene.point_cloud_item_list.append(gpt)
+                self._scene.electrode_pos_list.append((x, y, z))
+
+    def hide_point_cloud(self):
+        for item in self._scene.point_cloud_item_list:
+            self._scene.removeItem(item)
+        self._scene.point_cloud_item_list.clear()
+        self._scene.point_cloud_pos_list.clear()
+
+    def update_point_cloud_pos(self):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        for i in range(len(self._scene.point_cloud_item_list)):
+            gpt = self._scene.point_cloud_item_list[i]
+            pos = self._scene.electrode_pos_list[i]
+            gpt.my_x, gpt.my_y, z = svt.transform(pos[0], pos[1], pos[2], nd)
+            gpt.setVisible(z >= 0)
+
+            # linear
+            # if z >= 0:
+            #     if z > 100:
+            #         op = 0.25
+            #     else:
+            #         op = 0.75 - z / 200
+            #     gpt.setOpacity(op)
+
+            # only 2 values
+            if z >= 0:
+                if z > 25:
+                    op = 0.5
+                else:
+                    op = 0.75
+                gpt.setOpacity(op)
+
+            # logaritmic
+            # if z >= 0:
+            #     op = 1 - math.log(z) / 10
+            #     gpt.setOpacity(op)
+
+            gpt.update()
+
+    def show_gallery_mesh(self, genie):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        self.hide_gallery_mesh()
+
+        prj_dir = genie.cfg.current_project_dir
+        cfg = genie.project_cfg
+        file_name = os.path.join(prj_dir, "gallery_mesh.msh")
+        if not os.path.isfile(file_name):
+            return
+
+        pen = QtGui.QPen(QtGui.QColor("black"), 0, QtCore.Qt.SolidLine)
+
+        mesh = GmshIO(file_name)
+
+        lines = set()
+
+        def add_line(n1, n2):
+            if (n1, n2) in lines or (n1, n2) in lines:
+                return
+            else:
+                lines.add((n1, n2))
+
+            a = mesh.nodes[n1]
+            b = mesh.nodes[n2]
+
+            x1 = a[0] + cfg.gallery_mesh_origin_x
+            y1 = a[1] + cfg.gallery_mesh_origin_y
+            z1 = a[2] + cfg.gallery_mesh_origin_z
+            x2 = b[0] + cfg.gallery_mesh_origin_x
+            y2 = b[1] + cfg.gallery_mesh_origin_y
+            z2 = b[2] + cfg.gallery_mesh_origin_z
+
+            x1t, y1t, z1t = svt.transform(x1, y1, z1, nd)
+            x2t, y2t, z2t = svt.transform(x2, y2, z2, nd)
+
+            line = QtWidgets.QGraphicsLineItem(x1t, y1t, x2t, y2t)
+            line.setZValue(-80)
+            line.setPen(pen)
+            self._scene.addItem(line)
+            self._scene.gallery_mesh_lines.append(line)
+            self._scene.gallery_mesh_pos_list.append((x1, y1, z1, x2, y2, z2))
+
+        for data in mesh.elements.values():
+            type_, tags, nodeIDs = data
+            if type_ != 2:
+                continue
+            a = nodeIDs[0]
+            b = nodeIDs[1]
+            c = nodeIDs[2]
+
+            add_line(a, b)
+            add_line(b, c)
+            add_line(c, a)
+
+    def hide_gallery_mesh(self):
+        for item in self._scene.gallery_mesh_lines:
+            self._scene.removeItem(item)
+        self._scene.gallery_mesh_lines.clear()
+        self._scene.gallery_mesh_pos_list.clear()
+
+    def update_gallery_mesh_pos(self):
+        svt = self.diagram_view._scene.side_view_tool
+        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+
+        for i in range(len(self._scene.gallery_mesh_lines)):
+            gpt = self._scene.gallery_mesh_lines[i]
+            pos = self._scene.gallery_mesh_pos_list[i]
+            x1t, y1t, z1t = svt.transform(pos[0], pos[1], pos[2], nd)
+            x2t, y2t, z2t = svt.transform(pos[3], pos[4], pos[5], nd)
+            gpt.setLine(x1t, y1t, x2t, y2t)
+            gpt.setVisible(z1t >= 0 and z2t >= 0)
+
+    def update_pos(self):
+        self.update_electrodes_pos()
+        self.update_point_cloud_pos()
+        self.update_gallery_mesh_pos()
+
+    def wheelEvent(self, event):
+        self.diagram_view.no_scroll = True
+
+        if event.angleDelta().y() > 0:
+            factor = 1.25
+        else:
+            factor = 0.8
+        self.scale(factor, factor)
+
+        self.diagram_view.save_y_center()
+        self.diagram_view.setTransform(self.transform())
+
+        self.diagram_view.no_scroll = False
+
+    def scrollContentsBy(self, dx, dy):
+        super().scrollContentsBy(dx, dy)
+        if not self.no_scroll:
+            no_scroll = self.diagram_view.no_scroll
+            self.diagram_view.no_scroll = True
+            scx = self.mapToScene(self.viewport().geometry().center()).x()
+            #dcy = self.diagram_view.mapToScene(self.diagram_view.viewport().geometry().center()).y()
+            self.diagram_view.centerOn(scx, self.diagram_view.y_center)
+            self.diagram_view.no_scroll = no_scroll
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        self.diagram_view.save_y_center()
+
+    def save_y_center(self):
+        self.y_center = self.mapToScene(self.viewport().geometry().center()).y()
 
 
 if __name__ == '__main__':

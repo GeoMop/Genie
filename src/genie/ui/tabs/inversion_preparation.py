@@ -1,11 +1,12 @@
 from PyQt5.QtCore import Qt
-from ..panels.scene import DiagramView
+from ..panels.scene import DiagramView, SideView
 #import core.electrode_parser
 from genie.core.data_types import ElectrodeGroup, Electrode, Measurement
 from ..panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from ..panels.measurement_view import MeasurementModel, MeasurementGroupView
 from ..panels.region_panel import RegionPanel
 from ..panels.mesh_cut_tool_panel import MeshCutToolPanel
+from ..panels.side_view_panel import SideViewPanel
 from ..menus.main_menu_bar import MainMenuBar
 from ..dialogs.new_project_dialog import NewProjectDialog
 from xlsreader.xls_reader_dialog import XlsReaderDialog
@@ -51,8 +52,13 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.el_group_view.setMinimumWidth(200)
         self.el_group_view.setMaximumWidth(400)
 
-        self.diagram_view = DiagramView()
-        self.setCentralWidget(self.diagram_view)
+        self.side_view = SideView()
+        self.diagram_view = DiagramView(self.side_view)
+        self.side_view._scene.diagram = self.diagram_view._scene
+        splitter = QtWidgets.QSplitter(Qt.Vertical)
+        splitter.addWidget(self.diagram_view)
+        splitter.addWidget(self.side_view)
+        self.setCentralWidget(splitter)
 
         # self.region_panel = RegionPanel(self, self.diagram_view._scene)
         # self.region_panel._update_region_list()
@@ -65,8 +71,18 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.mesh_cut_tool_panel.scene_cut_changed()
         self.mesh_cut_tool_panel_dock.setWidget(self.mesh_cut_tool_panel)
 
+        self.side_view_panel = SideViewPanel(self, self.diagram_view._scene)
+        self.side_view_panel.scene_side_view_changed()
+        self.side_view_panel_dock.setWidget(self.side_view_panel)
+
         self.diagram_view._scene.mesh_cut_tool_changed.connect(self.mesh_cut_tool_panel.scene_cut_changed)
         #self.diagram_view._scene.mesh_cut_tool_changed.connect(self._scene_cut_changed)
+        self.diagram_view._scene.mesh_cut_tool_changed.connect(self.side_view._scene.side_mesh_cut_tool.update)
+
+        self.diagram_view._scene.side_view_tool_changed.connect(self.side_view_panel.scene_side_view_changed)
+
+        self.diagram_view._scene.side_view_tool_changed.connect(self.side_view.update_pos)
+        self.diagram_view._scene.side_view_tool_changed.connect(self.side_view._scene.side_mesh_cut_tool.update)
 
         self._measurement_model = MeasurementModel(self._measurements)
 
@@ -81,8 +97,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         # self.region_panel.selection_changed()
 
         #self.diagram_view.show_map()
-        self.diagram_view._scene.updata_screen_rect()
-        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.mesh_cut_tool_panel.reset_view()
 
         # connect actions
         self.main_window.menuBar.file.actionExit.triggered.connect(QtWidgets.QApplication.quit)
@@ -120,6 +135,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.mesh_cut_tool_panel_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.mesh_cut_tool_panel_dock)
 
+        self.side_view_panel_dock = QtWidgets.QDockWidget("Side view", self)
+        self.side_view_panel_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.side_view_panel_dock)
+
         self.measurements_dock = QtWidgets.QDockWidget("Measurements", self)
         self.measurements_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.measurements_dock)
@@ -137,7 +156,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionImportGalleryMesh.setEnabled(enable)
         self.main_window.menuBar.file.actionImportMap.setEnabled(enable)
         self.mesh_cut_tool_panel.setEnabled(enable)
+        self.side_view_panel.setEnabled(enable)
         self.diagram_view.setEnabled(enable)
+        self.side_view.setEnabled(enable)
 
     def _show_current_inversion(self):
         prj_dir = self.genie.cfg.current_project_dir
@@ -168,9 +189,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
                 self.genie.current_inversion_cfg.mesh_cut_tool_param)
+            self.diagram_view._scene.side_view_tool.from_mesh_cut_tool_param(
+                self.genie.current_inversion_cfg.side_view_tool)
 
-            self.diagram_view._scene.updata_screen_rect()
-            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+            self.mesh_cut_tool_panel.reset_view()
 
             self._handle_save_project_action()
 
@@ -221,7 +243,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.genie.project_cfg = project_cfg
 
         self._update_el_meas()
-        self.diagram_view.show_pixmap(self.genie)
+        self.diagram_view.show_point_cloud(self.genie)
         self.diagram_view.show_map(self.genie)
         self.diagram_view.show_gallery_mesh(self.genie)
 
@@ -279,7 +301,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.el_group_view.view.setModel(self._electrode_group_model)
         self._measurement_model = MeasurementModel(self._measurements)
         self.measurement_view.view.setModel(self._measurement_model)
-        self.diagram_view.hide_pixmap()
+        self.diagram_view.hide_point_cloud()
         self.diagram_view.hide_map()
         self.diagram_view.hide_gallery_mesh()
         self.diagram_view.hide_electrodes()
@@ -290,8 +312,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._enable_project_ctrl(False)
         self._show_current_inversion()
 
-        self.diagram_view._scene.updata_screen_rect()
-        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.mesh_cut_tool_panel.reset_view()
 
     def _add_inversion(self, name):
         self._save_current_inversion()
@@ -306,7 +327,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
             self.genie.current_inversion_cfg.mesh_cut_tool_param)
+        self.diagram_view._scene.side_view_tool.from_side_view_tool_param(
+            self.genie.current_inversion_cfg.side_view_tool_param)
         self.mesh_cut_tool_panel.center_origin()
+        self.side_view_panel.center_origin()
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
@@ -321,8 +345,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.tab_wiget.hide_meas_model()
         self._show_current_inversion()
 
-        self.diagram_view._scene.updata_screen_rect()
-        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.mesh_cut_tool_panel.reset_view()
 
     def _copy_inversion(self, name, new_name):
         self._save_current_inversion()
@@ -371,6 +394,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.genie.current_inversion_cfg = InversionConfig.deserialize(config)
 
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(self.genie.current_inversion_cfg.mesh_cut_tool_param)
+        self.diagram_view._scene.side_view_tool.from_side_view_tool_param(
+            self.genie.current_inversion_cfg.side_view_tool_param)
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
@@ -379,14 +404,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._show_meas_model()
         self._show_current_inversion()
 
-        self.diagram_view._scene.updata_screen_rect()
-        self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.mesh_cut_tool_panel.reset_view()
 
     def _save_current_inversion(self):
         if not self.genie.project_cfg.curren_inversion_name:
             return
 
         self.genie.current_inversion_cfg.mesh_cut_tool_param = self.diagram_view._scene.mesh_cut_tool.to_mesh_cut_tool_param()
+        self.genie.current_inversion_cfg.side_view_tool_param = self.diagram_view._scene.side_view_tool.to_side_view_tool_param()
         self.genie.current_inversion_cfg.checked_measurements = [m.number for m in self._measurement_model.checkedMeasurements()]
 
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions",
@@ -447,11 +472,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
             if self.genie.method == GenieMethod.ST:
                 self._init_first_arrivals()
 
-            self.diagram_view._scene.updata_screen_rect()
-            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+            self.mesh_cut_tool_panel.reset_view()
 
             if cfg.empty:
                 self.mesh_cut_tool_panel.center_origin()
+                self.side_view_panel.center_origin()
                 cfg.empty = False
 
             self._handle_save_project_action()
@@ -610,13 +635,13 @@ class InversionPreparation(QtWidgets.QMainWindow):
             cfg.point_cloud_pixmap_y_min = dlg.pixmap_y_min
             cfg.point_cloud_pixmap_scale = dlg.pixmap_scale
 
-            self.diagram_view.show_pixmap(self.genie)
+            self.diagram_view.show_point_cloud(self.genie)
 
-            self.diagram_view._scene.updata_screen_rect()
-            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+            self.mesh_cut_tool_panel.reset_view()
 
             if cfg.empty:
                 self.mesh_cut_tool_panel.center_origin()
+                self.side_view_panel.center_origin()
                 cfg.empty = False
 
             self._handle_save_project_action()
@@ -632,11 +657,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self.diagram_view.show_gallery_mesh(self.genie)
 
-            self.diagram_view._scene.updata_screen_rect()
-            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+            self.mesh_cut_tool_panel.reset_view()
 
             if cfg.empty:
                 self.mesh_cut_tool_panel.center_origin()
+                self.side_view_panel.center_origin()
                 cfg.empty = False
 
             self._handle_save_project_action()
@@ -661,11 +686,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self.diagram_view.show_map(self.genie)
 
-            self.diagram_view._scene.updata_screen_rect()
-            self.diagram_view.fitInView(self.diagram_view._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+            self.mesh_cut_tool_panel.reset_view()
 
             if cfg.empty:
                 self.mesh_cut_tool_panel.center_origin()
+                self.side_view_panel.center_origin()
                 cfg.empty = False
 
             self._handle_save_project_action()

@@ -1,5 +1,5 @@
 from xlsreader import json_data
-from .data_types import MeshCutToolParam, InversionParam
+from .data_types import MeshCutToolParam, SideViewToolParam, InversionParam
 from xlsreader.xls_parser import XlsMeasurementGroup
 from genie.core.global_const import GenieMethod
 
@@ -18,6 +18,7 @@ class FirstArrival:
 @json_data.jsondata
 class InversionConfig:
     mesh_cut_tool_param: MeshCutToolParam = attr.ib(factory=MeshCutToolParam)
+    side_view_tool_param: SideViewToolParam = attr.ib(factory=SideViewToolParam)
     checked_measurements: List[str] = attr.ib(factory=list)
     inversion_param: InversionParam = attr.ib(factory=InversionParam)
 
