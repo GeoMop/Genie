@@ -97,7 +97,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
 
         self._par_edgeLengthLineEdit = QtWidgets.QLineEdit("1.0")
-        self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length.")
+        self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length. [m]")
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
         self._par_meshFromComboBox.currentTextChanged.connect(self._handle_mesh_from_combobox_changed)
@@ -139,7 +139,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_snapDistanceLineEdit = QtWidgets.QLineEdit("1.0")
-        self._par_snapDistanceLineEdit.setToolTip("Electrodes are snapped to gallery surface, this parameter determine maximal snap distance.")
+        self._par_snapDistanceLineEdit.setToolTip("Electrodes are snapped to gallery surface, this parameter determine maximal snap distance. [m]")
         self._parameters_formLayout.addRow("Snap distance:", self._par_snapDistanceLineEdit)
 
         label = QtWidgets.QLabel("Inversion")
@@ -151,7 +151,11 @@ class RunInvDlg(QtWidgets.QDialog):
         else:
             text = "Min velocity:"
         self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
-        self._par_minModelLineEdit.setToolTip("Minimal value of resistivity/velocity allowed in model.")
+        if self.genie.method == GenieMethod.ERT:
+            text = "Minimal value of resistivity allowed in model. [Ohmm]"
+        else:
+            text = "Minimal value of velocity allowed in model. [m/s]"
+        self._par_minModelLineEdit.setToolTip(text)
         self._parameters_formLayout.addRow(text, self._par_minModelLineEdit)
 
         if self.genie.method == GenieMethod.ERT:
@@ -159,7 +163,11 @@ class RunInvDlg(QtWidgets.QDialog):
         else:
             text = "Max velocity:"
         self._par_maxModelLineEdit = QtWidgets.QLineEdit("100000.0")
-        self._par_maxModelLineEdit.setToolTip("Maximal value of resistivity/velocity allowed in model.")
+        if self.genie.method == GenieMethod.ERT:
+            text = "Maximal value of resistivity allowed in model. [Ohmm]"
+        else:
+            text = "Maximal value of velocity allowed in model. [m/s]"
+        self._par_maxModelLineEdit.setToolTip(text)
         self._parameters_formLayout.addRow(text, self._par_maxModelLineEdit)
 
         self._par_zWeightLineEdit = QtWidgets.QLineEdit("0.7")
@@ -213,7 +221,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("p3d:", self._par_p3dCheckBox)
 
         self._par_p3dStepLineEdit = QtWidgets.QLineEdit("1.0")
-        self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points.")
+        self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points. [m]")
         self._parameters_formLayout.addRow("p3d step:", self._par_p3dStepLineEdit)
 
         self._par_p3dCheckBox.stateChanged.connect(self._handle_p3d_checkbox_changed)
