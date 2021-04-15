@@ -118,6 +118,7 @@ class InversionParam:
     meshFile: str = ""
     meshFrom: MeshFrom = MeshFrom.GALLERY_CLOUD
     reconstructionDepth: int = 6
+    smallComponentRatio: float = 0.1
     edgeLength: float = 1.0
     refineMesh: bool = True
     refineP2: bool = False

@@ -1,6 +1,6 @@
-def gen(script_file, depth, len):
+def gen(script_file, depth, ratio, len):
     with open(script_file, "w") as f:
-        f.write(template.format(depth, len, len))
+        f.write(template.format(depth, ratio, len, len))
 
 
 template = '''<!DOCTYPE FilterScript>
@@ -20,7 +20,7 @@ template = '''<!DOCTYPE FilterScript>
     <xmlparam name="visibleLayer" value="false"/>
   </xmlfilter>
   <filter name="Select small disconnected component">
-    <Param type="RichFloat" name="NbFaceRatio" isxmlparam="0" value="1"/>
+    <Param type="RichFloat" name="NbFaceRatio" isxmlparam="0" value="{}"/>
     <Param type="RichBool" name="NonClosedOnly" isxmlparam="0" value="false"/>
   </filter>
   <filter name="Delete Selected Faces and Vertices"/>

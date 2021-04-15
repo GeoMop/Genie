@@ -96,6 +96,10 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_reconstructionDepthLineEdit.setToolTip('In case that previous option is "Gallery cloud", define how much details will be reconstructed from point cloud. Bigger value means more details. This value is integer from 4 to 10.')
         self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
 
+        self._par_smallComponentRatioLineEdit = QtWidgets.QLineEdit("0.1")
+        self._par_smallComponentRatioLineEdit.setToolTip("Small gallery mesh components are removed. This ratio define threshold for removing relative to largest component.")
+        self._parameters_formLayout.addRow("Small component ratio:", self._par_smallComponentRatioLineEdit)
+
         self._par_edgeLengthLineEdit = QtWidgets.QLineEdit("1.0")
         self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length. [m]")
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
@@ -146,16 +150,16 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
-        if self.genie.method == GenieMethod.ERT:
-            text = "Min resistivity:"
-        else:
-            text = "Min velocity:"
         self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
         if self.genie.method == GenieMethod.ERT:
             text = "Minimal value of resistivity allowed in model. [Ohmm]"
         else:
             text = "Minimal value of velocity allowed in model. [m/s]"
         self._par_minModelLineEdit.setToolTip(text)
+        if self.genie.method == GenieMethod.ERT:
+            text = "Min resistivity:"
+        else:
+            text = "Min velocity:"
         self._parameters_formLayout.addRow(text, self._par_minModelLineEdit)
 
         if self.genie.method == GenieMethod.ERT:
@@ -168,6 +172,10 @@ class RunInvDlg(QtWidgets.QDialog):
         else:
             text = "Maximal value of velocity allowed in model. [m/s]"
         self._par_maxModelLineEdit.setToolTip(text)
+        if self.genie.method == GenieMethod.ERT:
+            text = "Max resistivity:"
+        else:
+            text = "Max velocity:"
         self._parameters_formLayout.addRow(text, self._par_maxModelLineEdit)
 
         self._par_zWeightLineEdit = QtWidgets.QLineEdit("0.7")
@@ -408,6 +416,7 @@ class RunInvDlg(QtWidgets.QDialog):
             elif d > 10:
                 d = 10
             param.reconstructionDepth = d
+            param.smallComponentRatio = float(self._par_smallComponentRatioLineEdit.text())
             param.edgeLength = float(self._par_edgeLengthLineEdit.text())
             param.refineMesh = self._par_refineMeshCheckBox.isChecked()
             param.refineP2 = self._par_refineP2CheckBox.isChecked()
@@ -458,6 +467,7 @@ class RunInvDlg(QtWidgets.QDialog):
             ind = 0
         self._par_meshFromComboBox.setCurrentIndex(ind)
         self._par_reconstructionDepthLineEdit.setText(str(param.reconstructionDepth))
+        self._par_smallComponentRatioLineEdit.setText(str(param.smallComponentRatio))
         self._par_edgeLengthLineEdit.setText(str(param.edgeLength))
         self._par_refineMeshCheckBox.setChecked(param.refineMesh)
         self._par_refineP2CheckBox.setChecked(param.refineP2)

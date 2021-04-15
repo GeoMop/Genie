@@ -796,7 +796,7 @@ def prepare(mesh_cut_tool_param, inv_par, project_conf):
         meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
         if not os.path.exists(meshlabserver_path):
             meshlabserver_path = "meshlabserver"
-        meshlab_script_gen.gen("meshlab_script.mlx", inv_par.reconstructionDepth, inv_par.edgeLength)
+        meshlab_script_gen.gen("meshlab_script.mlx", inv_par.reconstructionDepth, inv_par.smallComponentRatio, inv_par.edgeLength)
         run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", "meshlab_script.mlx"])
         print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
         #return
