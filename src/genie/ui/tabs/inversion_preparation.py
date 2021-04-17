@@ -613,9 +613,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dlg = PointCloudReaderDialog(self, enable_import=True, work_dir=prj_dir)
         if dlg.exec():
             f1 = os.path.join(prj_dir, "point_cloud.xyz")
-            f1_tmp = os.path.join(prj_dir, "point_cloud.xyz.tmp")
-            f2 = os.path.join(prj_dir, "point_cloud_pixmap.png")
-            f2_tmp = os.path.join(prj_dir, "point_cloud_pixmap.png.tmp")
+            f1_tmp = os.path.join(prj_dir, "point_cloud.tmp.xyz")
+            f2 = os.path.join(prj_dir, "point_cloud_red.xyz")
+            f2_tmp = os.path.join(prj_dir, "point_cloud_red.tmp.xyz")
 
             # remove old files
             if os.path.exists(f1):
@@ -631,9 +631,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
             cfg.point_cloud_origin_x = dlg.origin_x
             cfg.point_cloud_origin_y = dlg.origin_y
             cfg.point_cloud_origin_z = dlg.origin_z
-            cfg.point_cloud_pixmap_x_min = dlg.pixmap_x_min
-            cfg.point_cloud_pixmap_y_min = dlg.pixmap_y_min
-            cfg.point_cloud_pixmap_scale = dlg.pixmap_scale
+            # cfg.point_cloud_pixmap_x_min = dlg.pixmap_x_min
+            # cfg.point_cloud_pixmap_y_min = dlg.pixmap_y_min
+            # cfg.point_cloud_pixmap_scale = dlg.pixmap_scale
 
             self.diagram_view.show_point_cloud(self.genie)
 

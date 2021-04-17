@@ -1,10 +1,14 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+from genie.core import meshlab_merge
+
 import sys
 import os
 import threading
 import math
 import time
+import subprocess
+import random
 
 
 class BadFormatError(Exception):
@@ -20,8 +24,10 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._import_ready = False
         self._work_dir = work_dir
 
-        self._out_file = os.path.join(self._work_dir, "point_cloud.xyz.tmp")
-        self._point_cloud_pixmap_file = os.path.join(self._work_dir, "point_cloud_pixmap.png.tmp")
+        self._out_file = os.path.join(self._work_dir, "point_cloud.tmp.xyz")
+        self._out_file_red = os.path.join(self._work_dir, "point_cloud_red.tmp.xyz")
+        #self._point_cloud_pixmap_file = os.path.join(self._work_dir, "point_cloud_pixmap.png.tmp")
+        self._meshlab_script = os.path.join(self._work_dir, "meshlab_merge.mlx")
 
         self.origin_x = 0.0
         self.origin_y = 0.0
@@ -38,6 +44,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._pixmap_mat = []
         self._timer = QtCore.QTimer()
         self._closing = False
+        self._meshlab_proc = None
 
         self.setWindowTitle("PointCloudReader")
 
@@ -47,7 +54,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         label = QtWidgets.QLabel("Point cloud file:")
         file_layout.addWidget(label)
         self._file_edit = QtWidgets.QLineEdit()
-        self._file_edit.returnPressed.connect(self._handle_read_action)
+        #self._file_edit.returnPressed.connect(self._handle_read_action)
         file_layout.addWidget(self._file_edit)
         self._browse_button = QtWidgets.QPushButton("Browse...")
         self._browse_button.clicked.connect(self._handle_browse_action)
@@ -78,6 +85,22 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         origin_layout.addWidget(self._origin_z_edit)
         main_layout.addLayout(origin_layout)
 
+        merge_layout = QtWidgets.QHBoxLayout()
+        merge_layout.addWidget(QtWidgets.QLabel("Merge close points:"))
+        self._merge_checkbox = QtWidgets.QCheckBox()
+        self._merge_checkbox.setToolTip("If checked close points are merged together.")
+        merge_layout.addWidget(self._merge_checkbox)
+        merge_layout.addWidget(QtWidgets.QLabel("Distance:"))
+        self._merge_distance_edit = QtWidgets.QLineEdit()
+        self._merge_distance_edit.setEnabled(False)
+        self._merge_distance_edit.setValidator(QtGui.QDoubleValidator())
+        self._merge_distance_edit.setText("0.1")
+        self._merge_distance_edit.setToolTip("All the points that closer than this threshold are merged together. [m]")
+        merge_layout.addWidget(self._merge_distance_edit)
+        main_layout.addLayout(merge_layout)
+
+        self._merge_checkbox.stateChanged.connect(self._handle_merge_distance_checkbox_changed)
+
         # button box
         self._read_button = QtWidgets.QPushButton("Read")
         self._read_button.clicked.connect(self._handle_read_action)
@@ -98,11 +121,16 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
 
         self.resize(600, 300)
 
+    def _handle_merge_distance_checkbox_changed(self, state=None):
+        self._merge_distance_edit.setEnabled(self._merge_checkbox.isChecked())
+
     def _enable_ctrl(self, enable=True):
         self._file_edit.blockSignals(not enable)
         self._browse_button.setEnabled(enable)
         self._save_results_button.setEnabled(enable)
         self._import_button.setEnabled(enable and self._import_ready and self._enable_import)
+        self._merge_checkbox.setEnabled(enable)
+        self._merge_distance_edit.setEnabled(enable and self._merge_checkbox.isChecked())
 
     def _pre_thread(self):
         self._enable_ctrl(False)
@@ -119,7 +147,119 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._timer.timeout.connect(self._handle_timeout)
         self._timer.start(100)
 
+    def _copy_cloud(self, src, dst):
+        points_count = 0
+        points_count_show = 1000000
+        points_count_test_stop = 10000
+
+        with open(src) as fd_in:
+            with open(dst, "w") as fd_out:
+                for line in fd_in:
+                    s = line.split()
+                    if len(s) >= 3:
+                        fd_out.write("{} {} {}\n".format(*s[:3]))
+                        points_count += 1
+                        if points_count % points_count_show == 0:
+                            self._message_queue.append("{} points copied.".format(points_count))
+                        if points_count % points_count_test_stop == 0:
+                            if self._stop_thread:
+                                return
+                self._message_queue.append("{} points copied.".format(points_count))
+
+    def _reduce_cloud(self, src, dst, red_count=5000):
+        points_count = 0
+        points_count_show = 1000000
+        points_count_test_stop = 10000
+
+        out = []
+        with open(src) as fd_in:
+            line = ""
+            for i in range(red_count):
+                line = fd_in.readline()
+                if line:
+                    out.append(line)
+                    points_count += 1
+                else:
+                    break
+            p = 1
+            while line:
+                p += 1
+                t = 1.0 / p
+                for i in range(red_count):
+                    line = fd_in.readline()
+                    if line:
+                        if random.random() < t:
+                            out[i] = line
+                        points_count += 1
+                        if points_count % points_count_show == 0:
+                            self._message_queue.append("{} points reduced.".format(points_count))
+                        if points_count % points_count_test_stop == 0:
+                            if self._stop_thread:
+                                return
+                    else:
+                        break
+            self._message_queue.append("{} points reduced.".format(points_count))
+
+        with open(dst, "w") as fd_out:
+            fd_out.writelines(out)
+
     def _thread_run(self):
+        self._import_ready = False
+
+        # copy points
+        self._message_queue.append("Copying points")
+        t = time.time()
+        self._copy_cloud(self._point_cloud_file, self._out_file)
+
+        if self._stop_thread:
+            self._message_queue.append("\nCopying points stopped.")
+            self._message_queue.append(None)
+            return
+
+        self._message_queue.append("Copying points done in {:0.3f} s.".format(time.time() - t))
+
+        # meshlab
+        if self._merge_checkbox.isChecked():
+            self._message_queue.append("\nMerging points")
+            t = time.time()
+            #meshlabserver_path = '/home/radek/apps/meshlab'
+            #os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
+            meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "meshlab", "meshlabserver.exe")
+            if not os.path.exists(meshlabserver_path):
+                meshlabserver_path = "meshlabserver"
+            meshlab_merge.gen(self._meshlab_script, self._merge_distance_edit.text())
+            args = [meshlabserver_path, "-i", self._out_file, "-o", self._out_file, "-m", "sa", "-s", self._meshlab_script]
+            self._meshlab_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+            for line in self._meshlab_proc.stdout:
+                if line and line[-1] == "\n":
+                    line = line[:-1]
+                self._message_queue.append(line)
+            self._meshlab_proc.wait()
+            self._meshlab_proc = None
+
+            if self._stop_thread:
+                self._message_queue.append("\nMerging points stopped.")
+                self._message_queue.append(None)
+                return
+
+            self._message_queue.append("Merging points done in {:0.3f} s.".format(time.time() - t))
+
+        # reduce points
+        self._message_queue.append("\nReducing points")
+        t = time.time()
+        self._reduce_cloud(self._out_file, self._out_file_red)
+
+        if self._stop_thread:
+            self._message_queue.append("\nReducing points stopped.")
+            self._message_queue.append(None)
+            return
+
+        self._message_queue.append("Reducing points done in {:0.3f} s.".format(time.time() - t))
+
+        self._message_queue.append(None)
+        self._import_ready = True
+
+    def _thread_run_old(self):
         def xy_gen(fd):
             try:
                 line = fd.readline()
@@ -219,26 +359,26 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._thread.join()
         self._thread = None
 
-        if self._pixmap_mat:
-            # create pixmap
-            pixmap = QtGui.QPixmap(len(self._pixmap_mat[0]), len(self._pixmap_mat))
-            pixmap.fill(QtCore.Qt.transparent)
-            painter = QtGui.QPainter(pixmap)
-            pen = QtGui.QPen(QtGui.QColor("black"))
-            painter.setPen(pen)
-            for j, line in enumerate(self._pixmap_mat):
-                for i, b in enumerate(line):
-                    if b:
-                        painter.drawPoint(i, j)
-            painter.end()
-
-            # save pixmap
-            tr_pixmap = pixmap.transformed(QtGui.QTransform.fromScale(1, -1))
-            tr_pixmap.save(self._point_cloud_pixmap_file, "PNG")
-
-            self._import_ready = True
-        else:
-            self._import_ready = False
+        # if self._pixmap_mat:
+        #     # create pixmap
+        #     pixmap = QtGui.QPixmap(len(self._pixmap_mat[0]), len(self._pixmap_mat))
+        #     pixmap.fill(QtCore.Qt.transparent)
+        #     painter = QtGui.QPainter(pixmap)
+        #     pen = QtGui.QPen(QtGui.QColor("black"))
+        #     painter.setPen(pen)
+        #     for j, line in enumerate(self._pixmap_mat):
+        #         for i, b in enumerate(line):
+        #             if b:
+        #                 painter.drawPoint(i, j)
+        #     painter.end()
+        #
+        #     # save pixmap
+        #     tr_pixmap = pixmap.transformed(QtGui.QTransform.fromScale(1, -1))
+        #     tr_pixmap.save(self._point_cloud_pixmap_file, "PNG")
+        #
+        #     self._import_ready = True
+        # else:
+        #     self._import_ready = False
 
         self._log_text = self._log.toPlainText()
 
@@ -261,6 +401,8 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
             self._pre_thread()
         else:
             self._stop_thread = True
+            if self._meshlab_proc is not None:
+                self._meshlab_proc.kill()
 
     def _handle_save_results_action(self):
         if self._log_text:
@@ -287,7 +429,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
             app = QtWidgets.QApplication.instance()
             app.processEvents(QtCore.QEventLoop.AllEvents, 0)
 
-            self._handle_read_action()
+            #self._handle_read_action()
 
     def _handle_timeout(self):
         if self._thread is not None:
@@ -317,8 +459,8 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         # remove tmp files
         if os.path.exists(self._out_file):
             os.remove(self._out_file)
-        if os.path.exists(self._point_cloud_pixmap_file):
-            os.remove(self._point_cloud_pixmap_file)
+        if os.path.exists(self._out_file_red):
+            os.remove(self._out_file_red)
 
     def keyPressEvent(self, evt):
         if evt.key() == QtCore.Qt.Key_Enter or evt.key() == QtCore.Qt.Key_Return:
