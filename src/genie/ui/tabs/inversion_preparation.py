@@ -498,8 +498,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 electrode_groups.append(eg)
             return eg, eg_id
 
-        def add_electrode(group, id, offset, x, y, z, is_receiver):
-            group.electrodes.append(Electrode(id=id, offset=offset, x=x, y=y, z=z, is_receiver=is_receiver))
+        def add_electrode(group, id, offset, x, y, z):
+            group.electrodes.append(Electrode(id=id, offset=offset, x=x, y=y, z=z))
 
         cfg = self.genie.project_cfg
         for mg in cfg.xls_measurement_groups:
@@ -509,23 +509,22 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 for e in mg.electrodes:
                     eg, eg_id = add_electrode_group(self._electrode_groups, e.gallery, e.wall, e.height)
                     eg_ids.append(eg_id)
-                    add_electrode(eg, e.id, 0, e.x, e.y, e.z, e.is_receiver)
+                    add_electrode(eg, e.id, 0, e.x, e.y, e.z)
 
                     meas_map[e.meas_id] = e.id
                 for m in mg.measurements:
                     if not m.has_error:
                         if self.genie.method == GenieMethod.ERT:
                             el_ids = list(meas_map.values())
-                            el_rec_ids = []
                         else:
                             el_ids = [m.source_id]
                             if m.receiver_stop >= m.receiver_start:
-                                el_rec_ids = list(range(m.receiver_start, m.receiver_stop + 1))
+                                el_ids.extend(list(range(m.receiver_start, m.receiver_stop + 1)))
                             else:
-                                el_rec_ids = list(range(m.receiver_start, m.receiver_stop - 1, -1))
+                                el_ids.extend(list(range(m.receiver_start, m.receiver_stop - 1, -1)))
 
                         meas = Measurement(number=m.number, date=m.date, file=m.file, meas_map=meas_map, eg_ids=eg_ids,
-                                           el_ids=el_ids, el_rec_ids=el_rec_ids,
+                                           el_ids=el_ids,
                                            source_id=m.source_id, receiver_start=m.receiver_start,
                                            receiver_stop=m.receiver_stop, channel_start=m.channel_start)
                         meas.load_data(self.genie)
@@ -546,14 +545,17 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self.diagram_view.show_electrodes(self._electrode_groups)
 
+        #self._measurement_table_model = MeasurementTableModel(self._electrode_groups, self._measurements)
+        #self.meas_table_view.filter_model.setSourceModel(self._measurement_table_model)
+        #self.meas_table_view.view.setModel(self._measurement_table_model)
+
     def _meas_model_data_changed(self):
         checked_el_ids = set()
-        checked_el_rec_ids = set()
         for i, meas in enumerate(self._measurements):
             if self._measurement_model._checked[i]:
                 checked_el_ids = checked_el_ids.union(set(meas.el_ids))
-                checked_el_rec_ids = checked_el_rec_ids.union(set(meas.el_rec_ids))
-        self.diagram_view.update_selected_electrodes(list(checked_el_ids), list(checked_el_rec_ids))
+        self.diagram_view.update_selected_electrodes(list(checked_el_ids))
+
 
     def _el_group_view_sel_change(self, selected, deselected):
         if self._selection_disable:

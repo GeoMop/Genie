@@ -205,14 +205,13 @@ class GsPoint2(QtWidgets.QGraphicsEllipseItem):
         brush_pen = cls.__pen_table.setdefault(color, cls.make_pen(QtGui.QColor(color)))
         return brush_pen
 
-    def __init__(self, x, y, color, color_selected, el_id, is_receiver):
+    def __init__(self, x, y, color, color_selected, el_id):
         self.my_x = x
         self.my_y = y
         self.color = color
         self.color_selected = color_selected
         self.selected = False
         self.el_id = el_id
-        self.is_receiver = is_receiver
         super().__init__()
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         # do not scale points whenzooming
@@ -1397,7 +1396,7 @@ class DiagramView(QtWidgets.QGraphicsView):
                 y = el.y
                 gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name(),
                                Region.colors_selected[color_ind % len(Region.colors)].name(),
-                               el.id, el.is_receiver)
+                               el.id)
                 self._scene.addItem(gpt)
                 gpt.update()
                 self.el_map[id(el)] = gpt
@@ -1414,13 +1413,12 @@ class DiagramView(QtWidgets.QGraphicsView):
 
         self.side_view.hide_electrodes()
 
-    def update_selected_electrodes(self, selected_el, selected_el_rec):
+    def update_selected_electrodes(self, selected_el):
         el = set(selected_el)
-        el_rec = set(selected_el_rec)
         for item in self._scene.electrode_item_list:
-            item.set_selected(item.el_id in el_rec if item.is_receiver else item.el_id in el)
+            item.set_selected(item.el_id in el)
 
-        self.side_view.update_selected_electrodes(selected_el, selected_el_rec)
+        self.side_view.update_selected_electrodes(selected_el)
 
     def show_laser(self, file_name):
         reg_id = self._scene.regions.add_region(dim=1)
@@ -1930,7 +1928,7 @@ class SideView(QtWidgets.QGraphicsView):
                 x, y, _ = svt.transform(el.x, el.y, el.z, nd)
                 gpt = GsPoint2(x, y, Region.colors[color_ind % len(Region.colors)].name(),
                                Region.colors_selected[color_ind % len(Region.colors)].name(),
-                               el.id, el.is_receiver)
+                               el.id)
                 self._scene.addItem(gpt)
                 gpt.update()
                 self.el_map[id(el)] = gpt
@@ -1945,11 +1943,10 @@ class SideView(QtWidgets.QGraphicsView):
         self._scene.electrode_item_list.clear()
         self._scene.electrode_pos_list.clear()
 
-    def update_selected_electrodes(self, selected_el, selected_el_rec):
+    def update_selected_electrodes(self, selected_el):
         el = set(selected_el)
-        el_rec = set(selected_el_rec)
         for item in self._scene.electrode_item_list:
-            item.set_selected(item.el_id in el_rec if item.is_receiver else item.el_id in el)
+            item.set_selected(item.el_id in el)
 
     def update_electrodes_pos(self):
         svt = self.diagram_view._scene.side_view_tool

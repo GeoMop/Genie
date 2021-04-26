@@ -351,9 +351,8 @@ def parse_st(xls_file):
         if type(df1[0][i]) is not int:
             continue
 
-        measurements_groups[0].electrodes.append(XlsElectrode(id=df1[0][i], gallery=df1[3][i],
-                                                              x=df1[4][i], y=df1[5][i], z=df1[6][i], xls_row=i,
-                                                              is_receiver=df1[1][i]))
+        measurements_groups[0].electrodes.append(XlsElectrode(id=df1[0][i], gallery=df1[2][i],
+                                                              x=df1[3][i], y=df1[4][i], z=df1[5][i], xls_row=i))
 
     # read measurement table
     row_num = df2.shape[0]
@@ -372,19 +371,6 @@ def parse_st(xls_file):
     # convert types, check not empty, valid
     for mg in measurements_groups:
         for e in mg.electrodes:
-            if _empty_cell(e.is_receiver):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1, "Type is empty."))
-                mg.has_error = True
-                e.is_receiver = False
-            else:
-                s = str(e.is_receiver).strip().lower()
-                if not s in ["receiver", "source"]:
-                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 1, 'Type must be "receiver" or "source".'))
-                    mg.has_error = True
-                    e.is_receiver = False
-                else:
-                    e.is_receiver = s == "receiver"
-
             if _empty_cell(e.gallery):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3, "Gallery is empty."))
                 mg.has_error = True
@@ -479,13 +465,13 @@ def parse_st(xls_file):
     for mg in measurements_groups:
         for e in mg.electrodes:
             if e.id in ed:
-                e_ed = ed[(e.id, e.is_receiver)]
-                if e.is_receiver != e_ed.is_receiver:
-                    log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 0,
-                                            'Duplicated sensors id on row {}.'.format(e_ed.xls_row)))
-                    mg.has_error = True
+                e_ed = ed[e.id]
+                # if e.is_receiver != e_ed.is_receiver:
+                #     log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 0,
+                #                             'Duplicated sensors id on row {}.'.format(e_ed.xls_row)))
+                #     mg.has_error = True
             else:
-                ed[(e.id, e.is_receiver)] = e
+                ed[e.id] = e
 
     # measurement files exist and have enough channels
     for mg in measurements_groups:
@@ -508,17 +494,17 @@ def parse_st(xls_file):
     # sensors id used in measurement exist
     for mg in measurements_groups:
         for m in mg.measurements:
-            if (m.source_id, False) not in ed:
+            if m.source_id not in ed:
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, 'Source sensor "{}" does not exist in sensors table.'.format(m.source_id)))
                 m.has_error = True
             if m.receiver_stop >= m.receiver_start:
                 for i in range(m.receiver_start, m.receiver_stop + 1):
-                    if (i, True) not in ed:
+                    if i not in ed:
                         log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, 'Receiver sensor "{}" does not exist in sensors table.'.format(i)))
                         m.has_error = True
             else:
                 for i in range(m.receiver_stop, m.receiver_start + 1):
-                    if (i, True) not in ed:
+                    if i not in ed:
                         log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, 'Receiver sensor "{}" does not exist in sensors table.'.format(i)))
                         m.has_error = True
 

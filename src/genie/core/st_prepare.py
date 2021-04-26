@@ -41,14 +41,14 @@ def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=
 
         # remove measurements outside inversion region
         if mesh_cut_tool_param is not None:
-            e = _find_el(electrode_groups, ms.source_id, False)
+            e = _find_el(electrode_groups, ms.source_id)
             nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([e.x, e.y, e.z]))
             if not (0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1):
                 continue
 
             ind_to_rem = set()
             for j, r in enumerate(receivers):
-                e = _find_el(electrode_groups, r, True)
+                e = _find_el(electrode_groups, r)
                 nl = cut_point_cloud.tr_to_local(base_point, inv_tr_mat, np.array([e.x, e.y, e.z]))
                 if not (0 <= nl[0] <= 1 and 0 <= nl[1] <= 1 and 0 <= nl[2] <= 1):
                     ind_to_rem.add(j)
@@ -71,11 +71,11 @@ def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=
         for meas_id, e_id in enumerate(receivers_used):
             ind = -1
             for j, e in enumerate(electrodes):
-                if e.id == e_id and e.is_receiver:
+                if e.id == e_id:
                     ind = j
                     break
             if ind < 0:
-                e = _find_el(electrode_groups, e_id, True)
+                e = _find_el(electrode_groups, e_id)
                 if e is None:
                     print("chyba")
                 ind = len(electrodes)
@@ -89,11 +89,11 @@ def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=
         meas_id = len(receivers_used)
         ind = -1
         for j, e in enumerate(electrodes):
-            if e.id == e_id and not e.is_receiver:
+            if e.id == e_id:
                 ind = j
                 break
         if ind < 0:
-            e = _find_el(electrode_groups, e_id, False)
+            e = _find_el(electrode_groups, e_id)
             if e is None:
                 print("chyba")
             ind = len(electrodes)
@@ -116,11 +116,11 @@ def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=
     return data
 
 
-def _find_el(electrode_groups, e_id, is_receiver):
+def _find_el(electrode_groups, e_id):
     # todo: better solution is create map
     for eg in electrode_groups:
         for e in eg.electrodes:
-            if e.id == e_id and e.is_receiver == is_receiver:
+            if e.id == e_id:
                 return e
     return None
 
