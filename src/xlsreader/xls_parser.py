@@ -339,8 +339,7 @@ def parse_st(xls_file):
         df2 = pd.read_excel(xls, sheet_name=1, skiprows=0, header=None, dtype=object)
 
     # read sensors table
-    df1[1] = df1[1].fillna(method='ffill')
-    df1[3] = df1[3].fillna(method='ffill')
+    df1[2] = df1[2].fillna(method='ffill')
 
     row_num = df1.shape[0]
     col_num = df1.shape[1]

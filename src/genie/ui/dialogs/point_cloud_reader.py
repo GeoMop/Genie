@@ -407,7 +407,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
     def _handle_save_results_action(self):
         if self._log_text:
             file = QtWidgets.QFileDialog.getSaveFileName(self, "Save results to file",
-                                                         os.path.join(self.directory, "results.txt"),
+                                                         os.path.join(self._work_dir, "results.txt"),
                                                          "Text Files (*.txt)")
             file_name = file[0]
             if file_name:

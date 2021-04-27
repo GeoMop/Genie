@@ -39,6 +39,7 @@ class FileMenu(QtWidgets.QMenu):
         self.actionSaveProject = create_action(self, "Save project")
         self.actionCloseProject = create_action(self, "Close project")
         self.actionImportExcel = create_action(self, "Import excel file...")
+        self.actionImportFirstArrivals = create_action(self, "Import first arrivals...")
         self.actionImportPointCloud = create_action(self, "Import point cloud...")
         self.actionImportGalleryMesh = create_action(self, "Import gallery mesh...")
         self.actionImportMap = create_action(self, "Import map...")
@@ -51,6 +52,8 @@ class FileMenu(QtWidgets.QMenu):
         self.addAction(self.actionCloseProject)
         self.addSeparator()
         self.addAction(self.actionImportExcel)
+        if genie.method == GenieMethod.ST:
+            self.addAction(self.actionImportFirstArrivals)
         self.addAction(self.actionImportPointCloud)
         self.addAction(self.actionImportGalleryMesh)
         self.addAction(self.actionImportMap)

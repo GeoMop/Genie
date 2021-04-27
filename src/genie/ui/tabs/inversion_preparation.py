@@ -10,6 +10,7 @@ from ..panels.side_view_panel import SideViewPanel
 from ..menus.main_menu_bar import MainMenuBar
 from ..dialogs.new_project_dialog import NewProjectDialog
 from xlsreader.xls_reader_dialog import XlsReaderDialog
+from ..dialogs.import_first_arrivals_dialog import ImportFirstArrivalsDialog
 from ..dialogs.point_cloud_reader import PointCloudReaderDialog
 from ..dialogs.gallery_mesh_dialog import GalleryMeshDialog
 from ..dialogs.map_dialog import MapDialog
@@ -106,6 +107,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionSaveProject.triggered.connect(self._handle_save_project_action)
         self.main_window.menuBar.file.actionCloseProject.triggered.connect(self._handle_close_project_action)
         self.main_window.menuBar.file.actionImportExcel.triggered.connect(self._handle_import_excel_action)
+        self.main_window.menuBar.file.actionImportFirstArrivals.triggered.connect(self._handle_import_first_arrivals_action)
         self.main_window.menuBar.file.actionImportPointCloud.triggered.connect(self._handle_import_point_cloud)
         self.main_window.menuBar.file.actionImportGalleryMesh.triggered.connect(self._handle_import_gallery_mesh)
         self.main_window.menuBar.file.actionImportMap.triggered.connect(self._handle_import_map)
@@ -152,6 +154,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.run_invButton.setEnabled(enable)
         self.main_window.menuBar.file.actionCloseProject.setEnabled(enable)
         self.main_window.menuBar.file.actionImportExcel.setEnabled(enable)
+        self.main_window.menuBar.file.actionImportFirstArrivals.setEnabled(enable)
         self.main_window.menuBar.file.actionImportPointCloud.setEnabled(enable)
         self.main_window.menuBar.file.actionImportGalleryMesh.setEnabled(enable)
         self.main_window.menuBar.file.actionImportMap.setEnabled(enable)
@@ -189,8 +192,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
                 self.genie.current_inversion_cfg.mesh_cut_tool_param)
-            self.diagram_view._scene.side_view_tool.from_mesh_cut_tool_param(
-                self.genie.current_inversion_cfg.side_view_tool)
+            self.diagram_view._scene.side_view_tool.from_side_view_tool_param(
+                self.genie.current_inversion_cfg.side_view_tool_param)
 
             self.mesh_cut_tool_panel.reset_view()
 
@@ -548,6 +551,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
         #self._measurement_table_model = MeasurementTableModel(self._electrode_groups, self._measurements)
         #self.meas_table_view.filter_model.setSourceModel(self._measurement_table_model)
         #self.meas_table_view.view.setModel(self._measurement_table_model)
+
+    def _handle_import_first_arrivals_action(self):
+        dlg = ImportFirstArrivalsDialog(self._electrode_groups, self._measurements, self.genie, self, enable_import=True, method=self.genie.method)
+        if dlg.exec():
+            for i, time in dlg.fa_tmp.items():
+                self.genie.current_inversion_cfg.first_arrivals[i].time = time
+
+            self._save_current_inversion()
 
     def _meas_model_data_changed(self):
         checked_el_ids = set()
