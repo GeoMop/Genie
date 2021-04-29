@@ -555,8 +555,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
     def _handle_import_first_arrivals_action(self):
         dlg = ImportFirstArrivalsDialog(self._electrode_groups, self._measurements, self.genie, self, enable_import=True, method=self.genie.method)
         if dlg.exec():
+            first_arrivals = self.genie.current_inversion_cfg.first_arrivals
             for i, time in dlg.fa_tmp.items():
-                self.genie.current_inversion_cfg.first_arrivals[i].time = time
+                first_arrivals[i].time = time
+                first_arrivals[i].verified = True
 
             self._save_current_inversion()
 
@@ -619,7 +621,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 for i, trace in enumerate(meas.data["data"]):
                     cft = recursive_sta_lta(trace.data, 40, 60)
                     t = np.argmax(cft) / trace.stats.sampling_rate
-                    self.genie.current_inversion_cfg.first_arrivals.append(FirstArrival(file=meas.file, channel=i, time=t))
+                    self.genie.current_inversion_cfg.first_arrivals.append(FirstArrival(file=meas.file, channel=i, time_auto=t))
 
     def _handle_import_point_cloud(self):
         prj_dir = self.genie.cfg.current_project_dir

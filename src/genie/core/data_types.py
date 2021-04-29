@@ -128,6 +128,7 @@ class InversionParam:
     maxCellArea: float = 0.0
     paraDX: float = 0.3
     snapDistance: float = 1.0
+    useOnlyVerified: bool = False
     minModel: float = 10.0
     maxModel: float = 1e+5
     zWeight: float = 0.7

@@ -37,6 +37,7 @@ class FirstArrivalDlg(QtWidgets.QDialog):
         plot.hideButtons()
         plot.setLabel('top', "Time", units='s')
         plot.getAxis('top').setStyle(showValues=True)
+        plot.setLabel('left', " ")
         scroll = QtWidgets.QScrollArea()
         scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         scroll.verticalScrollBar().setVisible(False)
@@ -60,6 +61,7 @@ class FirstArrivalDlg(QtWidgets.QDialog):
 
         self._plot_list = []
         self._line_list = []
+        self._line_auto_list = []
         self._checkbox_list = []
 
         scroll = QtWidgets.QScrollArea()
@@ -76,6 +78,16 @@ class FirstArrivalDlg(QtWidgets.QDialog):
         self._vbox = QtWidgets.QVBoxLayout()
         hbox.addLayout(self._vbox)
         hbox.addWidget(self._graphic_wiget)
+
+        lay = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("Auto")
+        label.setStyleSheet("QLabel {  color: #00ff00;}")
+        lay.addWidget(label)
+        label = QtWidgets.QLabel("Manual")
+        label.setStyleSheet("QLabel { color : blue; }")
+        lay.addWidget(label)
+        lay.addStretch()
+        grid.addLayout(lay, 6, 0)
 
         self._close_button = QtWidgets.QPushButton("Close", self)
         self._close_button.clicked.connect(self.reject)
@@ -120,6 +132,11 @@ class FirstArrivalDlg(QtWidgets.QDialog):
             plot.showGrid(x=True, y=True)
             plot.hideButtons()
 
+            # cross hair auto
+            vLineAuto = qtg.InfiniteLine(angle=90, movable=False, pen=qtg.mkPen(qtg.mkColor("g")))
+            self._line_auto_list.append(vLineAuto)
+            plot.addItem(vLineAuto, ignoreBounds=True)
+
             # cross hair
             vLine = qtg.InfiniteLine(angle=90, movable=True, pen=qtg.mkPen(qtg.mkColor("b")))
             self._line_list.append(vLine)
@@ -127,13 +144,29 @@ class FirstArrivalDlg(QtWidgets.QDialog):
 
             fa = self._find_fa(i)
             if fa is not None:
-                vLine.setPos(fa.time)
+                if fa.verified:
+                    t = fa.time
+                else:
+                    t = -0.1
+                vLine.setPos(t)
                 checkbox.setChecked(fa.use)
+                vLineAuto.setPos(fa.time_auto)
+
+        if self._plot_list:
+            self._plot_list[0].scene().sigMouseClicked.connect(self.mouseClickEvent)
 
         #plot.setLabel('bottom', "Time", units='s')
         #plot.getAxis('bottom').setStyle(showValues=True)
 
         self._graphic_wiget.setMinimumSize(100, 150 * row)
+
+    def mouseClickEvent(self, ev):
+        if ev.button() == QtCore.Qt.RightButton:
+            for i, plot in enumerate(self._plot_list):
+                if plot.sceneBoundingRect().contains(ev.scenePos()):
+                    self._line_list[i].setPos(self._line_auto_list[i].getPos()[0])
+                    ev.accept()
+                    break
 
     def _find_fa(self, channel):
         for fa in self.genie.current_inversion_cfg.first_arrivals:
@@ -145,7 +178,13 @@ class FirstArrivalDlg(QtWidgets.QDialog):
         for i, vLine in enumerate(self._line_list):
             fa = self._find_fa(i)
             if fa is not None:
-                fa.time = vLine.getPos()[0]
+                line_pos = float(vLine.getPos()[0])
+                if line_pos > 0:
+                    fa.time = line_pos
+                    fa.verified = True
+                else:
+                    fa.time = 0.0
+                    fa.verified = False
                 fa.use = self._checkbox_list[i].isChecked()
 
         super().reject()

@@ -12,6 +12,8 @@ class FirstArrival:
     file: str = ""
     channel: int = 0
     time: float = 0.0
+    time_auto: float = 0.0
+    verified: bool = False
     use: bool = True
 
 

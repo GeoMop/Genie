@@ -5,7 +5,7 @@ import numpy as np
 from genie.core import cut_point_cloud
 
 
-def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=None):
+def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=None, use_only_verified=False):
     """
     Prepares data for GIMLI inversion.
     :param electrode_groups:
@@ -61,9 +61,13 @@ def prepare(electrode_groups, measurements, first_arrivals, mesh_cut_tool_param=
             if fa is None:
                 print("chyba")
                 continue
-            if fa.use:
+            if fa.use and (fa.verified or not use_only_verified):
+                if fa.verified:
+                    time = fa.time
+                else:
+                    time = fa.time_auto
                 receivers_used.append(e_id)
-                fa_list.append(fa.time)
+                fa_list.append(time)
 
         if not receivers_used:
             continue

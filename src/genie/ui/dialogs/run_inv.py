@@ -150,6 +150,12 @@ class RunInvDlg(QtWidgets.QDialog):
         label.setFont(font)
         self._parameters_formLayout.addRow(label)
 
+        self._par_useOnlyVerifiedCheckBox = QtWidgets.QCheckBox()
+        self._par_useOnlyVerifiedCheckBox.setChecked(False)
+        self._par_useOnlyVerifiedCheckBox.setToolTip("Use only verified measurements.")
+        if self.genie.method == GenieMethod.ST:
+            self._parameters_formLayout.addRow("Use only verified meas.:", self._par_useOnlyVerifiedCheckBox)
+
         self._par_minModelLineEdit = QtWidgets.QLineEdit("10.0")
         if self.genie.method == GenieMethod.ERT:
             text = "Minimal value of resistivity allowed in model. [Ohmm]"
@@ -432,6 +438,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
             param.snapDistance = float(self._par_snapDistanceLineEdit.text())
 
+            param.useOnlyVerified = self._par_useOnlyVerifiedCheckBox.isChecked()
             param.minModel = float(self._par_minModelLineEdit.text())
             param.maxModel = float(self._par_maxModelLineEdit.text())
             param.zWeight = float(self._par_zWeightLineEdit.text())
@@ -482,6 +489,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_snapDistanceLineEdit.setText(str(param.snapDistance))
 
+        self._par_useOnlyVerifiedCheckBox.setChecked(param.useOnlyVerified)
         self._par_minModelLineEdit.setText(str(param.minModel))
         self._par_maxModelLineEdit.setText(str(param.maxModel))
         self._par_zWeightLineEdit.setText(str(param.zWeight))
@@ -548,7 +556,8 @@ class RunInvDlg(QtWidgets.QDialog):
         else:
             data = st_prepare.prepare(self._electrode_groups, self._measurements,
                                       self.genie.current_inversion_cfg.first_arrivals,
-                                      self.genie.current_inversion_cfg.mesh_cut_tool_param)
+                                      self.genie.current_inversion_cfg.mesh_cut_tool_param,
+                                      self.genie.current_inversion_cfg.inversion_param.useOnlyVerified)
             if data.size() > 0:
                 data.save(os.path.join(self._work_dir, "input.dat"))
             else:
