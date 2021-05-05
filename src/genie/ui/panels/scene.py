@@ -1989,7 +1989,7 @@ class SideView(QtWidgets.QGraphicsView):
                 gpt.setOpacity(0.5)
                 gpt.update()
                 self._scene.point_cloud_item_list.append(gpt)
-                self._scene.electrode_pos_list.append((x, y, z))
+                self._scene.point_cloud_pos_list.append((x, y, z))
 
     def hide_point_cloud(self):
         for item in self._scene.point_cloud_item_list:
@@ -2003,7 +2003,7 @@ class SideView(QtWidgets.QGraphicsView):
 
         for i in range(len(self._scene.point_cloud_item_list)):
             gpt = self._scene.point_cloud_item_list[i]
-            pos = self._scene.electrode_pos_list[i]
+            pos = self._scene.point_cloud_pos_list[i]
             gpt.my_x, gpt.my_y, z = svt.transform(pos[0], pos[1], pos[2], nd)
             gpt.setVisible(z >= 0)
 

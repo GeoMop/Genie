@@ -128,7 +128,7 @@ def prepare_old2(electrode_groups, measurements):
     return data
 
 
-def prepare(electrode_groups, measurements, mesh_cut_tool_param=None):
+def prepare(electrode_groups, measurements, mesh_cut_tool_param=None, masked_meas_lines=None):
     """
     Prepares data for GIMLI inversion.
     :param electrode_groups:
@@ -160,9 +160,15 @@ def prepare(electrode_groups, measurements, mesh_cut_tool_param=None):
             continue
         d = ms.data["data"]
 
+        ind_to_rem = set()
+
+        # remove masked lines from measurements
+        if masked_meas_lines is not None:
+            if ms.number in masked_meas_lines:
+                ind_to_rem.update({i for i, b in enumerate(masked_meas_lines[ms.number][:d.shape[0]]) if b})
+
         # remove measurements outside inversion region
         if mesh_cut_tool_param is not None:
-            ind_to_rem = set()
             for j in range(d.shape[0]):
                 for col in ["ca", "cb", "pa", "pb"]:
                     e = _find_el(electrode_groups, ms.meas_map[d[col][j]])
@@ -171,7 +177,7 @@ def prepare(electrode_groups, measurements, mesh_cut_tool_param=None):
                         ind_to_rem.add(j)
                         break
 
-            d = d.drop(d.index[list(ind_to_rem)])
+        d = d.drop(d.index[list(ind_to_rem)])
 
         meas_map_sensor = {}
         for meas_id, e_id in ms.meas_map.items():

@@ -3,7 +3,7 @@ from .data_types import MeshCutToolParam, SideViewToolParam, InversionParam
 from xlsreader.xls_parser import XlsMeasurementGroup
 from genie.core.global_const import GenieMethod
 
-from typing import List
+from typing import List, Dict
 import attr
 
 
@@ -22,6 +22,7 @@ class InversionConfig:
     mesh_cut_tool_param: MeshCutToolParam = attr.ib(factory=MeshCutToolParam)
     side_view_tool_param: SideViewToolParam = attr.ib(factory=SideViewToolParam)
     checked_measurements: List[str] = attr.ib(factory=list)
+    masked_meas_lines: Dict[str, List[bool]] = attr.ib(factory=dict)
     inversion_param: InversionParam = attr.ib(factory=InversionParam)
 
     # st extension

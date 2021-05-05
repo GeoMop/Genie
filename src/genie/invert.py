@@ -16,7 +16,7 @@ from genie.core import snap_electrodes, snap_surf
 from genie.core.config import InversionConfig, ProjectConfig
 from genie.core import mesh_gen2, mesh_gen3, mesh_gen4, mesh_surf, meshlab_script_gen
 from genie.core import cut_point_cloud
-from genie.core.data_types import MeasurementsInfo, MeshFrom
+from genie.core.data_types import MeasurementsInfo, MeshFrom, MeasurementModelInfoItem, MeasurementsModelInfo
 from genie.core.global_const import GenieMethod
 from genie.core import misc
 from bgem.gmsh.gmsh_io import GmshIO
@@ -276,6 +276,8 @@ def inv_ert(inversion_conf, project_conf):
         map_start[(data("a")[i], data("b")[i], data("m")[i], data("n")[i])] = resp_start[i]
         map_appres_gimli[(data("a")[i], data("b")[i], data("m")[i], data("n")[i])] = data('rhoa')[i]
 
+    meas_model_info = MeasurementsModelInfo()
+
     with open("measurements_model.txt", "w") as fd:
         fd.write("meas_number ca  cb  pa  pb  I[A]      V[V]     AppRes[Ohmm] std    AppResGimli[Ohmm] AppResModel[Ohmm]   ratio AppResStartModel[Ohmm] start_ratio\n")
         fd.write("-------------------------------------------------------------------------------------------------------------------------------------------------\n")
@@ -283,10 +285,14 @@ def inv_ert(inversion_conf, project_conf):
             k = (item.inv_ca, item.inv_cb, item.inv_pa, item.inv_pb)
             if k in map:
                 m_on_m = "{:17.2f} {:17.2f} {:7.2f} {:22.2f}     {:7.2f}".format(map_appres_gimli[k], map[k], map[k]/map_appres_gimli[k], map_start[k], map_start[k]/map_appres_gimli[k])
+                meas_model_info.items.append(MeasurementModelInfoItem(measurement_number=item.measurement_number, ca=item.ca, cb=item.cb, pa=item.pa, pb=item.pb, app_res_model=map[k], app_res_start_model=map_start[k]))
             else:
                 m_on_m = "         not used"
 
             fd.write("{:11} {:3} {:3} {:3} {:3} {:8.6f} {:9.6f} {:12.2f} {:6.4f} {}\n".format(item.measurement_number, item.ca, item.cb, item.pa, item.pb, item.I, item.V, item.AppRes, item.std, m_on_m))
+
+    with open("measurements_model_info.json", "w") as fd:
+        json.dump(meas_model_info.serialize(), fd, indent=4, sort_keys=True)
 
     if inv_par.p3d:
         print()

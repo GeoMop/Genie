@@ -548,7 +548,8 @@ class RunInvDlg(QtWidgets.QDialog):
 
         if self.genie.method == GenieMethod.ERT:
             data, meas_info = ert_prepare.prepare(self._electrode_groups, self._measurements,
-                                                  self.genie.current_inversion_cfg.mesh_cut_tool_param)
+                                                  self.genie.current_inversion_cfg.mesh_cut_tool_param,
+                                                  self.genie.current_inversion_cfg.masked_meas_lines)
             data.save(os.path.join(self._work_dir, "input.dat"))
             meas_info_file = os.path.join(self._work_dir, "measurements_info.json")
             with open(meas_info_file, "w") as fd:

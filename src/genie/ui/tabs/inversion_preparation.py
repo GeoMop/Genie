@@ -4,6 +4,8 @@ from ..panels.scene import DiagramView, SideView
 from genie.core.data_types import ElectrodeGroup, Electrode, Measurement
 from ..panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from ..panels.measurement_view import MeasurementModel, MeasurementGroupView
+from ..panels.measurement_table_view import MeasurementTableModel, MeasurementTableView
+from ..panels.measurement_histogram import MeasurementHistogram
 from ..panels.region_panel import RegionPanel
 from ..panels.mesh_cut_tool_panel import MeshCutToolPanel
 from ..panels.side_view_panel import SideViewPanel
@@ -53,13 +55,26 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.el_group_view.setMinimumWidth(200)
         self.el_group_view.setMaximumWidth(400)
 
+        tab = QtWidgets.QTabWidget()
+        self.setCentralWidget(tab)
+
         self.side_view = SideView()
         self.diagram_view = DiagramView(self.side_view)
         self.side_view._scene.diagram = self.diagram_view._scene
         splitter = QtWidgets.QSplitter(Qt.Vertical)
         splitter.addWidget(self.diagram_view)
         splitter.addWidget(self.side_view)
-        self.setCentralWidget(splitter)
+        tab.addTab(splitter, "Situation")
+
+        if self.genie.method == GenieMethod.ERT:
+            self._measurement_table_model = MeasurementTableModel(self._electrode_groups, self._measurements, self.genie)
+            self.meas_table_view = MeasurementTableView(self, self._measurement_table_model)
+            tab.addTab(self.meas_table_view, "Measurement table")
+
+            self.meas_hist = MeasurementHistogram(self, self.meas_table_view)
+            tab.addTab(self.meas_hist, "Measurement histogram")
+
+            tab.currentChanged.connect(self._tab_change)
 
         # self.region_panel = RegionPanel(self, self.diagram_view._scene)
         # self.region_panel._update_region_list()
@@ -117,6 +132,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._enable_project_ctrl(False)
 
         self._selection_disable = False
+
+    def _tab_change(self, index):
+        if index == 2:
+            self.meas_hist.show_hist()
 
     def _init_docks(self):
         """Initializes docks"""
@@ -338,6 +357,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
 
+        if self.genie.method == GenieMethod.ERT:
+            self._measurement_table_model.maskMeasLines(self.genie.current_inversion_cfg.masked_meas_lines)
+            self._measurement_table_model.update_model_data()
+            self.meas_table_view.view.reset()
+
         if self.genie.method == GenieMethod.ST:
             self._init_first_arrivals()
 
@@ -403,6 +427,11 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.measurement_view.view.reset()
         self._meas_model_data_changed()
 
+        if self.genie.method == GenieMethod.ERT:
+            self._measurement_table_model.maskMeasLines(self.genie.current_inversion_cfg.masked_meas_lines)
+            self._measurement_table_model.update_model_data()
+            self.meas_table_view.view.reset()
+
         self._show_3d()
         self._show_meas_model()
         self._show_current_inversion()
@@ -416,6 +445,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.genie.current_inversion_cfg.mesh_cut_tool_param = self.diagram_view._scene.mesh_cut_tool.to_mesh_cut_tool_param()
         self.genie.current_inversion_cfg.side_view_tool_param = self.diagram_view._scene.side_view_tool.to_side_view_tool_param()
         self.genie.current_inversion_cfg.checked_measurements = [m.number for m in self._measurement_model.checkedMeasurements()]
+
+        if self.genie.method == GenieMethod.ERT:
+            self.genie.current_inversion_cfg.masked_meas_lines = self._measurement_table_model.maskedMeasLines()
 
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions",
                            self.genie.project_cfg.curren_inversion_name)
@@ -548,9 +580,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         self.diagram_view.show_electrodes(self._electrode_groups)
 
-        #self._measurement_table_model = MeasurementTableModel(self._electrode_groups, self._measurements)
-        #self.meas_table_view.filter_model.setSourceModel(self._measurement_table_model)
-        #self.meas_table_view.view.setModel(self._measurement_table_model)
+        if self.genie.method == GenieMethod.ERT:
+            self._measurement_table_model = MeasurementTableModel(self._electrode_groups, self._measurements, self.genie)
+            self.meas_table_view.filter_model.setSourceModel(self._measurement_table_model)
 
     def _handle_import_first_arrivals_action(self):
         dlg = ImportFirstArrivalsDialog(self._electrode_groups, self._measurements, self.genie, self, enable_import=True, method=self.genie.method)
@@ -569,6 +601,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 checked_el_ids = checked_el_ids.union(set(meas.el_ids))
         self.diagram_view.update_selected_electrodes(list(checked_el_ids))
 
+        if self.genie.method == GenieMethod.ERT:
+            self.meas_table_view.filter_model.checked_meas = [m.number for b, m in zip(self._measurement_model._checked, self._measurements) if b]
+            self.meas_table_view.filter_model.invalidateFilter()
+            self.meas_hist.show_hist()
 
     def _el_group_view_sel_change(self, selected, deselected):
         if self._selection_disable:

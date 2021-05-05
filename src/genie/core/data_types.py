@@ -171,3 +171,21 @@ class MeasurementInfoItem:
 @json_data.jsondata
 class MeasurementsInfo:
     items: List[MeasurementInfoItem] = attr.ib(factory=list)
+
+
+@json_data.jsondata
+class MeasurementModelInfoItem:
+    measurement_number: str = ""
+
+    ca: str = ""
+    cb: str = ""
+    pa: str = ""
+    pb: str = ""
+
+    app_res_model: float = 0.0
+    app_res_start_model: float = 0.0
+
+
+@json_data.jsondata
+class MeasurementsModelInfo:
+    items: List[MeasurementModelInfoItem] = attr.ib(factory=list)
