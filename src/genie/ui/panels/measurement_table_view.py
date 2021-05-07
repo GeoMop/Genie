@@ -242,12 +242,12 @@ class ProxyModel(QtCore.QSortFilterProxyModel):
         for i in range(len(self.mins)):
             data = None
             if self.mins[i] is not None:
-                data = get_data()
+                data = get_data(i)
                 if data == "" or data < self.mins[i]:
                     return False
             if self.maxs[i] is not None:
                 if data is None:
-                    data = get_data()
+                    data = get_data(i)
                 if data == "" or data > self.maxs[i]:
                     return False
 
