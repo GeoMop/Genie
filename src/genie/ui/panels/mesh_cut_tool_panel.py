@@ -1,4 +1,5 @@
 from genie.core.data_types import MeshCutToolParam
+from genie.core.global_const import GenieMethod
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -91,7 +92,8 @@ class MeshCutToolPanel(QtWidgets.QWidget):
         # no inv factor
         self.factor_edit = MeshCutToolPanelEdit(self.editing_finished)
         #self.factor_edit.validator().setBottom(1.0)
-        formLayout.addRow("No inv factor:", self.factor_edit)
+        if self.genie.method == GenieMethod.ERT:
+            formLayout.addRow("No inv factor:", self.factor_edit)
 
         # reset buttons
         layout = QtWidgets.QHBoxLayout()

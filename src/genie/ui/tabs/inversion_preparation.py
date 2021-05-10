@@ -347,6 +347,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         dir = os.path.join(self.genie.cfg.current_project_dir, "inversions", name)
         os.makedirs(dir, exist_ok=True)
 
+        if self.genie.method == GenieMethod.ST:
+            self.genie.current_inversion_cfg.mesh_cut_tool_param.no_inv_factor = 1.0
+
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
             self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self.diagram_view._scene.side_view_tool.from_side_view_tool_param(

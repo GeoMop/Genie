@@ -676,7 +676,7 @@ def modify_mesh(in_file, out_file, mesh_cut_tool_param):
         if dim not in [2, 3]:
             continue
         physical_id = 2
-        if dim == 3:
+        if dim == 3 and mesh_cut_tool_param.no_inv_factor > 1:
             n_inside = 0
             for n in nodes:
                 nn = mesh.nodes[n]
