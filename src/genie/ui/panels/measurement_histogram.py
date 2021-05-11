@@ -134,7 +134,8 @@ class MeasurementHistogram(QtWidgets.QWidget):
             bins = 100
             self._static_ax.set_xscale('linear')
 
-        self._static_ax.hist(data, bins, histtype='step', color=color)
+        if data:
+            self._static_ax.hist(data, bins, histtype='step', color=color)
 
     def update_edits(self):
         ind = self._histComboBox.currentIndex()

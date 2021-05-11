@@ -361,7 +361,7 @@ def inv_st(inversion_conf, project_conf):
     # create Inv
     inv = pg.RInversion(verbose=inv_par.verbose, dosave=False)
     # variables tD, tM are needed to prevent destruct objects
-    tM = pg.RTransLogLU(inv_par.minModel, inv_par.maxModel)
+    tM = pg.RTransLogLU(1.0 / inv_par.maxModel, 1.0 / inv_par.minModel)
     tD = pg.RTrans()
     inv.setTransData(tD)
     inv.setTransModel(tM)

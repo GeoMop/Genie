@@ -77,7 +77,7 @@ class Measurement:
             file = os.path.join(prj_dir, "measurements", self.file)
             if file == "" or not os.path.isfile(file):
                 return
-            st = obspy.read(file)
+            st = obspy.read(file, format="SEG2")
             self.data = {"data": st}
 
 

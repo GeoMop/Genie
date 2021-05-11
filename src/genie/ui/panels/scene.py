@@ -1261,7 +1261,7 @@ class DiagramView(QtWidgets.QGraphicsView):
         self.setScene(self._scene)
 
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -1354,6 +1354,10 @@ class DiagramView(QtWidgets.QGraphicsView):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.side_view.save_y_center()
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        self.save_y_center()
 
     def save_y_center(self):
         self.y_center = self.mapToScene(self.viewport().geometry().center()).y()
@@ -1904,7 +1908,7 @@ class SideView(QtWidgets.QGraphicsView):
         self.scale(1, -1)
 
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -2136,6 +2140,10 @@ class SideView(QtWidgets.QGraphicsView):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.diagram_view.save_y_center()
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        self.save_y_center()
 
     def save_y_center(self):
         self.y_center = self.mapToScene(self.viewport().geometry().center()).y()

@@ -311,8 +311,6 @@ class InversionPreparation(QtWidgets.QMainWindow):
         with open(file_name, 'w') as fd:
             json.dump(data, fd, indent=4, sort_keys=True)
 
-        print("project saved")
-
     def _handle_close_project_action(self):
         self._handle_save_project_action()
 
@@ -357,6 +355,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self.diagram_view._scene.side_view_tool.from_side_view_tool_param(
             self.genie.current_inversion_cfg.side_view_tool_param)
+        self.mesh_cut_tool_panel.scene_cut_changed()
+        self.side_view_panel.scene_side_view_changed()
         self.mesh_cut_tool_panel.center_origin()
         self.side_view_panel.center_origin()
         self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
@@ -838,6 +838,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self._show_3d()
             self._show_meas_model()
+
+            if self.genie.method == GenieMethod.ERT:
+                self._measurement_table_model.update_model_data()
+                self.meas_table_view.view.reset()
         else:
             QtWidgets.QMessageBox.information(
                 self, 'Measurements not checked',

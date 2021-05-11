@@ -482,7 +482,7 @@ def parse_st(xls_file):
                 log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 0, 'File "{}" does not exist.'.format(f)))
                 m.has_error = True
             else:
-                num_channels = len(obspy.read(f))
+                num_channels = len(obspy.read(f, format="SEG2"))
                 req_channels = abs(m.receiver_stop - m.receiver_start) + m.channel_start
                 if req_channels > num_channels:
                     log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2,
