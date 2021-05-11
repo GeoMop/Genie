@@ -41,7 +41,7 @@ class MapTransform:
 
 @json_data.jsondata
 class ProjectConfig:
-    version: str = "0.3.0-a"
+    version: str = "0.4.0-a"
 
     method: GenieMethod = GenieMethod.ERT
 

@@ -241,12 +241,15 @@ class InversionPreparation(QtWidgets.QMainWindow):
             return
 
         # check version
-        expect_version = ProjectConfig().version
-        if config["version"] != expect_version:
+        expect_versions = [ProjectConfig().version]
+        if self.genie.method == GenieMethod.ERT:
+            expect_versions.extend(["0.3.0-a"])
+        if config["version"] not in expect_versions:
             QtWidgets.QMessageBox.critical(
                 self, 'Bad project version',
-                "Expected project version is {}, but opening project has {}.".format(expect_version, config["version"]))
+                "Expected project version is {}, but opening project has {}.".format(expect_versions[0], config["version"]))
             return
+        config["version"] = expect_versions[0]
 
         project_cfg = ProjectConfig.deserialize(config)
 
