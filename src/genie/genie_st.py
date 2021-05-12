@@ -9,7 +9,7 @@ from genie.core import config_file
 from genie.core.config import GenieConfig
 from genie.core.global_const import GenieMethod
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 
 
 class Genie:
@@ -38,6 +38,11 @@ class Genie:
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
+
+    locale = QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates)
+    locale.setNumberOptions(QtCore.QLocale.RejectGroupSeparator)
+    QtCore.QLocale.setDefault(locale)
+
     Cursor.setup_cursors()
     genie = Genie()
     genie.load_cfg()
