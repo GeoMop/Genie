@@ -518,6 +518,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
             self._update_el_meas()
 
+            self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
+            if self.genie.method == GenieMethod.ERT:
+                self._measurement_table_model.maskMeasLines(self.genie.current_inversion_cfg.masked_meas_lines)
+
             if self.genie.method == GenieMethod.ST:
                 self._init_first_arrivals()
 
@@ -665,13 +669,27 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self._selection_disable = False
 
     def _init_first_arrivals(self):
-        self.genie.current_inversion_cfg.first_arrivals = []
+        def find_fa(file, channel):
+            for fa in self.genie.current_inversion_cfg.first_arrivals:
+                if fa.file == file and fa.channel == channel:
+                    return fa
+            return None
+
+        new_first_arrivals = []
         for meas in self._measurements:
             if meas.data is not None:
                 for i, trace in enumerate(meas.data["data"]):
                     cft = recursive_sta_lta(trace.data, 40, 60)
                     t = np.argmax(cft) / trace.stats.sampling_rate
-                    self.genie.current_inversion_cfg.first_arrivals.append(FirstArrival(file=meas.file, channel=i, time_auto=t))
+
+                    fa = find_fa(meas.file, i)
+                    if fa is not None:
+                        fa.time_auto = t
+                        new_first_arrivals.append(fa)
+                    else:
+                        new_first_arrivals.append(FirstArrival(file=meas.file, channel=i, time_auto=t))
+
+        self.genie.current_inversion_cfg.first_arrivals = new_first_arrivals
 
     def _handle_import_point_cloud(self):
         prj_dir = self.genie.cfg.current_project_dir
