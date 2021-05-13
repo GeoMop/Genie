@@ -6,6 +6,7 @@ from ..panels.electrode_views import ElectrodeGroupModel, ElectrodeGroupView
 from ..panels.measurement_view import MeasurementModel, MeasurementGroupView
 from ..panels.measurement_table_view import MeasurementTableModel, MeasurementTableView
 from ..panels.measurement_histogram import MeasurementHistogram
+from ..panels.misfit_log import MisfitLog
 from ..panels.region_panel import RegionPanel
 from ..panels.mesh_cut_tool_panel import MeshCutToolPanel
 from ..panels.side_view_panel import SideViewPanel
@@ -75,6 +76,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
             tab.addTab(self.meas_hist, "Measurement histogram")
 
             tab.currentChanged.connect(self._tab_change)
+
+        self.misfit_log = MisfitLog(self)
+        tab.addTab(self.misfit_log, "Misfit log")
 
         # self.region_panel = RegionPanel(self, self.diagram_view._scene)
         # self.region_panel._update_region_list()
@@ -368,6 +372,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self._measurement_table_model.update_model_data()
             self.meas_table_view.view.reset()
 
+        self.misfit_log.update_log()
+
         if self.genie.method == GenieMethod.ST:
             self._init_first_arrivals()
 
@@ -437,6 +443,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self._measurement_table_model.maskMeasLines(self.genie.current_inversion_cfg.masked_meas_lines)
             self._measurement_table_model.update_model_data()
             self.meas_table_view.view.reset()
+
+        self.misfit_log.update_log()
 
         self._show_3d()
         self._show_meas_model()
@@ -842,6 +850,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
             if self.genie.method == GenieMethod.ERT:
                 self._measurement_table_model.update_model_data()
                 self.meas_table_view.view.reset()
+
+            self.misfit_log.update_log()
         else:
             QtWidgets.QMessageBox.information(
                 self, 'Measurements not checked',
