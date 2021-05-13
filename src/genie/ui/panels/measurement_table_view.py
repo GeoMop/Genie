@@ -17,13 +17,16 @@ class Meas:
 
         self.d = meas.data["data"]
         self.size = self.d.shape[0]
-        self.k = None
+        self.app_res_gimli = None
 
-    def get_k(self):
-        if self.k is None:
+    def get_app_res_gimli(self):
+        if self.app_res_gimli is None:
             data, meas_info = ert_prepare.prepare(self._electrode_groups, [self._meas])
-            self.k = misc.geometricFactors(data)
-        return self.k
+            k = misc.geometricFactors(data)
+            self.app_res_gimli = []
+            for i in range(self.size):
+                self.app_res_gimli.append(self.d["V"][i] / self.d["I"][i] * k[i])
+        return self.app_res_gimli
 
 
 class MeasurementTableModel(QtCore.QAbstractItemModel):
@@ -47,6 +50,8 @@ class MeasurementTableModel(QtCore.QAbstractItemModel):
         self._masked = [False] * self._num_rows
 
         self.row_meas_line_map = {r: self.row_to_meas_line(r) for r in range(self._num_rows)}
+
+        self.red_brush = QtGui.QBrush(QtGui.QColor("red"), QtCore.Qt.SolidPattern)
 
     def update_model_data(self):
         if self.genie.project_cfg is not None:
@@ -103,7 +108,7 @@ class MeasurementTableModel(QtCore.QAbstractItemModel):
                 elif index.column() == 8:
                     return QtCore.QVariant(nan_str(float(d["std"][line])))
                 elif index.column() == 9:
-                    return QtCore.QVariant(nan_str(float(d["V"][line] / d["I"][line] * self.meas_list[meas_id].get_k()[line])))
+                    return QtCore.QVariant(nan_str(float(self.meas_list[meas_id].get_app_res_gimli()[line])))
                 elif index.column() == 10:
                     ml = get_model_line(line)
                     if ml is not None:
@@ -130,6 +135,14 @@ class MeasurementTableModel(QtCore.QAbstractItemModel):
                         return QtCore.QVariant("")
                 else:
                     return QtCore.QVariant("")
+
+        elif role == QtCore.Qt.ForegroundRole:
+            meas_id, line = self.row_meas_line_map[index.row()]
+            AppResGimli = self.meas_list[meas_id].get_app_res_gimli()[line]
+            if AppResGimli <= 1e-12 or math.isnan(AppResGimli):
+                return QtCore.QVariant(self.red_brush)
+            else:
+                return QtCore.QVariant()
 
         elif role == QtCore.Qt.CheckStateRole:
             if index.column() == 0:
