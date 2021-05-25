@@ -516,9 +516,12 @@ class InversionPreparation(QtWidgets.QMainWindow):
                         e.x = -abs(e.x)
                         e.y = -abs(e.y)
 
+            self.genie.current_inversion_cfg.checked_measurements = [m.number for m in self._measurement_model.checkedMeasurements()]
+
             self._update_el_meas()
 
             self._measurement_model.checkMeasurements(self.genie.current_inversion_cfg.checked_measurements)
+            self._meas_model_data_changed()
             if self.genie.method == GenieMethod.ERT:
                 self._measurement_table_model.maskMeasLines(self.genie.current_inversion_cfg.masked_meas_lines)
 
