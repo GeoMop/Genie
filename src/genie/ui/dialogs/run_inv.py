@@ -94,7 +94,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_reconstructionDepthLineEdit = QtWidgets.QLineEdit("6")
         self._par_reconstructionDepthLineEdit.setToolTip('In case that previous option is "Gallery cloud", define how much details will be reconstructed from point cloud. Bigger value means more details. This value is integer from 4 to 10.')
-        self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
+        #self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
 
         self._par_smallComponentRatioLineEdit = QtWidgets.QLineEdit("0.1")
         self._par_smallComponentRatioLineEdit.setToolTip("Small gallery mesh components are removed. This ratio define threshold for removing relative to largest component.")

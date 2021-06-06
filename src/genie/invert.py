@@ -693,6 +693,49 @@ def modify_mesh(in_file, out_file, mesh_cut_tool_param):
         mesh.write_ascii(fd)
 
 
+def reconst_depth(mesh_cut_tool_param, inv_par):
+    base_point, gen_vecs = cut_point_cloud.cut_tool_to_gen_vecs(mesh_cut_tool_param, margin=True)
+    vs = []
+    vs.append(base_point)
+    vs.append(base_point + gen_vecs[0])
+    vs.append(base_point + gen_vecs[0] + gen_vecs[1])
+    vs.append(base_point + gen_vecs[1])
+    vs.append(base_point + gen_vecs[2])
+    vs.append(base_point + gen_vecs[2] + gen_vecs[0])
+    vs.append(base_point + gen_vecs[2] + gen_vecs[0] + gen_vecs[1])
+    vs.append(base_point + gen_vecs[2] + gen_vecs[1])
+
+    x_min = x_max = vs[0][0]
+    y_min = y_max = vs[0][1]
+    z_min = z_max = vs[0][2]
+    for v in vs[1:]:
+        if v[0] < x_min:
+            x_min = v[0]
+        if v[0] > x_max:
+            x_max = v[0]
+        if v[1] < y_min:
+            y_min = v[1]
+        if v[1] > y_max:
+            y_max = v[1]
+        if v[2] < z_min:
+            z_min = v[2]
+        if v[2] > z_max:
+            z_max = v[2]
+
+    # max size along all dimensions
+    size = max(abs(x_max - x_min), abs(y_max - y_min), abs(z_max - z_min))
+
+    d = math.ceil(math.log2(size / inv_par.edgeLength))
+
+    # apply limits
+    if d < 4:
+        d = 4
+    elif d > 10:
+        d = 10
+
+    return d
+
+
 def ball_mesh(in_file, out_file, pos, radius):
     """Sets physical id to 3 inside the ball."""
     pos = np.array(pos)
@@ -802,7 +845,7 @@ def prepare(mesh_cut_tool_param, inv_par, project_conf):
         meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
         if not os.path.exists(meshlabserver_path):
             meshlabserver_path = "meshlabserver"
-        meshlab_script_gen.gen("meshlab_script.mlx", inv_par.reconstructionDepth, inv_par.smallComponentRatio, inv_par.edgeLength)
+        meshlab_script_gen.gen("meshlab_script.mlx", reconst_depth(mesh_cut_tool_param, inv_par), inv_par.smallComponentRatio, inv_par.edgeLength)
         run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", "meshlab_script.mlx"])
         print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
         #return
