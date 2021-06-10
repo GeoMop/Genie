@@ -120,6 +120,9 @@ class InversionParam:
     reconstructionDepth: int = 6
     smallComponentRatio: float = 0.1
     edgeLength: float = 1.0
+    elementSize_d: float = 0.5
+    elementSize_D: float = 10.0
+    elementSize_H: float = 5.0
     refineMesh: bool = True
     refineP2: bool = False
     omitBackground: bool = False

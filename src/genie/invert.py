@@ -70,7 +70,7 @@ def inv_ert(inversion_conf, project_conf):
 
     print()
     print_headline("Creating inversion mesh")
-    mesh_from_brep("inv_mesh_tmp.brep", "inv_mesh_tmp.msh2", project_conf)
+    mesh_from_brep("inv_mesh_tmp.brep", "inv_mesh_tmp.msh2", project_conf, inv_par)
 
     print()
     print_headline("Modify mesh")
@@ -329,7 +329,7 @@ def inv_st(inversion_conf, project_conf):
 
     print()
     print_headline("Creating inversion mesh")
-    mesh_from_brep("inv_mesh_tmp.brep", "inv_mesh_tmp.msh2", project_conf)
+    mesh_from_brep("inv_mesh_tmp.brep", "inv_mesh_tmp.msh2", project_conf, inv_par)
 
     print()
     print_headline("Modify mesh")
@@ -636,7 +636,7 @@ def save_p3d(paraDomain, model_array, mesh_cut_tool_param, step, file_name, loca
             q_finalize()
 
 
-def mesh_from_brep(brep_file, mesh_file, project_conf):
+def mesh_from_brep(brep_file, mesh_file, project_conf, inv_par):
     if project_conf.method == GenieMethod.ERT:
         data = pg.DataContainerERT("input_snapped.dat", removeInvalid=False)
     else:
@@ -652,7 +652,8 @@ def mesh_from_brep(brep_file, mesh_file, project_conf):
     compound = model.import_shapes(brep_file, highestDimOnly=False)
     points = [model.point(pos).tags[0] for pos in el_pos]
     dist = field.distance_nodes(points)
-    f_distance = field.threshold(dist, lower_bound=(0.5, 0.5), upper_bound=(5, 5))
+    f_distance = field.threshold(dist, lower_bound=(inv_par.elementSize_d, inv_par.elementSize_d),
+                                 upper_bound=(inv_par.elementSize_D, inv_par.elementSize_H))
     model.set_mesh_step_field(f_distance)
     model.mesh_options.CharacteristicLengthMin = 0.1
     model.mesh_options.CharacteristicLengthMax = 100

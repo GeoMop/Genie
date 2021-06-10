@@ -355,6 +355,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         if self.genie.method == GenieMethod.ST:
             self.genie.current_inversion_cfg.mesh_cut_tool_param.no_inv_factor = 1.0
 
+            self.genie.current_inversion_cfg.inversion_param.elementSize_d = 1
+            self.genie.current_inversion_cfg.inversion_param.elementSize_H = 3
+
         self.diagram_view._scene.mesh_cut_tool.from_mesh_cut_tool_param(
             self.genie.current_inversion_cfg.mesh_cut_tool_param)
         self.diagram_view._scene.side_view_tool.from_side_view_tool_param(
@@ -861,6 +864,13 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         measurements = self._measurement_model.checkedMeasurements()
         if measurements:
+            # set default elementSize_D
+            if not self.genie.current_inversion_cfg.run_inv_opened:
+                ct = self.diagram_view._scene.mesh_cut_tool
+                s = min(np.linalg.norm(ct.gen_vec1), np.linalg.norm(ct.gen_vec2), abs(ct.z_max - ct.z_min))
+                self.genie.current_inversion_cfg.inversion_param.elementSize_D = s / 2
+                self.genie.current_inversion_cfg.run_inv_opened = True
+
             from ..dialogs.run_inv import RunInvDlg
             dlg = RunInvDlg(self._electrode_groups, measurements, self.genie, self)
             dlg.exec()

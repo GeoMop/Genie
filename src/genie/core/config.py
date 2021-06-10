@@ -24,6 +24,7 @@ class InversionConfig:
     checked_measurements: List[str] = attr.ib(factory=list)
     masked_meas_lines: Dict[str, List[bool]] = attr.ib(factory=dict)
     inversion_param: InversionParam = attr.ib(factory=InversionParam)
+    run_inv_opened: bool = False
 
     # st extension
     first_arrivals: List[FirstArrival] = attr.ib(factory=list)

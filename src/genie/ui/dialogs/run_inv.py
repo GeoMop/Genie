@@ -104,6 +104,18 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_edgeLengthLineEdit.setToolTip("Reconstructed mesh is remeshed with this target edge length. [m]")
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
+        layout = QtWidgets.QHBoxLayout()
+        self._par_elementSize_dLineEdit = QtWidgets.QLineEdit("0.5")
+        self._par_elementSize_DLineEdit = QtWidgets.QLineEdit("10.0")
+        self._par_elementSize_HLineEdit = QtWidgets.QLineEdit("5.0")
+        layout.addWidget(QtWidgets.QLabel("d = h:"))
+        layout.addWidget(self._par_elementSize_dLineEdit)
+        layout.addWidget(QtWidgets.QLabel("D:"))
+        layout.addWidget(self._par_elementSize_DLineEdit)
+        layout.addWidget(QtWidgets.QLabel("H:"))
+        layout.addWidget(self._par_elementSize_HLineEdit)
+        self._parameters_formLayout.addRow("Element size:", layout)
+
         self._par_meshFromComboBox.currentTextChanged.connect(self._handle_mesh_from_combobox_changed)
         self._handle_mesh_from_combobox_changed()
 
@@ -424,6 +436,9 @@ class RunInvDlg(QtWidgets.QDialog):
             param.reconstructionDepth = d
             param.smallComponentRatio = float(self._par_smallComponentRatioLineEdit.text())
             param.edgeLength = float(self._par_edgeLengthLineEdit.text())
+            param.elementSize_d = float(self._par_elementSize_dLineEdit.text())
+            param.elementSize_D = float(self._par_elementSize_DLineEdit.text())
+            param.elementSize_H = float(self._par_elementSize_HLineEdit.text())
             param.refineMesh = self._par_refineMeshCheckBox.isChecked()
             param.refineP2 = self._par_refineP2CheckBox.isChecked()
             param.omitBackground = self._par_omitBackgroundCheckBox.isChecked()
@@ -476,6 +491,9 @@ class RunInvDlg(QtWidgets.QDialog):
         self._par_reconstructionDepthLineEdit.setText(str(param.reconstructionDepth))
         self._par_smallComponentRatioLineEdit.setText(str(param.smallComponentRatio))
         self._par_edgeLengthLineEdit.setText(str(param.edgeLength))
+        self._par_elementSize_dLineEdit.setText(str(param.elementSize_d))
+        self._par_elementSize_DLineEdit.setText(str(param.elementSize_D))
+        self._par_elementSize_HLineEdit.setText(str(param.elementSize_H))
         self._par_refineMeshCheckBox.setChecked(param.refineMesh)
         self._par_refineP2CheckBox.setChecked(param.refineP2)
         self._par_omitBackgroundCheckBox.setChecked(param.omitBackground)
