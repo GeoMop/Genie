@@ -50,9 +50,14 @@ pip install -r requirements.txt
 "Gallery cloud" means that gallery mesh is created from imported point cloud and that mesh is subtracted from area of interest.
 "Surface cloud" means that surface is created from imported point cloud, this surface is cut and complete to form defined by area of interest.
 "Gallery mesh" means that imported gallery mesh is used instead point cloud.
+<!---
 **Reconstruction depth** - In case that previous option is "Gallery cloud", define how much details will be reconstructed from point cloud. Bigger value means more details.
 This value is integer from 4 to 10.
+-->
+**Small component ratio** - Small gallery mesh components are removed. This ratio define threshold for removing relative to largest component.
 **Edge length** - Reconstructed mesh is remeshed with this target edge length.
+**Element size** - Defines inversion mesh element size based od distance from electrode. On distance smaller then "d" element size will be "h".
+On distance larger then "D" element size will be "H". Between these points is element size defined by linear function.
 
 ## Electrode options
 
@@ -67,8 +72,10 @@ This value is integer from 4 to 10.
 not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.
 **Z weight** Float, anisotropic regularization parameter. Default value 1 prescribes an isometric regularization. For the values less then 1 the regularization in the vertical direction (Z-axis) is
 diminished, which can lead to better result for verticaly layered geological structures.
-**Blocky model** Boolean, L1 minimization scheme for the regulaization term. Allow non-smooth transitions in the resistivity.
+**Blocky model** Boolean, L1 minimization scheme for the regularization term. Allow non-smooth transitions in the resistivity.
+<!---
 **Constrant type** (? is it supported in PyGimli) 0,1,2 (1 is default), order of derivative used in the regularization term. TBD see [PyGimli tutorial](https://www.pygimli.org/_tutorials_auto/3_inversion/plot_6-geostatConstraints.html)
+-->
 **Max iter** - maximal number of iterations
 **Data log** - Use logarithmic transformation in data.
 
@@ -93,6 +100,16 @@ Columns ca, cb, pa, pb, I, V, std, AppRes are from measurement files.
 **AppResGimli** is apparent resistivity computed from input values using Gimli geometric factor function,
 which use full 3d space not half space and use elecrode positions from input xls file, that apparent resistivity values are different.
 Lines not suitable for computation are marked with red color, this lines are not use in computation, they do not need to be deleted from the files.
+
+## Measurement table
+Table shows all measurements from selected measurements from left bottom panel.
+Table may be sorted by individual columns by clicking on column header.
+Individual measurements may be masked by clicking on checkbox. This measurement will not be used in inversion.
+For mask multiple measurements select them and click on mask in context menu.
+
+## Measurement histogram
+Shows histograms of quantities from Measurement table. It is possible to apply filter on relevant quantity.
+This filter is also applied on relevant quantity in Measurement table.
 
 ## Map file
 It is posible to import a map. From file menu choose "Import map...".
