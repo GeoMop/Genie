@@ -105,9 +105,13 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
         layout = QtWidgets.QHBoxLayout()
+        text = 'Defines inversion mesh element size based od distance from electrode. On distance smaller then "d" element size will be "h". On distance larger then "D" element size will be "H". Between these points is element size defined by linear function.'
         self._par_elementSize_dLineEdit = QtWidgets.QLineEdit("0.5")
+        self._par_elementSize_dLineEdit.setToolTip(text)
         self._par_elementSize_DLineEdit = QtWidgets.QLineEdit("10.0")
+        self._par_elementSize_DLineEdit.setToolTip(text)
         self._par_elementSize_HLineEdit = QtWidgets.QLineEdit("5.0")
+        self._par_elementSize_HLineEdit.setToolTip(text)
         layout.addWidget(QtWidgets.QLabel("d = h:"))
         layout.addWidget(self._par_elementSize_dLineEdit)
         layout.addWidget(QtWidgets.QLabel("D:"))
@@ -301,9 +305,11 @@ class RunInvDlg(QtWidgets.QDialog):
 
     def _handle_mesh_from_combobox_changed(self):
         if self._par_meshFromComboBox.currentText() == "Gallery cloud":
+            self._par_smallComponentRatioLineEdit.setEnabled(True)
             self._par_reconstructionDepthLineEdit.setEnabled(True)
             self._par_edgeLengthLineEdit.setEnabled(True)
         else:
+            self._par_smallComponentRatioLineEdit.setEnabled(False)
             self._par_reconstructionDepthLineEdit.setEnabled(False)
             self._par_edgeLengthLineEdit.setEnabled(False)
 
