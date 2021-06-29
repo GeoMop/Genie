@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
+
 from ..view_3d.vtk_widget import VTKWidget
 from ..view_3d.panels.cut_plane_panel import CutPlanePanel
 from ..view_3d.panels.visibility_panel import VisibilityPanel
@@ -56,6 +57,7 @@ class View3D(QtWidgets.QMainWindow):
         self.cut_plane_panel.camera_normal_btn.clicked.connect(self.set_camera_normal)
 
         self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
+        self.color_map_panel.log_lin_checkbox.stateChanged.connect(self.vtk_view.update_range_type)
 
     def set_camera_normal(self):
         self.cut_plane_panel.normal.set_point(*self.vtk_view.renderer.GetActiveCamera().GetViewPlaneNormal())

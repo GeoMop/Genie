@@ -16,6 +16,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
         super(VTKWidget, self).__init__()
 
         self.model = UnstructuredGridActor(model_file)
+        self.model.mapper.SetUseLookupTableScalarRange(True)
 
         self.renderer = vtkRenderer()
         self.renderer.AddActor(self.model)
@@ -38,9 +39,13 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.plane_widget = PlaneWidget(self.model, self)
 
         self.slice = CutterActor(self.model, self.plane_widget.plane)
+        self.slice.mapper.SetUseLookupTableScalarRange(True)
         self.renderer.AddActor(self.slice)
         self.Initialize()
         self.Start()
+        self.scalar_bar.SetLookupTable(lut)
+        self.model.mapper.SetLookupTable(lut)
+        self.slice.mapper.SetLookupTable(lut)
 
     def keyPressEvent(self, ev):
         if ev.key() == Qt.Key_I:
@@ -82,8 +87,14 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.render_window.Render()
 
     def update_scalar_range(self, min, max):
-        self.model.mapper.SetScalarRange(min, max)
-        self.slice.mapper.SetScalarRange(min, max)
         lut.SetTableRange(min, max)
-        self.scalar_bar.SetLookupTable(lut)
+
         self.render_window.Render()
+
+    def update_range_type(self, state):
+        if state == Qt.Checked:
+            lut.SetScaleToLog10()
+        else:
+            lut.SetScaleToLinear()
+        self.render_window.Render()
+

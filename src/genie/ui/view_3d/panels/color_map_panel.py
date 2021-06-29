@@ -1,12 +1,14 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QDoubleSpinBox, QVBoxLayout, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QDoubleSpinBox, QVBoxLayout, QLabel, QSizePolicy, QCheckBox
 from PyQt5.QtCore import pyqtSignal
 
 class ColorMapPanel(QWidget):
     range_changed = pyqtSignal(float, float)
     def __init__(self, min_value, max_value, parent=None):
         super(ColorMapPanel, self).__init__(parent)
-        self.layout = QHBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+
+        first_line = QHBoxLayout()
 
         layout2 = QHBoxLayout()
         layout2.addWidget(QLabel("max:"))
@@ -18,7 +20,7 @@ class ColorMapPanel(QWidget):
         self.max.setDecimals(2)
         self.max.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         layout2.addWidget(self.max)
-        self.layout.addLayout(layout2)
+        first_line.addLayout(layout2)
         self.max.setRange(min_value, max_value)
         self.max.resize(0, 0)
         self.max.setSingleStep(self.step)
@@ -31,10 +33,21 @@ class ColorMapPanel(QWidget):
         self.min.setDecimals(2)
         self.min.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         layout2.addWidget(self.min)
-        self.layout.addLayout(layout2)
+        first_line.addLayout(layout2)
         self.min.setRange(0.01, max_value)
         self.min.resize(0, 0)
         self.min.setSingleStep(self.step)
+
+        self.layout.addLayout(first_line)
+
+        self.log_lin_checkbox = QCheckBox()
+        self.log_lin_checkbox.setChecked(True)
+        second_line = QHBoxLayout()
+        second_line.addWidget(QLabel("Log10 scale:"))
+        second_line.addWidget(self.log_lin_checkbox)
+        second_line.addStretch()
+
+        self.layout.addLayout(second_line)
 
         self.max.valueChanged.connect(self.update_min_maximum)
         self.min.valueChanged.connect(self.update_max_minimum)
