@@ -43,7 +43,6 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.renderer.AddActor(self.slice)
         self.Initialize()
         self.Start()
-        self.model.SetVisibility(False)
 
     def keyPressEvent(self, ev):
         if ev.key() == Qt.Key_I:
@@ -95,7 +94,4 @@ class VTKWidget(QVTKRenderWindowInteractor):
             lut.SetScaleToLinear()
         self.render_window.Render()
 
-    def set_scale_from_slice(self):
-        lut.SetTableRange(self.slice.scalar_range)
-        self.render_window.Render()
 

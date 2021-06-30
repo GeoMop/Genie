@@ -2,8 +2,10 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QDoubleSpinBox, QVBoxLayout, Q
     QPushButton
 from PyQt5.QtCore import pyqtSignal
 
+
 class ColorMapPanel(QWidget):
     range_changed = pyqtSignal(float, float)
+
     def __init__(self, min_value, max_value, parent=None):
         super(ColorMapPanel, self).__init__(parent)
         self.layout = QVBoxLayout()
@@ -11,20 +13,7 @@ class ColorMapPanel(QWidget):
 
         first_line = QHBoxLayout()
 
-        layout2 = QHBoxLayout()
-        layout2.addWidget(QLabel("max:"))
-
         self.step = (max_value - min_value)/15
-
-        self.max = QDoubleSpinBox()
-        self.max.setValue(max_value)
-        self.max.setDecimals(2)
-        self.max.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        layout2.addWidget(self.max)
-        first_line.addLayout(layout2)
-        self.max.setRange(min_value, max_value)
-        self.max.resize(0, 0)
-        self.max.setSingleStep(self.step)
 
         layout2 = QHBoxLayout()
         layout2.addWidget(QLabel("min:"))
@@ -38,6 +27,19 @@ class ColorMapPanel(QWidget):
         self.min.setRange(0.01, max_value)
         self.min.resize(0, 0)
         self.min.setSingleStep(self.step)
+
+        layout2 = QHBoxLayout()
+        layout2.addWidget(QLabel("max:"))
+
+        self.max = QDoubleSpinBox()
+        self.max.setValue(max_value)
+        self.max.setDecimals(2)
+        self.max.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        layout2.addWidget(self.max)
+        first_line.addLayout(layout2)
+        self.max.setRange(min_value, max_value)
+        self.max.resize(0, 0)
+        self.max.setSingleStep(self.step)
 
         self.layout.addLayout(first_line)
 
@@ -57,7 +59,6 @@ class ColorMapPanel(QWidget):
         self.min.valueChanged.connect(self.update_max_minimum)
 
         self.setFixedHeight(self.minimumSizeHint().height())
-
 
     def update_max_minimum(self, new_minimum):
         self.max.setMinimum(new_minimum)

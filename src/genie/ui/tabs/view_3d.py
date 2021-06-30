@@ -46,10 +46,15 @@ class View3D(QtWidgets.QMainWindow):
 
     def init_connections(self):
         self.visibility_panel.show_model.stateChanged.connect(self.vtk_view.show_model)
+        self.vtk_view.show_model(self.visibility_panel.show_model.checkState())
         self.visibility_panel.show_slice.stateChanged.connect(self.vtk_view.show_slice)
+        self.vtk_view.show_slice(self.visibility_panel.show_slice.checkState())
         self.visibility_panel.show_bounds.stateChanged.connect(self.vtk_view.show_bounds)
+        self.vtk_view.show_bounds(self.visibility_panel.show_bounds.checkState())
         self.visibility_panel.show_plane.stateChanged.connect(self.vtk_view.show_plane)
+        self.vtk_view.show_plane(self.visibility_panel.show_plane.checkState())
         self.visibility_panel.show_wireframe.stateChanged.connect(self.vtk_view.show_wireframe)
+        self.vtk_view.show_wireframe(self.visibility_panel.show_wireframe.checkState())
 
         self.vtk_view.plane_changed.connect(self.cut_plane_panel.update_plane_info)
         self.cut_plane_panel.origin.point_changed.connect(self.vtk_view.plane_widget.update_origin)
@@ -57,8 +62,23 @@ class View3D(QtWidgets.QMainWindow):
         self.cut_plane_panel.camera_normal_btn.clicked.connect(self.set_camera_normal)
 
         self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
-        self.color_map_panel.scale_from_slice_btn.clicked.connect(self.vtk_view.set_scale_from_slice)
+        self.color_map_panel.scale_from_slice_btn.clicked.connect(self.set_scale_from_slice)
         self.color_map_panel.log_lin_checkbox.stateChanged.connect(self.vtk_view.update_range_type)
+
+        self.vtk_view.render_window.Render()
 
     def set_camera_normal(self):
         self.cut_plane_panel.normal.set_point(*self.vtk_view.renderer.GetActiveCamera().GetViewPlaneNormal())
+
+    def set_scale_from_slice(self):
+        new_range = self.vtk_view.slice.scalar_range
+        self.color_map_panel.range_changed.disconnect(self.vtk_view.update_scalar_range)
+        self.color_map_panel.min.setValue(new_range[0])
+        self.color_map_panel.max.setValue(new_range[1])
+        # cannot set minimum higher than maximum or maximum lower than minimum. Second setValue solves it.
+        self.color_map_panel.min.setValue(new_range[0])
+        self.color_map_panel.max.setValue(new_range[1])
+        self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
+        self.vtk_view.update_scalar_range(*new_range)
+
+        self.vtk_view.render_window.Render()
