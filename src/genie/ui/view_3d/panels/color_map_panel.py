@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QDoubleSpinBox, QVBoxLayout, QLabel, QSizePolicy, QCheckBox
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QDoubleSpinBox, QVBoxLayout, QLabel, QSizePolicy, QCheckBox, \
+    QPushButton
 from PyQt5.QtCore import pyqtSignal
 
 class ColorMapPanel(QWidget):
@@ -39,6 +40,9 @@ class ColorMapPanel(QWidget):
         self.min.setSingleStep(self.step)
 
         self.layout.addLayout(first_line)
+
+        self.scale_from_slice_btn = QPushButton("Min/Max from slice")
+        self.layout.addWidget(self.scale_from_slice_btn)
 
         self.log_lin_checkbox = QCheckBox()
         self.log_lin_checkbox.setChecked(True)

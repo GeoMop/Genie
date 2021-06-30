@@ -9,8 +9,6 @@ class UnstructuredGridActor(vtkActor):
         self.model.SetFileName(filename)
         self.model.Update()
 
-        self.scalar_range = self.model.GetOutput().GetScalarRange()
-        self.scalar_range = (max(self.scalar_range[0], 0.01), self.scalar_range[1])
         self.mapper = vtkDataSetMapper()
         self.mapper.SetInputConnection(self.model.GetOutputPort())
         self.mapper.ScalarVisibilityOn()
@@ -19,3 +17,8 @@ class UnstructuredGridActor(vtkActor):
         self.mapper.SetLookupTable(lut)
 
         self.SetMapper(self.mapper)
+
+    @property
+    def scalar_range(self):
+        scalar_range = self.model.GetOutput().GetScalarRange()
+        return max(scalar_range[0], 0.01), scalar_range[1]

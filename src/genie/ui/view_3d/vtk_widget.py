@@ -43,9 +43,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.renderer.AddActor(self.slice)
         self.Initialize()
         self.Start()
-        self.scalar_bar.SetLookupTable(lut)
-        self.model.mapper.SetLookupTable(lut)
-        self.slice.mapper.SetLookupTable(lut)
+        self.model.SetVisibility(False)
 
     def keyPressEvent(self, ev):
         if ev.key() == Qt.Key_I:
@@ -58,7 +56,6 @@ class VTKWidget(QVTKRenderWindowInteractor):
             return
 
         super(VTKWidget, self).keyPressEvent(ev)
-
 
     def show_model(self, b):
         self.plane_widget.rep.SetDrawPlane(b)
@@ -96,5 +93,9 @@ class VTKWidget(QVTKRenderWindowInteractor):
             lut.SetScaleToLog10()
         else:
             lut.SetScaleToLinear()
+        self.render_window.Render()
+
+    def set_scale_from_slice(self):
+        lut.SetTableRange(self.slice.scalar_range)
         self.render_window.Render()
 

@@ -57,6 +57,7 @@ class View3D(QtWidgets.QMainWindow):
         self.cut_plane_panel.camera_normal_btn.clicked.connect(self.set_camera_normal)
 
         self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
+        self.color_map_panel.scale_from_slice_btn.clicked.connect(self.vtk_view.set_scale_from_slice)
         self.color_map_panel.log_lin_checkbox.stateChanged.connect(self.vtk_view.update_range_type)
 
     def set_camera_normal(self):

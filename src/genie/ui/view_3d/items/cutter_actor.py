@@ -22,3 +22,8 @@ class CutterActor(vtkActor):
         self.GetProperty().SetLineWidth(3)
         self.SetMapper(self.mapper)
         self.SetBackfaceProperty(back)
+
+    @property
+    def scalar_range(self):
+        scalar_range = self.cutter.GetOutput().GetScalarRange()
+        return max(scalar_range[0], 0.01), scalar_range[1]
