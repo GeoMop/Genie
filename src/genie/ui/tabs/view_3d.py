@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
+from vtkmodules.vtkCommonCore import vtkLookupTable
 
+from ..dialogs.color_map_editor import ColorMapPreset
 from ..view_3d.vtk_widget import VTKWidget
 from ..view_3d.panels.cut_plane_panel import CutPlanePanel
 from ..view_3d.panels.visibility_panel import VisibilityPanel
@@ -8,10 +10,16 @@ from ..view_3d.panels.color_map_panel import ColorMapPanel
 
 
 class View3D(QtWidgets.QMainWindow):
-    def __init__(self, model_file):
+    def __init__(self, model_file, genie):
         super(View3D, self).__init__()
+        self.lut = vtkLookupTable()
+        self.lut.SetScaleToLog10()
+        if genie.current_inversion_cfg.colormap_file:
+            ColorMapPreset.use_colormap(genie.current_inversion_cfg.colormap_file, self.lut)
+        else:
+            ColorMapPreset.use_colormap("ui\\view_3d\\color_maps\\cool_to_warm_extended.json", self.lut)
         self.init_docks()
-        self.vtk_view = VTKWidget(model_file)
+        self.vtk_view = VTKWidget(model_file, self.lut)
         self.vtk_view.update_scalar_range(*self.vtk_view.model.scalar_range)
         self.setCentralWidget(self.vtk_view)
 
@@ -23,7 +31,7 @@ class View3D(QtWidgets.QMainWindow):
         self.cut_plane_panel.update_plane_info(self.vtk_view.plane_widget.plane.GetOrigin(),
                                                self.vtk_view.plane_widget.plane.GetNormal())
 
-        self.color_map_panel = ColorMapPanel(*self.vtk_view.model.scalar_range)
+        self.color_map_panel = ColorMapPanel(*self.vtk_view.model.scalar_range, genie, self.lut)
         self.color_map_dock.setWidget(self.color_map_panel)
 
 

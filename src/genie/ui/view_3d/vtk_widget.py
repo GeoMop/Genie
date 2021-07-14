@@ -3,19 +3,19 @@ from vtk import vtkCommand, vtkImplicitPlaneRepresentation, vtkSphereSource, vtk
     vtkPolyDataMapper, vtkActor, vtkProperty, vtkRenderer, vtkRenderWindow, vtkRenderWindowInteractor, \
     vtkImplicitPlaneWidget2, vtkUnstructuredGridReader, vtkDataSetMapper, vtkInteractorStyleTrackballCamera, \
     vtkScalarBarActor
+
 from .items.unstructured_grid import UnstructuredGridActor
 from .items.plane_widget import PlaneWidget
 from .items.cutter_actor import CutterActor
 from PyQt5.QtCore import pyqtSignal, Qt, QEvent
-from .color_maps.default_log10 import lut
 
 
 class VTKWidget(QVTKRenderWindowInteractor):
     plane_changed = pyqtSignal(tuple, tuple)
-    def __init__(self, model_file):
+    def __init__(self, model_file, lut):
         super(VTKWidget, self).__init__()
-
-        self.model = UnstructuredGridActor(model_file)
+        self.lut = lut
+        self.model = UnstructuredGridActor(model_file, self.lut)
         self.model.mapper.SetUseLookupTableScalarRange(True)
 
         self.renderer = vtkRenderer()
@@ -27,9 +27,11 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.SetInteractorStyle(vtkInteractorStyleTrackballCamera())
 
         self.scalar_bar = vtkScalarBarActor()
-        self.scalar_bar.SetLookupTable(lut)
+        self.scalar_bar.SetLookupTable(self.lut)
         scalar_bar_width = 0.1
         scalar_bar_height = 0.9
+        self.scalar_bar.SetMaximumNumberOfColors(200)
+        self.scalar_bar.SetNumberOfLabels(10)
         self.scalar_bar.SetBarRatio(0.2)
         self.scalar_bar.SetWidth(scalar_bar_width)
         self.scalar_bar.SetHeight(scalar_bar_height)
@@ -38,7 +40,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
 
         self.plane_widget = PlaneWidget(self.model, self)
 
-        self.slice = CutterActor(self.model, self.plane_widget.plane)
+        self.slice = CutterActor(self.model, self.plane_widget.plane, self.lut)
         self.slice.mapper.SetUseLookupTableScalarRange(True)
         self.renderer.AddActor(self.slice)
         self.Initialize()
@@ -83,15 +85,15 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.render_window.Render()
 
     def update_scalar_range(self, min, max):
-        lut.SetTableRange(min, max)
+        self.lut.SetTableRange(min, max)
 
         self.render_window.Render()
 
     def update_range_type(self, state):
         if state == Qt.Checked:
-            lut.SetScaleToLog10()
+            self.lut.SetScaleToLog10()
         else:
-            lut.SetScaleToLinear()
+            self.lut.SetScaleToLinear()
         self.render_window.Render()
 
 
