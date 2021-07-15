@@ -19,7 +19,7 @@ class View3D(QtWidgets.QMainWindow):
         else:
             ColorMapPreset.use_colormap("ui\\view_3d\\color_maps\\cool_to_warm_extended.json", self.lut)
         self.init_docks()
-        self.vtk_view = VTKWidget(model_file, self.lut)
+        self.vtk_view = VTKWidget(model_file, self.lut, genie)
         self.vtk_view.update_scalar_range(*self.vtk_view.model.scalar_range)
         self.setCentralWidget(self.vtk_view)
 
@@ -72,6 +72,7 @@ class View3D(QtWidgets.QMainWindow):
         self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
         self.color_map_panel.scale_from_slice_btn.clicked.connect(self.set_scale_from_slice)
         self.color_map_panel.log_lin_checkbox.stateChanged.connect(self.vtk_view.update_range_type)
+        self.color_map_panel.link_vals_cols.stateChanged.connect(self.vtk_view.link_state_changed)
 
         self.vtk_view.render_window.Render()
 

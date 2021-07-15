@@ -63,6 +63,22 @@ class ColorMapPanel(QWidget):
         self.change_colors_button.clicked.connect(self.open_change_color_dialog)
         self.layout.addWidget(self.change_colors_button)
 
+        self.link_vals_cols = QCheckBox()
+        self.link_vals_cols.setChecked(False)
+        link_tooltip = ("Links colors to values as defined in colormap. \n"
+                        "If colormap defines color blue (0,0,255) for value 0.5, \n"
+                        "then every value 0.5 will be blue despite defined range.")
+        self.link_vals_cols.setToolTip(link_tooltip)
+        third_line = QHBoxLayout()
+        label = QLabel("Link colors to values:")
+        label.setToolTip(link_tooltip)
+        third_line.addWidget(label)
+        third_line.addWidget(self.link_vals_cols)
+        third_line.addStretch()
+        self.link_vals_cols.stateChanged.connect(self.disable_log_scale)
+
+        self.layout.addLayout(third_line)
+
         self.max.valueChanged.connect(self.update_min_maximum)
         self.min.valueChanged.connect(self.update_max_minimum)
 
@@ -80,3 +96,12 @@ class ColorMapPanel(QWidget):
         dlg = ColorMapEditor(self.genie)
         if dlg.exec() == QDialog.Accepted:
             dlg.set_new_lut(self.lut)
+
+    def disable_log_scale(self, state):
+        if state:
+            self.log_lin_checkbox.setChecked(False)
+            self.log_lin_checkbox.setEnabled(False)
+            self.log_lin_checkbox.setToolTip("Logarithmic scale is unavailable while colors are linked to values")
+        else:
+            self.log_lin_checkbox.setEnabled(True)
+            self.log_lin_checkbox.setToolTip("")

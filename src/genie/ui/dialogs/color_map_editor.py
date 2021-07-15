@@ -1,11 +1,13 @@
 import glob
 import json
+import math
 import os
+import sys
 from pathlib import Path
 from shutil import copyfile
 
-from PyQt5.QtCore import QPoint
-from PyQt5.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QImage, qAlpha, qRed, qGreen, qBlue
+from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QImage, qAlpha, qRed, qGreen, qBlue, QTransform
 from PyQt5.QtWidgets import QDialog, QWidget, QLabel, QApplication, QHBoxLayout, QListWidget, QListWidgetItem, QLayout, \
     QVBoxLayout, QDialogButtonBox, QPushButton, QFileDialog
 from vtkmodules.vtkCommonCore import vtkLookupTable
@@ -24,7 +26,7 @@ class ColorMapPreset(QWidget):
         layout = QHBoxLayout()
         self.bar = QLabel()
         layout.addWidget(self.bar)
-        self.create_color_bar(self.values, self.colors.__iter__())
+        self.bar.setPixmap(self.create_pixmap())
 
         self.name = QLabel(color_data[0]["Name"])
         font = self.name.font()
@@ -36,41 +38,81 @@ class ColorMapPreset(QWidget):
         layout.setSizeConstraint(QLayout.SetFixedSize)
         self.setLayout(layout)
 
-    def create_color_bar(self, values, colors):
-        pixmap = QPixmap(200, 20)
+    def create_pixmap(self, pixmap_height=20, minimum=None, maximum=None):
+        #doesnt yet work with linear scale
+        if minimum is None:
+            minimum = self.values[0]
+            maximum = self.values[-1]
+
+
+        orig_range = self.values[-1] - self.values[0]
+        new_range = maximum - minimum
+
+        pixmap = QPixmap(200, pixmap_height)
+        pixmap.fill(Qt.magenta)
         painter = QPainter()
         painter.begin(pixmap)
-        range_start = values[0]
-        range_length = values[-1] - values[0]
-        gradient = QLinearGradient(QPoint(0, 10), QPoint(200, 10))
-        for value in values:
-            pos = (value - range_start) / range_length
-            color = next(colors)
+        if len(self.values) == 1:
+            painter.fillRect(0, 0, 200, pixmap_height, QColor(self.colors[0] * 255,
+                                                              self.colors[1] * 255,
+                                                              self.colors[2] * 255))
+        else:
+            if minimum == maximum:
+                zoom = 1000
+            else:
+                zoom = min(orig_range/new_range, 100)
 
-            gradient.setColorAt(pos, QColor(color[0] * 255, color[1] * 255, color[2] * 255))
+            gradient = QLinearGradient(QPoint(-(minimum - self.values[0]) * 200 * zoom,
+                                              math.ceil(pixmap_height/2)),
+                                       QPoint(200 * zoom - (minimum - self.values[0]) * 200 * zoom,
+                                              math.ceil(pixmap_height/2)))
+            range_start = self.values[0]
+            range_length = self.values[-1] - self.values[0]
+            colors = self.colors.__iter__()
+            for value in self.values:
+                pos = (value - range_start) / range_length
+                color = next(colors)
+                gradient.setColorAt(pos, QColor(color[0] * 255, color[1] * 255, color[2] * 255))
 
-        painter.fillRect(0, 0, 200, 20, gradient)
+            painter.fillRect(0, 0, 200, pixmap_height, gradient)
+
         painter.end()
-        self.bar.setPixmap(pixmap)
+        return pixmap
 
-    def set_new_lut(self, lut):
+    @staticmethod
+    def copy_lut_settings(src_lut, dest_lut):
+        dest_lut.SetRamp(src_lut.GetRamp())
+        dest_lut.SetRange(src_lut.GetRange())
+        dest_lut.SetScale(src_lut.GetScale())
+
+    def make_new_lut(self, lut, pixmap=None):
         new_lut = vtkLookupTable()
-        new_lut.SetRampToLinear()
-        new_lut.SetRange(lut.GetRange())
-        new_lut.SetScale(lut.GetScale())
+        self.copy_lut_settings(lut, new_lut)
         new_lut.SetNumberOfTableValues(200)
-        map = QImage(self.bar.pixmap())
+        if pixmap == None:
+            map = QImage(self.bar.pixmap())
+        else:
+            map = QImage(pixmap)
         for index in range(200):
             pixel = map.pixel(index, 0)
             new_lut.SetTableValue(index, qRed(pixel) / 255, qGreen(pixel) / 255, qBlue(pixel) / 255, 1)
 
         new_lut.Build()
-        lut.DeepCopy(new_lut)
+        return new_lut
 
     @staticmethod
     def use_colormap(filename, lut):
         preset = ColorMapPreset(filename)
-        preset.set_new_lut(lut)
+        new_lut = preset.make_new_lut(lut)
+        lut.DeepCopy(new_lut)
+
+    @staticmethod
+    def use_colormap_linked(filename, lut, min, max):
+        preset = ColorMapPreset(filename)
+        pixmap = preset.create_pixmap(1, min, max)
+        new_lut = preset.make_new_lut(lut, pixmap)
+        new_lut.SetRange(min, max)
+        lut.DeepCopy(new_lut)
 
 
 class ColorMapEditor(QDialog):
@@ -141,6 +183,3 @@ class ColorMapEditor(QDialog):
                 dest_file = root + f"_{index}" + ext
                 index += 1
             copyfile(filename, dest_file)
-
-
-

@@ -9,11 +9,14 @@ from .items.plane_widget import PlaneWidget
 from .items.cutter_actor import CutterActor
 from PyQt5.QtCore import pyqtSignal, Qt, QEvent
 
+from ..dialogs.color_map_editor import ColorMapPreset
+
 
 class VTKWidget(QVTKRenderWindowInteractor):
     plane_changed = pyqtSignal(tuple, tuple)
-    def __init__(self, model_file, lut):
+    def __init__(self, model_file, lut, genie):
         super(VTKWidget, self).__init__()
+        self.genie = genie
         self.lut = lut
         self.model = UnstructuredGridActor(model_file, self.lut)
         self.model.mapper.SetUseLookupTableScalarRange(True)
@@ -45,6 +48,8 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.renderer.AddActor(self.slice)
         self.Initialize()
         self.Start()
+
+        self.link_colors_to_values = False
 
     def keyPressEvent(self, ev):
         if ev.key() == Qt.Key_I:
@@ -85,7 +90,13 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.render_window.Render()
 
     def update_scalar_range(self, min, max):
-        self.lut.SetTableRange(min, max)
+        if self.link_colors_to_values:
+            ColorMapPreset.use_colormap_linked(self.genie.current_inversion_cfg.colormap_file,
+                                               self.lut,
+                                               min,
+                                               max)
+        else:
+            self.lut.SetTableRange(min, max)
 
         self.render_window.Render()
 
@@ -95,5 +106,12 @@ class VTKWidget(QVTKRenderWindowInteractor):
         else:
             self.lut.SetScaleToLinear()
         self.render_window.Render()
+
+    def link_state_changed(self, state):
+        self.link_colors_to_values = state
+        if not state:
+            ColorMapPreset.use_colormap(self.genie.current_inversion_cfg.colormap_file, self.lut)
+        self.update_scalar_range(*self.lut.GetRange())
+
 
 
