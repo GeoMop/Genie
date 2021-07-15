@@ -146,7 +146,8 @@ class ColorMapEditor(QDialog):
     def set_new_lut(self, lut):
         colormap_item = self.list.selectedItems()[0]
         colormap_widget = self.list.itemWidget(colormap_item)
-        colormap_widget.set_new_lut(lut)
+        new_lut = colormap_widget.make_new_lut(lut)
+        lut.DeepCopy(new_lut)
         self.genie.current_inversion_cfg.colormap_file = colormap_widget.color_data_filename
 
     def add_preset(self, filename, index=None):
