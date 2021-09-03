@@ -140,9 +140,9 @@ class MeasurementHistogram(QtWidgets.QWidget):
     def update_edits(self):
         ind = self._histComboBox.currentIndex()
         min = self.meas_table_view.filter_model.mins[ind]
-        max = self.meas_table_view.filter_model.mins[ind]
+        max = self.meas_table_view.filter_model.maxs[ind]
         self.filter_min_edit.setText(str(min) if min is not None else "")
-        self.filter_max_edit.setText(str(max) if min is not None else "")
+        self.filter_max_edit.setText(str(max) if max is not None else "")
 
     def create_combo_data(self):
         ret = []
