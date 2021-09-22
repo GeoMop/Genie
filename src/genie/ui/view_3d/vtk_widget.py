@@ -65,7 +65,6 @@ class VTKWidget(QVTKRenderWindowInteractor):
         plane_normal = self.cut_plane_panel.normal.get_numpy()
 
         dot_product = camera_normal.dot(plane_normal)
-        print(dot_product)
         if dot_product > 0:
             self.plane_widget.plane.SetOrigin(self.cut_plane_panel.origin.get_numpy() + plane_normal * 0.2)
         else:
