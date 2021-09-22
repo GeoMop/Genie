@@ -14,26 +14,22 @@ class View3D(QtWidgets.QMainWindow):
         super(View3D, self).__init__()
         self.lut = vtkLookupTable()
         self.lut.SetScaleToLog10()
-        if genie.current_inversion_cfg.colormap_file:
-            ColorMapPreset.use_colormap(genie.current_inversion_cfg.colormap_file, self.lut)
-        else:
-            ColorMapPreset.use_colormap("ui\\view_3d\\color_maps\\cool_to_warm_extended.json", self.lut)
+
+        ColorMapPreset.use_colormap(genie.current_inv_colormap_filename(), self.lut)
+
         self.init_docks()
-        self.vtk_view = VTKWidget(model_file, self.lut, genie)
+        self.cut_plane_panel = CutPlanePanel()
+        self.cut_plane_dock.setWidget(self.cut_plane_panel)
+
+        self.vtk_view = VTKWidget(model_file, self.lut, genie, self.cut_plane_panel)
         self.vtk_view.update_scalar_range(*self.vtk_view.model.scalar_range)
         self.setCentralWidget(self.vtk_view)
 
         self.visibility_panel = VisibilityPanel()
         self.visibility_dock.setWidget(self.visibility_panel)
 
-        self.cut_plane_panel = CutPlanePanel()
-        self.cut_plane_dock.setWidget(self.cut_plane_panel)
-        self.cut_plane_panel.update_plane_info(self.vtk_view.plane_widget.plane.GetOrigin(),
-                                               self.vtk_view.plane_widget.plane.GetNormal())
-
         self.color_map_panel = ColorMapPanel(*self.vtk_view.model.scalar_range, genie, self.lut)
         self.color_map_dock.setWidget(self.color_map_panel)
-
 
         self.resizeDocks([self.cut_plane_dock], [self.cut_plane_panel.minimumSizeHint().width() + 1], Qt.Horizontal)
 

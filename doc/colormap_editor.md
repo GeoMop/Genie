@@ -21,7 +21,7 @@ so it is possible to import colormaps from Paraview, with some limitations or di
 We only use attributes "Name" and "RGBPoints", all other attributes will be ignored.
 
 Colormap is defined in attribute "RGBPoints" where every 4 numbers represent one node.
-Node is defined by value, red, green, blue. Colors between defined nodes are gained from linear interpolation.
+These 4 numbers define: value, red, green, blue (in this order). Colors between defined nodes are gained from linear interpolation.
 Warning!!! color values must be in range 0-1.
 
 As default Genie will change range of values to always utilize the whole colormap, but there is option to link colors to values.

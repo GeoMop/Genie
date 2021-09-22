@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QDialog, QWidget, QLabel, QApplication, QHBoxLayout,
 from vtkmodules.vtkCommonCore import vtkLookupTable
 
 class ColorMapPreset(QWidget):
-    def __init__(self, color_data_filename):
+    def __init__(self, color_data_filename, user_defined=None):
         super(ColorMapPreset, self).__init__()
         self.color_data_filename = color_data_filename
         with open(color_data_filename, 'r') as file:
@@ -37,6 +37,8 @@ class ColorMapPreset(QWidget):
         layout.addWidget(self.name)
         layout.setSizeConstraint(QLayout.SetFixedSize)
         self.setLayout(layout)
+
+        self.user_defined = user_defined
 
     def create_pixmap(self, pixmap_height=20, minimum=None, maximum=None):
         #doesnt yet work with linear scale
@@ -125,11 +127,11 @@ class ColorMapEditor(QDialog):
         self.list = QListWidget()
         layout.addWidget(self.list)
 
-        for filename in glob.glob("ui\\view_3d\\color_maps\\*.json"):
-            self.add_preset(filename)
+        for filename in glob.glob(os.path.realpath(os.path.join(genie.COLORMAPS_DIR, "*.json"))):
+            self.add_preset(filename, user_defined=False)
 
-        for filename in glob.glob(os.path.join(self.genie.cfg.current_project_dir, "colormaps", "*.json")):
-            self.add_preset(filename, 0)
+        for filename in glob.glob(os.path.join(self.genie.cfg.current_project_dir, "color_maps", "*.json")):
+            self.add_preset(filename, 0, user_defined=True)
 
         self.list.item(0).setSelected(True)
 
@@ -148,10 +150,18 @@ class ColorMapEditor(QDialog):
         colormap_widget = self.list.itemWidget(colormap_item)
         new_lut = colormap_widget.make_new_lut(lut)
         lut.DeepCopy(new_lut)
-        self.genie.current_inversion_cfg.colormap_file = colormap_widget.color_data_filename
 
-    def add_preset(self, filename, index=None):
-        widget = ColorMapPreset(filename)
+        if colormap_widget.user_defined:
+            #user defined color map
+            filename = os.path.relpath(colormap_widget.color_data_filename, self.genie.cfg.current_project_dir)
+        else:
+            #default color maps
+            filename = os.path.relpath(colormap_widget.color_data_filename, self.genie.COLORMAPS_DIR)
+
+        self.genie.current_inversion_cfg.colormap_file = os.path.normpath(filename)
+
+    def add_preset(self, abs_filename,  index=None, user_defined=False):
+        widget = ColorMapPreset(abs_filename, user_defined)
         names = [self.list.itemWidget(self.list.item(index)).name.text() for index in range(self.list.count())]
         name_extension = 1
         original_name = widget.name.text()
@@ -173,9 +183,8 @@ class ColorMapEditor(QDialog):
                                                self.genie.cfg.last_colormap_dir,
                                                "Colormap file (*.json)")[0]
         if filename:
-            self.add_preset(os.path.relpath(filename), 0)
             self.genie.cfg.last_colormap_dir = os.path.dirname(filename)
-            colormap_dir = os.path.join(self.genie.cfg.current_project_dir, "colormaps")
+            colormap_dir = os.path.join(self.genie.cfg.current_project_dir, "color_maps")
             Path(colormap_dir).mkdir(parents=True, exist_ok=True)
             dest_file = os.path.join(colormap_dir, os.path.split(filename)[1])
             index = 1
@@ -184,3 +193,4 @@ class ColorMapEditor(QDialog):
                 dest_file = root + f"_{index}" + ext
                 index += 1
             copyfile(filename, dest_file)
+            self.add_preset(os.path.relpath(dest_file), 0, user_defined=True)

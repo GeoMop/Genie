@@ -10,12 +10,15 @@ from .items.cutter_actor import CutterActor
 from PyQt5.QtCore import pyqtSignal, Qt, QEvent
 
 from ..dialogs.color_map_editor import ColorMapPreset
+import numpy as np
 
 
 class VTKWidget(QVTKRenderWindowInteractor):
     plane_changed = pyqtSignal(tuple, tuple)
-    def __init__(self, model_file, lut, genie):
+
+    def __init__(self, model_file, lut, genie, cut_plane_panel):
         super(VTKWidget, self).__init__()
+        self.cut_plane_panel = cut_plane_panel
         self.genie = genie
         self.lut = lut
         self.model = UnstructuredGridActor(model_file, self.lut)
@@ -42,14 +45,32 @@ class VTKWidget(QVTKRenderWindowInteractor):
         self.renderer.AddActor2D(self.scalar_bar)
 
         self.plane_widget = PlaneWidget(self.model, self)
-
+        self.cut_plane_panel.update_plane_info(self.plane_widget.plane.GetOrigin(),
+                                               self.plane_widget.plane.GetNormal())
         self.slice = CutterActor(self.model, self.plane_widget.plane, self.lut)
         self.slice.mapper.SetUseLookupTableScalarRange(True)
+        #self.slice.mapper.SetResolveCoincidentTopologyPolygonOffsetParameters(10, 10)
+        #self.slice.mapper.SetResolveCoincidentTopologyToPolygonOffset()
+
+        self.renderer.AddObserver("StartEvent", self.correct_cut_plane_depth)
         self.renderer.AddActor(self.slice)
         self.Initialize()
         self.Start()
 
         self.link_colors_to_values = False
+
+    def correct_cut_plane_depth(self, renderer, event_type):
+        self.blockSignals(True)
+        camera_normal = np.array(self.renderer.GetActiveCamera().GetViewPlaneNormal())
+        plane_normal = self.cut_plane_panel.normal.get_numpy()
+
+        dot_product = camera_normal.dot(plane_normal)
+        print(dot_product)
+        if dot_product > 0:
+            self.plane_widget.plane.SetOrigin(self.cut_plane_panel.origin.get_numpy() + plane_normal * 0.2)
+        else:
+            self.plane_widget.plane.SetOrigin(self.cut_plane_panel.origin.get_numpy() - plane_normal * 0.2)
+        self.blockSignals(False)
 
     def keyPressEvent(self, ev):
         if ev.key() == Qt.Key_I:
@@ -64,7 +85,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
         super(VTKWidget, self).keyPressEvent(ev)
 
     def show_model(self, b):
-        self.plane_widget.rep.SetDrawPlane(b)
+        #self.plane_widget.rep.SetDrawPlane(b)
         self.model.SetVisibility(b)
         self.render_window.Render()
 
@@ -91,7 +112,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
 
     def update_scalar_range(self, min, max):
         if self.link_colors_to_values:
-            ColorMapPreset.use_colormap_linked(self.genie.current_inversion_cfg.colormap_file,
+            ColorMapPreset.use_colormap_linked(self.genie.current_inv_colormap_filename(),
                                                self.lut,
                                                min,
                                                max)
@@ -110,7 +131,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
     def link_state_changed(self, state):
         self.link_colors_to_values = state
         if not state:
-            ColorMapPreset.use_colormap(self.genie.current_inversion_cfg.colormap_file, self.lut)
+            ColorMapPreset.use_colormap(self.genie.current_inv_colormap_filename(), self.lut)
         self.update_scalar_range(*self.lut.GetRange())
 
 

@@ -1,3 +1,4 @@
+import numpy as np
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QApplication, QMessageBox
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QDoubleValidator
@@ -37,6 +38,8 @@ class PointControler(QWidget):
                           "This vector should not be zero. \n Update is paused until valid vector is provided.",
                           QMessageBox.Ok, self)
 
+    def get_numpy(self):
+        return np.array([float(self.x.text()), float(self.y.text()), float(self.z.text())])
 
     def on_point_change(self):
         x = float(self.x.text())
