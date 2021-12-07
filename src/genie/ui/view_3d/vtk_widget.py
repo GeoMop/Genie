@@ -9,6 +9,7 @@ from .items.plane_widget import PlaneWidget
 from .items.cutter_actor import CutterActor
 from PyQt5.QtCore import pyqtSignal, Qt, QEvent
 
+from .utility import current_inv_colormap_filename
 from ..dialogs.color_map_editor import ColorMapPreset
 import numpy as np
 
@@ -111,7 +112,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
 
     def update_scalar_range(self, min, max):
         if self.link_colors_to_values:
-            ColorMapPreset.use_colormap_linked(self.genie.current_inv_colormap_filename(),
+            ColorMapPreset.use_colormap_linked(current_inv_colormap_filename(self.genie),
                                                self.lut,
                                                min,
                                                max)
@@ -130,7 +131,7 @@ class VTKWidget(QVTKRenderWindowInteractor):
     def link_state_changed(self, state):
         self.link_colors_to_values = state
         if not state:
-            ColorMapPreset.use_colormap(self.genie.current_inv_colormap_filename(), self.lut)
+            ColorMapPreset.use_colormap(current_inv_colormap_filename(self.genie), self.lut)
         self.update_scalar_range(*self.lut.GetRange())
 
 

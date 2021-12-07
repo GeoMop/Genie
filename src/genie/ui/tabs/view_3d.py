@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from vtkmodules.vtkCommonCore import vtkLookupTable
 
 from ..dialogs.color_map_editor import ColorMapPreset
+from ..view_3d.utility import current_inv_colormap_filename
 from ..view_3d.vtk_widget import VTKWidget
 from ..view_3d.panels.cut_plane_panel import CutPlanePanel
 from ..view_3d.panels.visibility_panel import VisibilityPanel
@@ -15,7 +16,7 @@ class View3D(QtWidgets.QMainWindow):
         self.lut = vtkLookupTable()
         self.lut.SetScaleToLog10()
 
-        ColorMapPreset.use_colormap(genie.current_inv_colormap_filename(), self.lut)
+        ColorMapPreset.use_colormap(current_inv_colormap_filename(genie), self.lut)
 
         self.init_docks()
         self.cut_plane_panel = CutPlanePanel()
