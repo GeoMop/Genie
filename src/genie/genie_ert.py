@@ -48,7 +48,7 @@ class Genie:
             else:
                 filename = os.path.join(self.COLORMAPS_DIR, *split_filename[1:])
         else:
-            filename = os.path.join(self.COLORMAPS_DIR, "cool_to_warm_extended.json")
+            filename = os.path.join(self.COLORMAPS_DIR, "jet_color_map.json")
         return filename
 
 

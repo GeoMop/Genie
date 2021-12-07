@@ -13,6 +13,10 @@ from PyQt5 import QtWidgets, QtCore
 
 
 class Genie:
+    COLORMAPS_DIR = os.path.join(os.path.dirname(__file__),
+                                 "ui",
+                                 "dialogs",
+                                 "color_maps")
     def __init__(self):
         self.cfg = GenieConfig()
         self.project_cfg = None
@@ -35,6 +39,17 @@ class Genie:
     def save_cfg(self):
         config_file.save_config_file("genie_st", self.cfg, extension="conf")
 
+    def current_inv_colormap_filename(self):
+        if self.current_inversion_cfg.colormap_file:
+            split_filename = os.path.split(self.current_inversion_cfg.colormap_file)
+            if split_filename[0] == "color_maps":
+                filename = os.path.join(self.cfg.current_project_dir,
+                                        self.current_inversion_cfg.colormap_file)
+            else:
+                filename = os.path.join(self.COLORMAPS_DIR, *split_filename[1:])
+        else:
+            filename = os.path.join(self.COLORMAPS_DIR, "jet_color_map.json")
+        return filename
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
