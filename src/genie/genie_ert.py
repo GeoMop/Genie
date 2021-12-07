@@ -13,6 +13,10 @@ from PyQt5 import QtWidgets, QtCore
 
 
 class Genie:
+    COLORMAPS_DIR = os.path.join(os.path.dirname(__file__),
+                                 "ui",
+                                 "dialogs",
+                                 "color_maps")
     def __init__(self):
         self.cfg = GenieConfig()
         self.project_cfg = None
@@ -34,7 +38,6 @@ class Genie:
 
     def save_cfg(self):
         config_file.save_config_file("genie_ert", self.cfg, extension="conf")
-
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

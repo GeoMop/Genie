@@ -8,7 +8,7 @@ class VisibilityPanel(QWidget):
         self.setLayout(layout)
 
         self.show_model = QCheckBox("Show Model")
-        self.show_model.setChecked(True)
+        self.show_model.setChecked(False)
         layout.addWidget(self.show_model)
 
         self.show_plane = QCheckBox("Show Cut Plane")

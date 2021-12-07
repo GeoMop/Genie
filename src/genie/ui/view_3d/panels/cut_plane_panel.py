@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QLabel, QHBoxLayout, QPushButton, QGridLayout
 from PyQt5.QtCore import pyqtSignal
-from ..utility import PointControler
+from ..point_controller import PointControler
 import sys
 
 

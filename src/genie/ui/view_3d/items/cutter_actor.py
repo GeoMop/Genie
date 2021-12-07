@@ -1,9 +1,8 @@
 from vtk import vtkCutter, vtkDataSetMapper, vtkActor, vtkProperty
-from ..color_maps.default_log10 import lut
 
 
 class CutterActor(vtkActor):
-    def __init__(self, item_actor, plane):
+    def __init__(self, item_actor, plane, lut):
         self.cutter = vtkCutter()
         self.cutter.SetCutFunction(plane)
         self.cutter.SetInputConnection(item_actor.model.GetOutputPort())
@@ -22,3 +21,8 @@ class CutterActor(vtkActor):
         self.GetProperty().SetLineWidth(3)
         self.SetMapper(self.mapper)
         self.SetBackfaceProperty(back)
+
+    @property
+    def scalar_range(self):
+        scalar_range = self.cutter.GetOutput().GetScalarRange()
+        return max(scalar_range[0], 0.01), scalar_range[1]
