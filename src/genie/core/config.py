@@ -25,6 +25,7 @@ class InversionConfig:
     masked_meas_lines: Dict[str, List[bool]] = attr.ib(factory=dict)
     inversion_param: InversionParam = attr.ib(factory=InversionParam)
     run_inv_opened: bool = False
+    colormap_file: str = ""
 
     # st extension
     first_arrivals: List[FirstArrival] = attr.ib(factory=list)
@@ -74,3 +75,4 @@ class ProjectConfig:
 @json_data.jsondata
 class GenieConfig:
     current_project_dir: str = ""
+    last_colormap_dir: str = ""

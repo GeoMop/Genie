@@ -21,6 +21,8 @@ class PlaneWidget(vtkImplicitPlaneWidget2):
         self.rep.SetNormal(self.plane.GetNormal())
         self.rep.OutlineTranslationOff()
         self.rep.ScaleEnabledOff()
+        plane_prop = self.rep.GetPlaneProperty()
+        plane_prop.SetOpacity(0.1)
         #self.rep.SetDrawPlane(False)
 
         self.SetInteractor(interactor)
@@ -30,8 +32,12 @@ class PlaneWidget(vtkImplicitPlaneWidget2):
 
     def update_origin(self, x, y, z):
         self.rep.SetOrigin(x, y, z)
+        self.rep.GetPlane(self.plane)
+        self.interactor.plane_changed.emit(self.plane.GetOrigin(), self.plane.GetNormal())
         self.interactor.render_window.Render()
 
     def update_normal(self, x, y, z):
         self.rep.SetNormal(x, y, z)
+        self.rep.GetPlane(self.plane)
+        self.interactor.plane_changed.emit(self.plane.GetOrigin(), self.plane.GetNormal())
         self.interactor.render_window.Render()
