@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from genie.core import snap_electrodes, snap_surf
 from genie.core.config import InversionConfig, ProjectConfig
-from genie.core import mesh_gen2, mesh_gen3, mesh_gen4, mesh_surf
+from genie.core import mesh_gen, mesh_surf
 from genie.core import cut_point_cloud
 from genie.core.data_types import MeasurementsInfo, MeshFrom, MeasurementModelInfoItem, MeasurementsModelInfo
 from genie.core.global_const import GenieMethod
@@ -876,7 +876,7 @@ def prepare(mesh_cut_tool_param, inv_par, project_conf):
         elif inv_par.meshFrom == MeshFrom.GALLERY_MESH:
             gallery_mesh_file = "../../gallery_mesh.msh"
         #mesh_gen2.gen(mesh_cut_tool_param)
-        if not mesh_gen4.gen(gallery_mesh_file, "inv_mesh_tmp.brep", mesh_cut_tool_param, inv_par, project_conf):
+        if not mesh_gen.gen(gallery_mesh_file, "inv_mesh_tmp.brep", mesh_cut_tool_param, inv_par, project_conf):
             print("Error in mesh generation")
             return False, bw_surface
 
