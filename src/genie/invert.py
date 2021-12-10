@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from genie.core import snap_electrodes, snap_surf
 from genie.core.config import InversionConfig, ProjectConfig
-from genie.core import mesh_gen2, mesh_gen3, mesh_gen4, mesh_surf, meshlab_script_gen
+from genie.core import mesh_gen2, mesh_gen3, mesh_gen4, mesh_surf
 from genie.core import cut_point_cloud
 from genie.core.data_types import MeasurementsInfo, MeshFrom, MeasurementModelInfoItem, MeasurementsModelInfo
 from genie.core.global_const import GenieMethod
@@ -26,6 +26,7 @@ import numpy as np
 #import pybert as pb
 import pygimli as pg
 from pygimli.physics.traveltime import Refraction
+import pymeshlab
 
 
 def main():
@@ -841,15 +842,20 @@ def prepare(mesh_cut_tool_param, inv_par, project_conf):
         t = time.time()
         print()
         print_headline("Creating gallery mesh")
-        #meshlabserver_path = '/home/radek/apps/meshlab'
-        #os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
-        meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "meshlab", "meshlabserver.exe")
-        if not os.path.exists(meshlabserver_path):
-            meshlabserver_path = "meshlabserver"
-        meshlab_script_gen.gen("meshlab_script.mlx", reconst_depth(mesh_cut_tool_param, inv_par), inv_par.smallComponentRatio, inv_par.edgeLength)
-        run_process([meshlabserver_path, "-i", "point_cloud_cut.xyz", "-o", "gallery_mesh.ply", "-m", "sa", "-s", "meshlab_script.mlx"])
+        ms = pymeshlab.MeshSet()
+        ms.load_new_mesh("point_cloud_cut.xyz")
+        ms.compute_normals_for_point_sets()
+        ms.surface_reconstruction_screened_poisson(depth=reconst_depth(mesh_cut_tool_param, inv_par))
+        ms.select_small_disconnected_component(nbfaceratio=inv_par.smallComponentRatio)
+        ms.delete_selected_faces_and_vertices()
+        ms.invert_faces_orientation(forceflip=False)
+        ms.remove_zero_area_faces()
+        ms.remove_duplicate_vertices()
+        ms.remeshing_isotropic_explicit_remeshing(
+            targetlen=pymeshlab.AbsoluteValue(inv_par.edgeLength),
+            maxsurfdist=pymeshlab.AbsoluteValue(inv_par.edgeLength))
+        ms.save_current_mesh("gallery_mesh.ply", binary=False)
         print("meshlab elapsed time: {:0.3f} s".format(time.time() - t))
-        #return
 
         print()
         print_headline("Converting gallery mesh")
