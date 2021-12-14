@@ -16,11 +16,6 @@ curl -Ls install.pygimli.org | bash
 For detailed description go to <https://www.pygimli.org/compilation.html#sec-build>.
 Add path to pygimli to PYTHONPATH.
 
-#### download Meshlab
-Download Meshlab from <https://github.com/cnr-isti-vclab/meshlab/releases/download/Meshlab-2020.02/MeshLab2020.02-linux.zip>.
-We need exact version MeshLab-2020.02, due to script version which we use.
-Extract archive to some directory and add it to PATH.
-
 #### clone project repository
 ``` bash
 git clone https://github.com/GeoMop/Genie.git
@@ -139,7 +134,7 @@ Columns meas_number, ca, cb, pa, pb, I, V, AppRes, std are from measurement file
 - cut of point cloud is time consuming operation, if we want to work with smaller area,
   after first inversion computation is possible to import to project file inversions/inversion_name/point_cloud_cut.xyz,
   which contains cut point cloud
-- in installation are included softwares Meshlab and Gmsh, which can be used for showing and editing of point clouds and meshes
+- in installation is included software Gmsh, which can be used for showing and editing of meshes
 
 ## Description of files in inversion directory
 - inv.conf - configuration of inversin

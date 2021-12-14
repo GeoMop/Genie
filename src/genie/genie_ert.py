@@ -9,10 +9,14 @@ from genie.core import config_file
 from genie.core.config import GenieConfig
 from genie.core.global_const import GenieMethod
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class Genie:
+    COLORMAPS_DIR = os.path.join(os.path.dirname(__file__),
+                                 "ui",
+                                 "dialogs",
+                                 "color_maps")
     def __init__(self):
         self.cfg = GenieConfig()
         self.project_cfg = None
@@ -35,13 +39,15 @@ class Genie:
     def save_cfg(self):
         config_file.save_config_file("genie_ert", self.cfg, extension="conf")
 
-
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     locale = QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates)
     locale.setNumberOptions(QtCore.QLocale.RejectGroupSeparator)
     QtCore.QLocale.setDefault(locale)
+
+    # icon
+    app.setWindowIcon(QtGui.QIcon("genie/icons/genie_ert_128.png"))
 
     Cursor.setup_cursors()
     genie = Genie()

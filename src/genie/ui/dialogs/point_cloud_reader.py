@@ -1,7 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from genie.core import meshlab_merge
-
 import sys
 import os
 import threading
@@ -222,13 +220,8 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         if self._merge_checkbox.isChecked():
             self._message_queue.append("\nMerging points")
             t = time.time()
-            #meshlabserver_path = '/home/radek/apps/meshlab'
-            #os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
-            meshlabserver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "meshlab", "meshlabserver.exe")
-            if not os.path.exists(meshlabserver_path):
-                meshlabserver_path = "meshlabserver"
-            meshlab_merge.gen(self._meshlab_script, self._merge_distance_edit.text())
-            args = [meshlabserver_path, "-i", self._out_file, "-o", self._out_file, "-m", "sa", "-s", self._meshlab_script]
+            merge_script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "merge.py")
+            args = [sys.executable, merge_script_path, self._out_file, self._merge_distance_edit.text()]
             self._meshlab_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             for line in self._meshlab_proc.stdout:
                 if line and line[-1] == "\n":

@@ -1,9 +1,8 @@
 from vtk import vtkUnstructuredGridReader, vtkActor, vtkDataSetMapper
-from ..color_maps.default_log10 import lut
 
 
 class UnstructuredGridActor(vtkActor):
-    def __init__(self, filename):
+    def __init__(self, filename, lut):
         super(UnstructuredGridActor, self).__init__()
         self.model = vtkUnstructuredGridReader()
         self.model.SetFileName(filename)
