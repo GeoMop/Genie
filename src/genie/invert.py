@@ -25,7 +25,6 @@ from bgem.gmsh import gmsh, field
 import numpy as np
 #import pybert as pb
 import pygimli as pg
-from pygimli.physics.traveltime import Refraction
 import pymeshlab
 
 
@@ -141,16 +140,16 @@ def inv_ert(inversion_conf, project_conf):
             error[i] = min_err
 
     # create FOP
-    fop = pg.DCSRMultiElectrodeModelling(verbose=inv_par.verbose)
+    fop = pg.core.DCSRMultiElectrodeModelling(verbose=inv_par.verbose)
     fop.setThreadCount(psutil.cpu_count(logical=False))
     fop.setData(data)
 
     # create Inv
-    inv = pg.RInversion(verbose=inv_par.verbose, dosave=False)
+    inv = pg.core.RInversion(verbose=inv_par.verbose, dosave=False)
     # variables tD, tM are needed to prevent destruct objects
-    tM = pg.RTransLogLU(inv_par.minModel, inv_par.maxModel)
+    tM = pg.core.RTransLogLU(inv_par.minModel, inv_par.maxModel)
     if inv_par.data_log:
-        tD = pg.RTransLog()
+        tD = pg.core.RTransLog()
         inv.setTransData(tD)
     inv.setTransModel(tM)
     inv.setForwardOperator(fop)
@@ -161,7 +160,7 @@ def inv_ert(inversion_conf, project_conf):
     if mesh_file == "":
         depth = inv_par.depth
         if depth is None:
-            depth = pg.DCParaDepth(data)
+            depth = pg.core.DCParaDepth(data)
 
         poly = pg.meshtools.createParaMeshPLC(
             data.sensorPositions(), paraDepth=depth, paraDX=inv_par.paraDX,
@@ -228,11 +227,11 @@ def inv_ert(inversion_conf, project_conf):
     pc = fop.regionManager().parameterCount()
     if inv_par.k_ones:
         # hack of gimli hack
-        v = pg.RVector(pg.RVector(pc, pg.median(data('rhoa') * misc.geometricFactors(data))))
+        v = pg.Vector(pg.Vector(pc, pg.core.median(data('rhoa') * misc.geometricFactors(data))))
         v[0] += tolerance * 2
         startModel = v
     else:
-        startModel = pg.RVector(pc, pg.median(data('rhoa')))
+        startModel = pg.Vector(pc, pg.core.median(data('rhoa')))
     #startModel = pg.RVector(pc, 2000.0)
 
     inv.setModel(startModel)
@@ -240,9 +239,9 @@ def inv_ert(inversion_conf, project_conf):
     # Run the inversion
     sys.stdout.flush()  # flush before multithreading
     model = inv.run()
-    resistivity = model(paraDomain.cellMarkers())
+    resistivity = model[paraDomain.cellMarkers()]
     np.savetxt('resistivity.vector', resistivity)
-    paraDomain.addExportData('Resistivity', resistivity)
+    paraDomain.addData('Resistivity', resistivity)
     #paraDomain.addExportData('Resistivity (log10)', np.log10(resistivity))
     #paraDomain.addExportData('Coverage', coverageDC(fop, inv, paraDomain))
     #paraDomain.exportVTK('resistivity')
@@ -265,7 +264,7 @@ def inv_ert(inversion_conf, project_conf):
 
     resp = fop.response(resistivity)
     # hack of gimli hack
-    v = pg.RVector(startModel)
+    v = pg.Vector(startModel)
     v[0] += tolerance * 2
     resp_start = fop.response(v)
 
@@ -355,15 +354,15 @@ def inv_st(inversion_conf, project_conf):
         print('Removed ' + str(oldsize - newsize) + ' values.')
 
     # create FOP
-    fop = pg.TravelTimeDijkstraModelling(verbose=inv_par.verbose)
+    fop = pg.core.TravelTimeDijkstraModelling(verbose=inv_par.verbose)
     fop.setThreadCount(psutil.cpu_count(logical=False))
     fop.setData(data)
 
     # create Inv
-    inv = pg.RInversion(verbose=inv_par.verbose, dosave=False)
+    inv = pg.core.RInversion(verbose=inv_par.verbose, dosave=False)
     # variables tD, tM are needed to prevent destruct objects
-    tM = pg.RTransLogLU(1.0 / inv_par.maxModel, 1.0 / inv_par.minModel)
-    tD = pg.RTrans()
+    tM = pg.core.RTransLogLU(1.0 / inv_par.maxModel, 1.0 / inv_par.minModel)
+    tD = pg.core.RTrans()
     inv.setTransData(tD)
     inv.setTransModel(tM)
     inv.setForwardOperator(fop)
@@ -373,7 +372,7 @@ def inv_st(inversion_conf, project_conf):
     if mesh_file == "":
         depth = inv_par.depth
         if depth is None:
-            depth = pg.DCParaDepth(data)
+            depth = pg.core.DCParaDepth(data)
 
         poly = pg.meshtools.createParaMeshPLC(
             data.sensorPositions(), paraDepth=depth, paraDX=inv_par.paraDX,
@@ -408,8 +407,9 @@ def inv_st(inversion_conf, project_conf):
 
     # inversion parameters
     inv.setData(data('t'))
-    error = Refraction.estimateError(data, absoluteError=0.001, relativeError=0.001)
-    inv.setAbsoluteError(error)
+    absoluteError = 0.001
+    relativeError = 0.001
+    inv.setAbsoluteError(absoluteError + data('t') * relativeError)
     #inv.setRelativeError(pg.RVector(data.size(), 0.03))
     fop.regionManager().setZWeight(inv_par.zWeight)
     inv.setLambda(inv_par.lam)
@@ -425,9 +425,9 @@ def inv_st(inversion_conf, project_conf):
     # Run the inversion
     sys.stdout.flush()  # flush before multithreading
     model = inv.run()
-    velocity = 1.0 / model(paraDomain.cellMarkers())
+    velocity = 1.0 / model[paraDomain.cellMarkers()]
     np.savetxt('velocity.vector', velocity)
-    paraDomain.addExportData('Velocity', velocity)
+    paraDomain.addData('Velocity', velocity)
     #paraDomain.exportVTK('velocity')
 
     # output in local coordinates
@@ -455,9 +455,9 @@ def coverageDC(fop, inv, paraDomain):
     """
     Return coverage vector considering the logarithmic transformation.
     """
-    covTrans = pg.coverageDCtrans(fop.jacobian(),
-                                  1.0/inv.response(),
-                                  1.0/inv.model())
+    covTrans = pg.core.coverageDCtrans(fop.jacobian(),
+                                       1.0/inv.response(),
+                                       1.0/inv.model())
     return np.log10(covTrans / paraDomain.cellSizes())
 
 
