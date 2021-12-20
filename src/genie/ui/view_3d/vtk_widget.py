@@ -104,10 +104,10 @@ class VTKWidget(QVTKRenderWindowInteractor):
     def show_wireframe(self, b):
         if b:
             for actor in self.renderer.GetActors():
-                actor.GetProperty().SetRepresentationToWireframe();
+                actor.GetProperty().SetRepresentationToWireframe()
         else:
             for actor in self.renderer.GetActors():
-                actor.GetProperty().SetRepresentationToSurface();
+                actor.GetProperty().SetRepresentationToSurface()
         self.render_window.Render()
 
     def update_scalar_range(self, min, max):

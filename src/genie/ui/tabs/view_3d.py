@@ -26,7 +26,7 @@ class View3D(QtWidgets.QMainWindow):
         self.vtk_view.update_scalar_range(*self.vtk_view.model.scalar_range)
         self.setCentralWidget(self.vtk_view)
 
-        self.visibility_panel = VisibilityPanel()
+        self.visibility_panel = VisibilityPanel(self.vtk_view.model.data_fields_names)
         self.visibility_dock.setWidget(self.visibility_panel)
 
         self.color_map_panel = ColorMapPanel(*self.vtk_view.model.scalar_range, genie, self.lut)
@@ -60,6 +60,7 @@ class View3D(QtWidgets.QMainWindow):
         self.vtk_view.show_plane(self.visibility_panel.show_plane.checkState())
         self.visibility_panel.show_wireframe.stateChanged.connect(self.vtk_view.show_wireframe)
         self.vtk_view.show_wireframe(self.visibility_panel.show_wireframe.checkState())
+        self.visibility_panel.data_selection.currentTextChanged.connect(self.change_current_data_field)
 
         self.vtk_view.plane_changed.connect(self.cut_plane_panel.update_plane_info)
         self.cut_plane_panel.origin.point_changed.connect(self.vtk_view.plane_widget.update_origin)
@@ -87,4 +88,8 @@ class View3D(QtWidgets.QMainWindow):
         self.color_map_panel.range_changed.connect(self.vtk_view.update_scalar_range)
         self.vtk_view.update_scalar_range(*new_range)
 
+        self.vtk_view.render_window.Render()
+
+    def change_current_data_field(self, field_name):
+        self.vtk_view.model.change_data_field(field_name)
         self.vtk_view.render_window.Render()

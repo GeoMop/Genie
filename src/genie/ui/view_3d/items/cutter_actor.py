@@ -5,7 +5,7 @@ class CutterActor(vtkActor):
     def __init__(self, item_actor, plane, lut):
         self.cutter = vtkCutter()
         self.cutter.SetCutFunction(plane)
-        self.cutter.SetInputConnection(item_actor.model.GetOutputPort())
+        self.cutter.SetInputConnection(item_actor.reader.GetOutputPort())
         self.cutter.Update()
 
         self.mapper = vtkDataSetMapper()
