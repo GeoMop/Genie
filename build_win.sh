@@ -4,9 +4,8 @@
 # download prerequisites
 wget -r -np -nd -nv -R "index.html*" -e robots=off -P build/win_x86 https://geomop.nti.tul.cz/genie/prerequisites/
 cd build/win_x86
-unzip gmsh-4.5.6-Windows64.zip
-mv gmsh-4.5.6-Windows64 gmsh
-unzip meshlab.zip
+unzip gmsh-4.9.0-Windows64.zip
+mv gmsh-4.9.0-Windows64 gmsh
 cd ../..
 
 # run nsis build

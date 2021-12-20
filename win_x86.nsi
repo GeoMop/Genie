@@ -229,11 +229,6 @@ Section "Runtime Environment" SecRuntime
   SetOutPath $INSTDIR
   File /r "${BUILD_DIR}\gmsh"
 
-  # Install MeshLab.
-  SetOutPath $INSTDIR
-  File /r "${BUILD_DIR}\meshlab"
-  ExecWait '"$INSTDIR\meshlab\vc_redist.x64.exe" /q /norestart'
-
 SectionEnd
 
 
@@ -325,11 +320,11 @@ Section "Start Menu shortcuts" SecStartShortcuts
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortcut "$SMPROGRAMS\Genie\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+    CreateShortcut "$SMPROGRAMS\Genie\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"' "$INSTDIR\genie\icons\genie_ert_128.ico" 0
 
   IfFileExists "$INSTDIR\genie\genie_st.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortcut "$SMPROGRAMS\Genie\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"'
+    CreateShortcut "$SMPROGRAMS\Genie\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"' "$INSTDIR\genie\icons\genie_st_128.ico" 0
 
 SectionEnd
 
@@ -342,11 +337,11 @@ Section "Desktop icons" SecDesktopIcons
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortCut "$DESKTOP\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"'
+    CreateShortCut "$DESKTOP\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"' "$INSTDIR\genie\icons\genie_ert_128.ico" 0
 
   IfFileExists "$INSTDIR\genie\genie_st.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortCut "$DESKTOP\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"'
+    CreateShortCut "$DESKTOP\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"' "$INSTDIR\genie\icons\genie_st_128.ico" 0
 
 SectionEnd
 

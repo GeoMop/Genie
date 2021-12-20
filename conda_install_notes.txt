@@ -1,0 +1,12 @@
+conda create -n genie -c gimli -c conda-forge pygimli=1.2.1
+conda activate genie
+conda install -c conda-forge obspy
+conda install openpyxl psutil pyqtgraph
+conda install pybind11
+pip install git+git://github.com/GeoMop/bgem.git@266266a
+pip install PyQt5
+pip install pymeshlab
+pip install gmsh==4.7.1 # not needed after fix gmsh 4.8 bug
+
+
+gist.github.com/pmbaumgartner/2626ce24adb7f4030c0075d2b35dda32
