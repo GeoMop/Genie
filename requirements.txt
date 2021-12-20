@@ -3,7 +3,7 @@ PyQt5==5.15.6
 vtk==9.1.0
 #bgem
 pandas==1.3.4
-xlrd==2.0.1
+openpyxl==3.0.9
 #pygimli==1.2.1
 psutil==5.8.0
 attrs==21.2.0

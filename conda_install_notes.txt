@@ -7,3 +7,6 @@ pip install git+git://github.com/GeoMop/bgem.git@266266a
 pip install PyQt5
 pip install pymeshlab
 pip install gmsh==4.7.1 # not needed after fix gmsh 4.8 bug
+
+
+gist.github.com/pmbaumgartner/2626ce24adb7f4030c0075d2b35dda32
