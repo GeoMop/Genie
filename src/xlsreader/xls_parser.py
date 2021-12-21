@@ -371,37 +371,37 @@ def parse_st(xls_file):
     for mg in measurements_groups:
         for e in mg.electrodes:
             if _empty_cell(e.gallery):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3, "Gallery is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 2, "Gallery is empty."))
                 mg.has_error = True
                 e.gallery = ""
             else:
                 e.gallery = str(e.gallery).strip()
 
             if _empty_cell(e.x):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4, "X is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3, "X is empty."))
                 mg.has_error = True
             elif not (type(e.x) is float) and not (type(e.x) is int):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4,
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 3,
                                         'X type must be float or int. Found "{}".'.format(type(e.x).__name__)))
                 mg.has_error = True
             else:
                 e.x = float(e.x)
 
             if _empty_cell(e.y):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5, "Y is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4, "Y is empty."))
                 mg.has_error = True
             elif not (type(e.y) is float) and not (type(e.y) is int):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5,
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 4,
                                         'Y type must be float or int. Found "{}".'.format(type(e.y).__name__)))
                 mg.has_error = True
             else:
                 e.y = float(e.y)
 
             if _empty_cell(e.z):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 6, "Z is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5, "Z is empty."))
                 mg.has_error = True
             elif not (type(e.z) is float) and not (type(e.z) is int):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 6,
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, e.xls_row, 5,
                                         'Z type must be float or int. Found "{}".'.format(type(e.z).__name__)))
                 mg.has_error = True
             else:
@@ -433,29 +433,29 @@ def parse_st(xls_file):
                 m.source_id = 0
 
             if _empty_cell(m.receiver_start):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver start id is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, "Receiver start id is empty."))
                 m.has_error = True
                 m.receiver_start = 0
             elif type(m.receiver_start) is not int:
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver start id must be int."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 2, "Receiver start id must be int."))
                 m.has_error = True
                 m.receiver_start = 0
 
             if _empty_cell(m.receiver_stop):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver stop id is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 3, "Receiver stop id is empty."))
                 m.has_error = True
                 m.receiver_stop = 0
             elif type(m.receiver_stop) is not int:
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Receiver stop id must be int."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 3, "Receiver stop id must be int."))
                 m.has_error = True
                 m.receiver_stop = 0
 
             if _empty_cell(m.channel_start):
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Channel start id is empty."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 4, "Channel start id is empty."))
                 m.has_error = True
                 m.receiver_start = 0
             elif type(m.channel_start) is not int:
-                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 1, "Channel start id must be int."))
+                log.add_item(XlsLogItem(XlsLogLevel.ERROR, m.xls_row, 4, "Channel start id must be int."))
                 m.has_error = True
                 m.receiver_start = 0
 
