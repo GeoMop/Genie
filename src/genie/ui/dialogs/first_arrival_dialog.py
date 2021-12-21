@@ -115,7 +115,7 @@ class FirstArrivalDlg(QtWidgets.QDialog):
             plot.setMouseEnabled(False, False)
             self._plot_list.append(plot)
 
-            checkbox = QtGui.QCheckBox()
+            checkbox = QtWidgets.QCheckBox()
             checkbox.setMinimumSize(30, 150)
             checkbox.setMaximumWidth(30)
             self._checkbox_list.append(checkbox)
