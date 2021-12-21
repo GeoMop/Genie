@@ -3,8 +3,12 @@
 #--------------------------------
 
 
+# Unicode target
+Unicode True
+
 # Maximum compression.
-SetCompressor /SOLID lzma
+#SetCompressor /SOLID lzma # not working for very large installers
+SetCompressor lzma
 
 #faster compression
 #SetCompressor /SOLID zlib
@@ -19,14 +23,6 @@ SetCompressor /SOLID lzma
 !define SRC_DIR "${GIT_DIR}\src"
 !define BUILD_DIR "${GIT_DIR}\build\win_x86"
 #!define DATA_DIR "${GIT_DIR}\data"
-
-!define PYTHON_MAJOR   "3"
-!define PYTHON_MINOR   "7"
-
-# The following are derived from the above.
-!define PYTHON_VERS    "${PYTHON_MAJOR}.${PYTHON_MINOR}"
-!define PYTHON_HK      "Software\Python\PythonCore\${PYTHON_VERS}\InstallPath"
-!define PYTHON_HK_64   "Software\Wow6432Node\Python\PythonCore\${PYTHON_VERS}\InstallPath"
 
 
 # Include the tools we use.
@@ -69,38 +65,13 @@ InstallDirRegKey HKCU "Software\Genie" "Install_Dir"
 #--------------------------------
 # Init
 
-Var PYTHON_EXE
-Var PYTHON_SCRIPTS
+Var CONDA_ENV
 
 Function .onInit
 
   !insertmacro MULTIUSER_INIT
 
   !define APP_HOME_DIR "$APPDATA\Genie"
-
-  CheckPython:
-    # Check if Python is installed.
-    ReadRegStr $PYTHON_EXE HKCU "${PYTHON_HK}" ""
-
-    ${If} $PYTHON_EXE == ""
-        ReadRegStr $PYTHON_EXE HKLM "${PYTHON_HK}" ""
-    ${Endif}
-
-    # Install Python.
-    ${If} $PYTHON_EXE == ""
-      MessageBox MB_YESNO|MB_ICONQUESTION "Python ${PYTHON_VERS} 64b is not installed. Do you wish to install it?" IDYES InstallPython
-                  Abort
-      InstallPython:
-        SetOutPath $INSTDIR\prerequisites
-        File "${BUILD_DIR}\python-3.7.6-amd64.exe"
-        ExecWait 'python-3.7.6-amd64.exe'
-
-        # Check installation.
-        Goto CheckPython
-    ${Endif}
-
-    # Set the path to the python.exe instead of directory.
-    StrCpy $PYTHON_EXE "$PYTHON_EXEpython.exe"
 
 FunctionEnd
 
@@ -121,15 +92,9 @@ Section "Runtime Environment" SecRuntime
   RMDir /r "$INSTDIR\env"
   #RMDir /r "$INSTDIR\gm_base"
 
-  # Install virtualenv.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\virtualenv-16.1.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_EXE" -m pip install "$INSTDIR\prerequisites\virtualenv-16.1.0-py2.py3-none-any.whl"'
-  ExecWait '"$PYTHON_EXE" -m virtualenv "$INSTDIR\env"'
-
-  # Copy PyQt5 and other Python packages.
+  # Install conda environment.
   SetOutPath $INSTDIR
-  #File /r "${BUILD_DIR}\env"
+  File /r "${BUILD_DIR}\env"
 
   # Copy the gm_base folder.
   #File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${SRC_DIR}\gm_base"
@@ -143,87 +108,8 @@ Section "Runtime Environment" SecRuntime
   #SetOutPath $INSTDIR\doc
   #File "${BUILD_DIR}\Genie 1.1.0 reference guide.pdf"
 
-  # Set the varible with path to python virtual environment scripts.
-  StrCpy $PYTHON_SCRIPTS "$INSTDIR\env\Scripts"
-
-  # Install PyQt5.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\PyQt5_sip-12.7.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\PyQt5_sip-12.7.1-cp37-cp37m-win_amd64.whl"'
-  File "${BUILD_DIR}\PyQt5-5.14.1-5.14.1-cp35.cp36.cp37.cp38-none-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\PyQt5-5.14.1-5.14.1-cp35.cp36.cp37.cp38-none-win_amd64.whl"'
-
-  # Install NumPy.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\numpy-1.18.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\numpy-1.18.1-cp37-cp37m-win_amd64.whl"'
-
-  # Install SciPy.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\scipy-1.4.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\scipy-1.4.1-cp37-cp37m-win_amd64.whl"'
-
-  # Install psutil.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\psutil-5.7.0-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\psutil-5.7.0-cp37-cp37m-win_amd64.whl"'
-
-  # Install attrs.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\attrs-19.3.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\attrs-19.3.0-py2.py3-none-any.whl"'
-
-  # Install pandas.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\six-1.14.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\six-1.14.0-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\pytz-2019.3-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pytz-2019.3-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\python_dateutil-2.8.1-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\python_dateutil-2.8.1-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\pandas-1.0.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pandas-1.0.1-cp37-cp37m-win_amd64.whl"'
-  File "${BUILD_DIR}\xlrd-1.2.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\xlrd-1.2.0-py2.py3-none-any.whl"'
-
-  # Install bgem.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\pybind11-2.5.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pybind11-2.5.0-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\bih-1.0.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bih-1.0.1-cp37-cp37m-win_amd64.whl"'
-  #File "${BUILD_DIR}\gmsh_sdk-4.5.6.post1-py3-none-any.whl"
-  #ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh_sdk-4.5.6.post1-py3-none-any.whl"'
-  File "${BUILD_DIR}\gmsh-4.7.1-py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\gmsh-4.7.1-py3-none-any.whl"'
-  File "${BUILD_DIR}\bgem-0.2.0_test-py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\bgem-0.2.0_test-py3-none-any.whl"'
-
-  # Install vtk.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\vtk-8.1.2-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\vtk-8.1.2-cp37-cp37m-win_amd64.whl"'
-
-  # Install pygimli.
-  SetOutPath $INSTDIR\prerequisites
-  File "${BUILD_DIR}\pyparsing-2.4.7-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pyparsing-2.4.7-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\kiwisolver-1.2.0-cp37-none-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\kiwisolver-1.2.0-cp37-none-win_amd64.whl"'
-  File "${BUILD_DIR}\cycler-0.10.0-py2.py3-none-any.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\cycler-0.10.0-py2.py3-none-any.whl"'
-  File "${BUILD_DIR}\matplotlib-3.2.1-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\matplotlib-3.2.1-cp37-cp37m-win_amd64.whl"'
-  File "${BUILD_DIR}\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install "$INSTDIR\prerequisites\pygimli-1.0.12-cp37-cp37m-win_amd64.whl"'
-
-  # Install obspy.
-  SetOutPath $INSTDIR\prerequisites
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install obspy'
-
-  # Install pyqtgraph.
-  SetOutPath $INSTDIR\prerequisites
-  ExecWait '"$PYTHON_SCRIPTS\python.exe" -m pip install pyqtgraph'
+  # Set the varible with path to conda environment.
+  StrCpy $CONDA_ENV "$INSTDIR\env"
 
   # Install gmsh.
   SetOutPath $INSTDIR
@@ -272,31 +158,35 @@ Section "-Batch files" SecBatchFiles
   CreateDirectory "$INSTDIR\bin"
   SetOutPath $INSTDIR\bin
 
-  IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +6
+  IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +7
     FileOpen $0 "xls_reader.bat" w
     FileWrite $0 "@echo off$\r$\n"
+    FileWrite $0 'call "$CONDA_ENV\Scripts\activate.bat"$\r$\n'
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\xlsreader\xls_reader.py" %*$\r$\n'
+    FileWrite $0 '"$CONDA_ENV\python.exe" "$INSTDIR\xlsreader\xls_reader.py" %*$\r$\n'
     FileClose $0
 
-  IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +6
+  IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +7
     FileOpen $0 "genie_ert.bat" w
     FileWrite $0 "@echo off$\r$\n"
+    FileWrite $0 'call "$CONDA_ENV\Scripts\activate.bat"$\r$\n'
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie_ert.py" %*$\r$\n'
+    FileWrite $0 '"$CONDA_ENV\python.exe" "$INSTDIR\genie\genie_ert.py" %*$\r$\n'
     FileClose $0
 
-  IfFileExists "$INSTDIR\genie\genie_st.py" 0 +6
+  IfFileExists "$INSTDIR\genie\genie_st.py" 0 +7
     FileOpen $0 "genie_st.bat" w
     FileWrite $0 "@echo off$\r$\n"
+    FileWrite $0 'call "$CONDA_ENV\Scripts\activate.bat"$\r$\n'
     FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-    FileWrite $0 '"$PYTHON_SCRIPTS\python.exe" "$INSTDIR\genie\genie_st.py" %*$\r$\n'
+    FileWrite $0 '"$CONDA_ENV\python.exe" "$INSTDIR\genie\genie_st.py" %*$\r$\n'
     FileClose $0
 
   FileOpen $0 "pythonw.bat" w
   FileWrite $0 "@echo off$\r$\n"
+  FileWrite $0 'call "$CONDA_ENV\Scripts\activate.bat"$\r$\n'
   FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-  FileWrite $0 'start "" "$PYTHON_SCRIPTS\pythonw.exe" %*$\r$\n'
+  FileWrite $0 'start "" "$CONDA_ENV\pythonw.exe" %*$\r$\n'
   FileClose $0
 
 SectionEnd
