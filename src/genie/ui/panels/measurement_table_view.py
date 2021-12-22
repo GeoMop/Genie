@@ -4,6 +4,7 @@ from genie.core.global_const import GenieMethod
 from genie.core import misc
 from genie.core import ert_prepare
 from genie.core.data_types import MeasurementsModelInfo
+from genie.core.icons_dir import icons_dir
 
 import math
 import os
@@ -314,7 +315,7 @@ class MeasurementTableView(QtWidgets.QWidget):
         self.view.header().resizeSection(3, 40)
         self.view.header().resizeSection(4, 40)
 
-        icon_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../icons/cross.png")
+        icon_file = os.path.join(icons_dir, "cross.png")
         self.view.setStyleSheet(
             "QTreeView::indicator:checked {image: url(" + icon_file + ");}"
         )

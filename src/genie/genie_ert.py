@@ -8,6 +8,7 @@ from genie.ui.main_window import MainWindow
 from genie.core import config_file
 from genie.core.config import GenieConfig
 from genie.core.global_const import GenieMethod
+from genie.core.icons_dir import icons_dir
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -47,8 +48,7 @@ if __name__ == '__main__':
     QtCore.QLocale.setDefault(locale)
 
     # icon
-    icon_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons/genie_ert_128.png")
-    app.setWindowIcon(QtGui.QIcon(icon_file))
+    app.setWindowIcon(QtGui.QIcon(os.path.join(icons_dir, "genie_ert_128.png")))
 
     Cursor.setup_cursors()
     genie = Genie()
