@@ -553,10 +553,10 @@ class MeshCutTool:
         self.margin = 5.0
         self.no_inv_factor = 2.0
 
-        pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor("red"), 1.5, QtCore.Qt.SolidLine)
         pen.setCosmetic(True)
         pen.setCapStyle(QtCore.Qt.RoundCap)
-        margin_pen = QtGui.QPen(QtGui.QColor("red"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen = QtGui.QPen(QtGui.QColor("red"), 0.5, QtCore.Qt.SolidLine)
         margin_pen.setCosmetic(True)
         z = 30
 
@@ -710,10 +710,10 @@ class SideViewTool:
         self.origin = np.array([0.0, 0.0])
         self.dir_vec = np.array([0.0, 20.0])
 
-        pen = QtGui.QPen(QtGui.QColor("blue"), 3.0, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor("blue"), 1.5, QtCore.Qt.SolidLine)
         pen.setCosmetic(True)
         pen.setCapStyle(QtCore.Qt.RoundCap)
-        margin_pen = QtGui.QPen(QtGui.QColor("blue"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen = QtGui.QPen(QtGui.QColor("blue"), 0.5, QtCore.Qt.SolidLine)
         margin_pen.setCosmetic(True)
         z = 31
 
@@ -1695,10 +1695,10 @@ class SideMeshCutTool:
     def __init__(self, scene):
         self._scene = scene
 
-        pen = QtGui.QPen(QtGui.QColor("red"), 3.0, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor("red"), 1.5, QtCore.Qt.SolidLine)
         pen.setCosmetic(True)
         pen.setCapStyle(QtCore.Qt.RoundCap)
-        margin_pen = QtGui.QPen(QtGui.QColor("red"), 1.0, QtCore.Qt.SolidLine)
+        margin_pen = QtGui.QPen(QtGui.QColor("red"), 0.5, QtCore.Qt.SolidLine)
         margin_pen.setCosmetic(True)
         z = 30
 
