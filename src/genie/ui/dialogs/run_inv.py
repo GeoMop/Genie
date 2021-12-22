@@ -93,11 +93,11 @@ class RunInvDlg(QtWidgets.QDialog):
         #self._parameters_formLayout.addRow("meshFile:", self._par_meshFileLineEdit)
 
         self._par_reconstructionDepthLineEdit = QtWidgets.QLineEdit("6")
-        self._par_reconstructionDepthLineEdit.setToolTip('In case that previous option is "Gallery cloud", define how much details will be reconstructed from point cloud. Bigger value means more details. This value is integer from 4 to 10.')
+        self._par_reconstructionDepthLineEdit.setToolTip('In case that previous option is "Gallery cloud",\ndefine how much details will be reconstructed from point cloud. Bigger value means more details. This value is integer from 4 to 10.')
         #self._parameters_formLayout.addRow("Reconstruction depth:", self._par_reconstructionDepthLineEdit)
 
         self._par_smallComponentRatioLineEdit = QtWidgets.QLineEdit("0.1")
-        self._par_smallComponentRatioLineEdit.setToolTip("Small gallery mesh components are removed. This ratio define threshold for removing relative to largest component.")
+        self._par_smallComponentRatioLineEdit.setToolTip("Small gallery mesh components are removed.\nThis ratio define threshold for removing relative to largest component.")
         self._parameters_formLayout.addRow("Small component ratio:", self._par_smallComponentRatioLineEdit)
 
         self._par_edgeLengthLineEdit = QtWidgets.QLineEdit("1.0")
@@ -105,7 +105,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("Edge length:", self._par_edgeLengthLineEdit)
 
         layout = QtWidgets.QHBoxLayout()
-        text = 'Defines inversion mesh element size based od distance from electrode. On distance smaller then "d" element size will be "h". On distance larger then "D" element size will be "H". Between these points is element size defined by linear function.'
+        text = 'Defines inversion mesh element size based od distance from electrode.\nOn distance smaller then "d" element size will be "h".\nOn distance larger then "D" element size will be "H".\nBetween these points is element size defined by linear function.'
         self._par_elementSize_dLineEdit = QtWidgets.QLineEdit("0.5")
         self._par_elementSize_dLineEdit.setToolTip(text)
         self._par_elementSize_DLineEdit = QtWidgets.QLineEdit("10.0")
@@ -159,7 +159,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(label)
 
         self._par_snapDistanceLineEdit = QtWidgets.QLineEdit("1.0")
-        self._par_snapDistanceLineEdit.setToolTip("Electrodes are snapped to gallery surface, this parameter determine maximal snap distance. [m]")
+        self._par_snapDistanceLineEdit.setToolTip("Electrodes are snapped to gallery surface,\nthis parameter determine maximal snap distance. [m]")
         self._parameters_formLayout.addRow("Snap distance:", self._par_snapDistanceLineEdit)
 
         label = QtWidgets.QLabel("Inversion")
@@ -201,11 +201,11 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow(text, self._par_maxModelLineEdit)
 
         self._par_zWeightLineEdit = QtWidgets.QLineEdit("0.7")
-        self._par_zWeightLineEdit.setToolTip("Float, anisotropic regularization parameter. Default value 1 prescribes an isometric regularization. For the values less then 1 the regularization in the vertical direction (Z-axis) is diminished, which can lead to better result for verticaly layered geological structures.")
+        self._par_zWeightLineEdit.setToolTip("Float, anisotropic regularization parameter.\nDefault value 1 prescribes an isometric regularization.\nFor the values less then 1 the regularization in the vertical direction (Z-axis) is diminished,\nwhich can lead to better result for verticaly layered geological structures.")
         self._parameters_formLayout.addRow("Z weight:", self._par_zWeightLineEdit)
 
         self._par_lamLineEdit = QtWidgets.QLineEdit("20.0")
-        self._par_lamLineEdit.setToolTip("Float, global regularization parameter. Higher values leads to smoother result, lower values to overfitting. Default value is 20.")
+        self._par_lamLineEdit.setToolTip("Float, global regularization parameter.\nHigher values leads to smoother result, lower values to overfitting. Default value is 20.")
         self._parameters_formLayout.addRow("Lambda:", self._par_lamLineEdit)
 
         self._par_optimizeLambdaCheckBox = QtWidgets.QCheckBox()
@@ -219,12 +219,12 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self._par_robustDataCheckBox = QtWidgets.QCheckBox()
         self._par_robustDataCheckBox.setChecked(False)
-        self._par_robustDataCheckBox.setToolTip("Boolean, if set to 1, the L1 minimization scheme is used. Can be benefitial in the case of significant outliers in the data, but not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.")
+        self._par_robustDataCheckBox.setToolTip("Boolean, if set to 1, the L1 minimization scheme is used.\nCan be benefitial in the case of significant outliers in the data, but not used by defalut as it may cause deteriorated resolution. Default value 0 use L2 scheme assuming Gaussian error of the input data.")
         self._parameters_formLayout.addRow("Robust data:", self._par_robustDataCheckBox)
 
         self._par_blockyModelCheckBox = QtWidgets.QCheckBox()
         self._par_blockyModelCheckBox.setChecked(False)
-        self._par_blockyModelCheckBox.setToolTip("Boolean, L1 minimization scheme for the regulaization term. Allow non-smooth transitions in the resistivity.")
+        self._par_blockyModelCheckBox.setToolTip("Boolean, L1 minimization scheme for the regulaization term.\nAllow non-smooth transitions in the resistivity.")
         self._parameters_formLayout.addRow("Blocky model:", self._par_blockyModelCheckBox)
 
         self._par_data_logCheckBox = QtWidgets.QCheckBox()
@@ -251,7 +251,7 @@ class RunInvDlg(QtWidgets.QDialog):
         self._parameters_formLayout.addRow("p3d:", self._par_p3dCheckBox)
 
         self._par_p3dStepLineEdit = QtWidgets.QLineEdit("1.0")
-        self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler. This parameter defines step between individual points. [m]")
+        self._par_p3dStepLineEdit.setToolTip("Inversion result is also saved in p3d format suitable for software Voxler.\nThis parameter defines step between individual points. [m]")
         self._parameters_formLayout.addRow("p3d step:", self._par_p3dStepLineEdit)
 
         self._par_p3dCheckBox.stateChanged.connect(self._handle_p3d_checkbox_changed)

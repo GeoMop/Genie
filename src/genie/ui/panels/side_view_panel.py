@@ -30,7 +30,7 @@ class SideViewPanel(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("y:"))
         layout.addWidget(self.origin_y_edit)
         self.center_origin_button = QtWidgets.QPushButton("+")
-        self.center_origin_button.setToolTip("Move origin point to center of area defined by points cloud, electrode positions and map.")
+        self.center_origin_button.setToolTip("Move origin point to center of area defined\nby points cloud, electrode positions and map.")
         self.center_origin_button.clicked.connect(self.center_origin)
         self.center_origin_button.setMaximumWidth(20)
         layout.addWidget(self.center_origin_button)
