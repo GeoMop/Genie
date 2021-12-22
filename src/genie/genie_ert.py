@@ -47,7 +47,8 @@ if __name__ == '__main__':
     QtCore.QLocale.setDefault(locale)
 
     # icon
-    app.setWindowIcon(QtGui.QIcon("genie/icons/genie_ert_128.png"))
+    icon_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons/genie_ert_128.png")
+    app.setWindowIcon(QtGui.QIcon(icon_file))
 
     Cursor.setup_cursors()
     genie = Genie()
