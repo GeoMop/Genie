@@ -1781,11 +1781,14 @@ class SideMeshCutTool:
         # no inv corner points
         g1 = mct.gen_vec1
         g2 = mct.gen_vec2
+        gv3 = mct.z_max - mct.z_min
         k = (mct.no_inv_factor - 1) * 0.5
         am = a - g1 * k - g2 * k
         bm = b + g1 * k - g2 * k
         cm = c + g1 * k + g2 * k
         dm = d - g1 * k + g2 * k
+        z_min_m = mct.z_min - gv3 * k
+        z_max_m = mct.z_max + gv3 * k
 
         amx, _, _ = svt.transform(am[0], am[1], 0, nd)
         bmx, _, _ = svt.transform(bm[0], bm[1], 0, nd)
@@ -1811,18 +1814,18 @@ class SideMeshCutTool:
         self.line_d.setLine(dx, mct.z_min, dx, mct.z_max)
         self.point0.setPos(z_x, mct.z_max)
         self.point1.setPos(z_x, mct.z_min)
-        self.margin_line1.setLine(amx, mct.z_max, bmx, mct.z_max)
-        self.margin_line2.setLine(bmx, mct.z_max, cmx, mct.z_max)
-        self.margin_line3.setLine(cmx, mct.z_max, dmx, mct.z_max)
-        self.margin_line4.setLine(dmx, mct.z_max, amx, mct.z_max)
-        self.margin_line1_b.setLine(amx, mct.z_min, bmx, mct.z_min)
-        self.margin_line2_b.setLine(bmx, mct.z_min, cmx, mct.z_min)
-        self.margin_line3_b.setLine(cmx, mct.z_min, dmx, mct.z_min)
-        self.margin_line4_b.setLine(dmx, mct.z_min, amx, mct.z_min)
-        self.margin_line_a.setLine(amx, mct.z_min, amx, mct.z_max)
-        self.margin_line_b.setLine(bmx, mct.z_min, bmx, mct.z_max)
-        self.margin_line_c.setLine(cmx, mct.z_min, cmx, mct.z_max)
-        self.margin_line_d.setLine(dmx, mct.z_min, dmx, mct.z_max)
+        self.margin_line1.setLine(amx, z_max_m, bmx, z_max_m)
+        self.margin_line2.setLine(bmx, z_max_m, cmx, z_max_m)
+        self.margin_line3.setLine(cmx, z_max_m, dmx, z_max_m)
+        self.margin_line4.setLine(dmx, z_max_m, amx, z_max_m)
+        self.margin_line1_b.setLine(amx, z_min_m, bmx, z_min_m)
+        self.margin_line2_b.setLine(bmx, z_min_m, cmx, z_min_m)
+        self.margin_line3_b.setLine(cmx, z_min_m, dmx, z_min_m)
+        self.margin_line4_b.setLine(dmx, z_min_m, amx, z_min_m)
+        self.margin_line_a.setLine(amx, z_min_m, amx, z_max_m)
+        self.margin_line_b.setLine(bmx, z_min_m, bmx, z_max_m)
+        self.margin_line_c.setLine(cmx, z_min_m, cmx, z_max_m)
+        self.margin_line_d.setLine(dmx, z_min_m, dmx, z_max_m)
 
     def point0_move_to(self, pos):
         if self._scene.diagram is None:
@@ -2003,13 +2006,14 @@ class SideView(QtWidgets.QGraphicsView):
 
     def update_point_cloud_pos(self):
         svt = self.diagram_view._scene.side_view_tool
-        nd = svt.dir_vec / np.linalg.norm(svt.dir_vec)
+        dir_vec_len = np.linalg.norm(svt.dir_vec)
+        nd = svt.dir_vec / dir_vec_len
 
         for i in range(len(self._scene.point_cloud_item_list)):
             gpt = self._scene.point_cloud_item_list[i]
             pos = self._scene.point_cloud_pos_list[i]
             gpt.my_x, gpt.my_y, z = svt.transform(pos[0], pos[1], pos[2], nd)
-            gpt.setVisible(z >= 0)
+            #gpt.setVisible(z >= 0)
 
             # linear
             # if z >= 0:
@@ -2020,12 +2024,12 @@ class SideView(QtWidgets.QGraphicsView):
             #     gpt.setOpacity(op)
 
             # only 2 values
-            if z >= 0:
-                if z > 25:
-                    op = 0.5
-                else:
-                    op = 0.75
-                gpt.setOpacity(op)
+            #if z >= 0:
+            if -dir_vec_len < z < dir_vec_len:
+                op = 0.75
+            else:
+                op = 0.5
+            gpt.setOpacity(op)
 
             # logaritmic
             # if z >= 0:

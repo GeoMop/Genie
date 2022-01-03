@@ -63,6 +63,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.diagram_view = DiagramView(self.side_view)
         self.side_view._scene.diagram = self.diagram_view._scene
         splitter = QtWidgets.QSplitter(Qt.Vertical)
+        splitter.setHandleWidth(2)
+        splitter.setStyleSheet("QSplitter::handle { background : black; }")
         splitter.addWidget(self.diagram_view)
         splitter.addWidget(self.side_view)
         tab.addTab(splitter, "Situation")
@@ -130,8 +132,14 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionImportPointCloud.triggered.connect(self._handle_import_point_cloud)
         self.main_window.menuBar.file.actionImportGalleryMesh.triggered.connect(self._handle_import_gallery_mesh)
         self.main_window.menuBar.file.actionImportMap.triggered.connect(self._handle_import_map)
+
         self.main_window.menuBar.inversions.actionEdit.triggered.connect(self._handle_inversions_edit_action)
         self.main_window.menuBar.inversions.inversion_selected.connect(self.change_current_inversion)
+
+        self.main_window.menuBar.view.actionElectrodes.triggered.connect(self.edit_electrodes.show)
+        self.main_window.menuBar.view.actionMeshCutTool.triggered.connect(self.mesh_cut_tool_panel_dock.show)
+        self.main_window.menuBar.view.actionSideView.triggered.connect(self.side_view_panel_dock.show)
+        self.main_window.menuBar.view.actionMeasurements.triggered.connect(self.measurements_dock.show)
 
         self._enable_project_ctrl(False)
 
@@ -886,8 +894,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self.misfit_log.update_log()
         else:
             QtWidgets.QMessageBox.information(
-                self, 'Measurements not checked',
-                'Check measurements first.')
+                self, 'No measurement selected',
+                'No measurement selected.\nSelect one or more in the Measurements panel.')
 
     # def _handle_connect_electrodesButton(self):
     #     sel = self.el_group_view.view.selectedIndexes()
