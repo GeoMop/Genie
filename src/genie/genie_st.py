@@ -56,7 +56,6 @@ if __name__ == '__main__':
     mainWindow = MainWindow(genie)
     mainWindow.setGeometry(400, 200, 1200, 800)
     mainWindow.showMaximized()
-    mainWindow.show()
     ret = app.exec()
     genie.save_cfg()
     sys.exit(ret)
