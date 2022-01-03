@@ -149,6 +149,9 @@ class ImportFirstArrivalsDialog(QtWidgets.QDialog):
         else:
             text = "Reading Ok."
 
+        # remove items with errors
+        self.first_arrivals = [fa for fa in self.first_arrivals if not fa.has_error]
+
         log2 = self._find_meas()
 
         text += "\n\n"
