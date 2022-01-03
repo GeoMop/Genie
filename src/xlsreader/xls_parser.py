@@ -81,8 +81,8 @@ class XlsLog:
 
     def to_string(self):
         items = sorted(self.items, key=operator.attrgetter("xls_row", "xls_col"))
-        texts = ["{} row: {}, col: {}, {}".format(item.level.name, item.xls_row + 1, self._xls_col_name(item.xls_col),
-                                                  item.text) for item in items]
+        texts = ["{}: {} row {}, col {}".format(item.level.name, item.text,
+                                                item.xls_row + 1, self._xls_col_name(item.xls_col)) for item in items]
         return "\n".join(texts)
 
     @staticmethod

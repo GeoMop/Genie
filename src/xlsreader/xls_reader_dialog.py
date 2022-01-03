@@ -36,6 +36,11 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log.setFont(QtGui.QFont("monospace"))
         main_layout.addWidget(self._log)
 
+        self._error_label = QtWidgets.QLabel("Document contains errors. Some measurements omitted.")
+        self._error_label.setStyleSheet("QLabel { color : red; }")
+        self._error_label.setVisible(False)
+        main_layout.addWidget(self._error_label)
+
         self._apply_abs_transform_checkbox = QtWidgets.QCheckBox("Apply transform x = -abs(x), y = -abs(y)")
         self._apply_abs_transform_checkbox.setChecked(True)
         main_layout.addWidget(self._apply_abs_transform_checkbox)
@@ -76,7 +81,7 @@ class XlsReaderDialog(QtWidgets.QDialog):
         else:
             text = "Ok."
 
-        text += "\n\nMeasurements without errors:\n"
+        text += "\n\nLoading measurements without errors:\n"
         meas_nums = sorted([m.number for mg in self.measurements_groups if not mg.has_error for m in mg.measurements
                             if not m.has_error])
         text += "\n".join(meas_nums) + "\n"
@@ -84,6 +89,8 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._log_text = text
         self._log.append(text)
         self._log.moveCursor(QtGui.QTextCursor.End)
+
+        self._error_label.setVisible(len(meas_nums) < sum([len(mg.measurements) for mg in self.measurements_groups]))
 
         if self._enable_import:
             self._import_button.setEnabled(True)
