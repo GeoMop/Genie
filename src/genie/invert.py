@@ -386,6 +386,8 @@ def inv_st(inversion_conf, project_conf):
 
     mesh.createNeighbourInfos()
 
+    mesh.createSecondaryNodes()
+
     if inv_par.verbose:
         print(mesh)
 
