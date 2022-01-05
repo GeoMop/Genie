@@ -8,8 +8,9 @@ from genie.ui.main_window import MainWindow
 from genie.core import config_file
 from genie.core.config import GenieConfig
 from genie.core.global_const import GenieMethod
+from genie.core.icons_dir import icons_dir
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class Genie:
@@ -46,12 +47,15 @@ if __name__ == '__main__':
     locale.setNumberOptions(QtCore.QLocale.RejectGroupSeparator)
     QtCore.QLocale.setDefault(locale)
 
+    # icon
+    app.setWindowIcon(QtGui.QIcon(os.path.join(icons_dir, "genie_st_128.png")))
+
     Cursor.setup_cursors()
     genie = Genie()
     genie.load_cfg()
     mainWindow = MainWindow(genie)
     mainWindow.setGeometry(400, 200, 1200, 800)
-    mainWindow.show()
+    mainWindow.showMaximized()
     ret = app.exec()
     genie.save_cfg()
     sys.exit(ret)

@@ -22,10 +22,12 @@ class MainMenuBar(QtWidgets.QMenuBar):
         # menus
         self.file = FileMenu(genie, self)
         self.inversions = InversionsMenu(genie, self)
+        self.view = ViewMenu(genie, self)
 
         # add menus to main menu
         self.addAction(self.file.menuAction())
         self.addAction(self.inversions.menuAction())
+        self.addAction(self.view.menuAction())
 
 
 class FileMenu(QtWidgets.QMenu):
@@ -59,6 +61,24 @@ class FileMenu(QtWidgets.QMenu):
         self.addAction(self.actionImportMap)
         #self.addSeparator()
         #self.addAction(self.actionExit)
+
+
+class ViewMenu(QtWidgets.QMenu):
+    def __init__(self, genie, parent=None):
+        super().__init__(parent)
+        self.setTitle("View")
+
+        # app actions
+        self.actionElectrodes = create_action(self, "Electrodes")
+        self.actionMeshCutTool = create_action(self, "Mesh cut tool")
+        self.actionSideView = create_action(self, "Side view")
+        self.actionMeasurements = create_action(self, "Measurements")
+
+        # add actions to menu
+        self.addAction(self.actionElectrodes)
+        self.addAction(self.actionMeshCutTool)
+        self.addAction(self.actionSideView)
+        self.addAction(self.actionMeasurements)
 
 
 class InversionsMenu(QtWidgets.QMenu):

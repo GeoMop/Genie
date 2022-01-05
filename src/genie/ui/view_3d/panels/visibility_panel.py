@@ -1,11 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QComboBox
 
 
 class VisibilityPanel(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, data_array_names, parent=None):
         super(VisibilityPanel, self).__init__(parent)
         layout = QVBoxLayout()
         self.setLayout(layout)
+
+        self.data_selection = QComboBox()
+        self.data_selection.addItems(data_array_names)
+        layout.addWidget(self.data_selection)
 
         self.show_model = QCheckBox("Show Model")
         self.show_model.setChecked(False)

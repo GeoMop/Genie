@@ -13,7 +13,7 @@ def geometricFactors(data):
     :param data: ERT data container
     :return: geometric factors k
     """
-    k = pg.RVector(data.size())
+    k = pg.core.RVector(data.size())
 
     for i in range(k.size()):
         uam = ubm = uan = ubn = 0.0
