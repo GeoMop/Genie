@@ -1,0 +1,2 @@
+- markdown with Latex extension
+- use pandoc (see makefile) to convert to HTML
