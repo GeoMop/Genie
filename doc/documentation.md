@@ -5,7 +5,7 @@
 ## Installation
 ### Windows
 Installation packages are available at <https://geomop.nti.tul.cz/genie/packages/>.
-Standard graphical instalator is available for Windows 10. To run the installation execute file
+Standard graphical installer is available for Windows 10. To run the installation execute file
 genie_0.2.0_x86_64.exe and go through installation wizard. Individual tools are executable by
 their shortcuts or by batch files. Batch files are in default installation located in directory:
 c:\\Users\\UserName\\AppData\\Local\\Genie\\bin\\.
@@ -366,7 +366,7 @@ Giant. 7 First Deployment Editor. Displays signals from geophones and allows aut
 - with Mesh cut tool sets area of interest
 - on left bottom part check measurements, which will be used in inversion
 - press Run inversion
-- sets inversion parameters, parametrs are mostly taken from BERT/GIMLI
+- sets inversion parameters, parameters are mostly taken from BERT/GIMLI
 - press Start
 - after successful inversion and closing Run inversion dialog, is shown tab Inversion 3D view with inversion results,
   in which is possible browse slices of 3D space
@@ -472,19 +472,19 @@ Columns meas_number, ca, cb, pa, pb, I, V, AppRes, std are from measurement file
 - in installation is included software Gmsh, which can be used for showing and editing of meshes
 
 ## Description of files in inversion directory
-- inv.conf - configuration of inversin
+- inv.conf - configuration of inversion
 - point_cloud_cut.xyz - cut point cloud
 - gallery_mesh.ply, gallery_mesh.msh - gallery mesh
 - inv_mesh.msh - mesh for own inversion
 - input.dat - file with electrode positions and list of individual measurements
 - input_snapped.dat - like previous, but electrodes are snapped to gallery mesh
 - resistivity.vtk - result of inversion .vtk file
-- resistivity.vector - rezistivity vektor on individual elements
+- resistivity.vector - resistivity vector on individual elements
 - resistivity.p3d - result in p3d format
 - resistivity.q - second file of p3d format
 
 ## Known issues
-- some measuremens have to small current, it may cause inaccuracy in computation, currently this is not solved in any way
+- some measurements have to small current, it may cause inaccuracy in computation, currently this is not solved in any way
 
 ## Genie ST
 Application Genie ST is similar to Genie RT. There is a "First arrival editor" dialog instead of "Analyse measurement",
