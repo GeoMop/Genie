@@ -1,4 +1,4 @@
-from xlsreader import ares_parser
+from genie.core import ares_parser
 
 import os
 import sys
@@ -9,7 +9,7 @@ import attr
 import math
 import operator
 import json
-from xlsreader import json_data
+from genie.core import json_data
 import pandas as pd
 import obspy
 

@@ -118,21 +118,6 @@ Section "Runtime Environment" SecRuntime
 SectionEnd
 
 
-Section "XLSReader" SecXLSReader
-
-  # Section is mandatory.
-  SectionIn RO
-
-  #RMDir /r "$INSTDIR\xlsreader"
-  #SetOutPath $INSTDIR\xlsreader
-  #File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${SRC_DIR}\xlsreader\*"
-  RMDir /r "$INSTDIR\xlsreader"
-  SetOutPath $INSTDIR
-  File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${SRC_DIR}\xlsreader"
-
-SectionEnd
-
-
 Section "Genie" SecGenie
 
   # Section is mandatory.
@@ -157,14 +142,6 @@ Section "-Batch files" SecBatchFiles
 
   CreateDirectory "$INSTDIR\bin"
   SetOutPath $INSTDIR\bin
-
-  IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +7
-    FileOpen $0 "xls_reader.bat" w
-    FileWrite $0 "@echo off$\r$\n"
-    FileWrite $0 'call "$CONDA_ENV\Scripts\activate.bat"$\r$\n'
-    FileWrite $0 'set "PYTHONPATH=$INSTDIR"$\r$\n'
-    FileWrite $0 '"$CONDA_ENV\python.exe" "$INSTDIR\xlsreader\xls_reader.py" %*$\r$\n'
-    FileClose $0
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +7
     FileOpen $0 "genie_ert.bat" w
@@ -204,10 +181,6 @@ Section "Start Menu shortcuts" SecStartShortcuts
   SetOutPath $INSTDIR
   CreateShortcut "$SMPROGRAMS\Genie\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
 
-  IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
-    SetOutPath $INSTDIR\xlsreader
-    CreateShortcut "$SMPROGRAMS\Genie\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
-
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
     CreateShortcut "$SMPROGRAMS\Genie\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"' "$INSTDIR\genie\icons\genie_ert_128.ico" 0
@@ -220,10 +193,6 @@ SectionEnd
 
 
 Section "Desktop icons" SecDesktopIcons
-
-  IfFileExists "$INSTDIR\xlsreader\xls_reader.py" 0 +3
-    SetOutPath $INSTDIR\xlsreader
-    CreateShortCut "$DESKTOP\XLSReader.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\xlsreader\xls_reader.py"'
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
@@ -280,9 +249,7 @@ SectionEnd
 # Section description text.
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${SecRuntime} \
-"The runtime environment for Genie - Python 3.7 with PyQt5."
-!insertmacro MUI_DESCRIPTION_TEXT ${SecXLSReader} \
-"The reader for Excel files."
+"The runtime environment for Genie."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecGenie} \
 "Genie application."
 !insertmacro MUI_DESCRIPTION_TEXT ${SecBatchFiles} \
@@ -306,7 +273,6 @@ Section "Uninstall"
   DeleteRegKey HKCU SOFTWARE\Genie
 
   # Delete desktop icons.
-  Delete "$DESKTOP\XLSReader.lnk"
   Delete "$DESKTOP\GenieERT.lnk"
   Delete "$DESKTOP\GenieST.lnk"
 

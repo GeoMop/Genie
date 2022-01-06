@@ -1,6 +1,6 @@
-from xlsreader import json_data
+from genie.core import json_data
 from .data_types import MeshCutToolParam, SideViewToolParam, InversionParam
-from xlsreader.xls_parser import XlsMeasurementGroup
+from genie.core.xls_parser import XlsMeasurementGroup
 from genie.core.global_const import GenieMethod
 
 from typing import List, Dict
