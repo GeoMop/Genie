@@ -14,18 +14,17 @@ Processing of data is consisting of this operations:
 ## Installation
 ### Windows
 Installation packages are available at <https://geomop.nti.tul.cz/genie/packages/>.
-Standard graphical instalator is available for Windows 10. To run the installation execute file
-genie_0.2.0_x86_64.exe and go through installation wizard. Individual tools are executable by
+Standard graphical installer is available for Windows 10. To run the installation execute file
+genie_1.0.0_x86_64.exe and go through installation wizard. Individual tools are executable by
 their shortcuts or by batch files. Batch files are in default installation located in directory:
-c:\\Users\\UserName\\AppData\\Local\\Genie\\bin\\.
+c:\\Users\\UserName\\AppData\\Local\\Programs\\Genie\\bin\\.
 
 ### Linux
-#### build pygimli
+#### install pygimli
 ``` bash
-curl -Ls install.pygimli.org | bash
+conda create -n pg -c gimli -c conda-forge pygimli=1.2.1
 ```
-For detailed description go to <https://www.pygimli.org/compilation.html#sec-build>.
-Add path to pygimli to PYTHONPATH.
+For detailed description go to <https://www.pygimli.org/installation.html>.
 
 #### clone project repository
 ``` bash

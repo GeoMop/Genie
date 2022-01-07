@@ -1,11 +1,11 @@
-from xlsreader import ares_parser
+from genie.core import ares_parser
 from genie.core.global_const import GenieMethod
 
 import os
 from enum import IntEnum
 from typing import List, Dict, Optional
 import attr
-from xlsreader import json_data
+from genie.core import json_data
 import obspy
 
 

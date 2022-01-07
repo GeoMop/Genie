@@ -1,6 +1,6 @@
 import os
-from xlsreader import json_data
-from xlsreader.xls_parser import XlsLog, XlsLogItem, XlsLogLevel, _empty_cell
+from genie.core import json_data
+from genie.core.xls_parser import XlsLog, XlsLogItem, XlsLogLevel, _empty_cell
 import pandas as pd
 
 

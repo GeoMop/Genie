@@ -12,7 +12,7 @@ from ..panels.mesh_cut_tool_panel import MeshCutToolPanel
 from ..panels.side_view_panel import SideViewPanel
 from ..menus.main_menu_bar import MainMenuBar
 from ..dialogs.new_project_dialog import NewProjectDialog
-from xlsreader.xls_reader_dialog import XlsReaderDialog
+from ..dialogs.xls_reader_dialog import XlsReaderDialog
 from ..dialogs.import_first_arrivals_dialog import ImportFirstArrivalsDialog
 from ..dialogs.point_cloud_reader import PointCloudReaderDialog
 from ..dialogs.gallery_mesh_dialog import GalleryMeshDialog

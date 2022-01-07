@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from genie.core.global_const import GenieMethod
 from genie.core.parse_first_arrival import parse_first_arrival
-from xlsreader.xls_parser import XlsLog, XlsLogItem, XlsLogLevel
+from genie.core.xls_parser import XlsLog, XlsLogItem, XlsLogLevel
 
 import sys
 import os

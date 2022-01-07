@@ -1,4 +1,4 @@
-from xlsreader.xls_parser import parse_ert, parse_st
+from genie.core.xls_parser import parse_ert, parse_st
 from genie.core.global_const import GenieMethod
 
 from PyQt5 import QtWidgets, QtGui, QtCore
