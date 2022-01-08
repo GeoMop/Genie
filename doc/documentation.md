@@ -1,5 +1,3 @@
-<link rel="stylesheet" href="path/to/css/air.css">
-
 # Genie reference manual
 
 ## 1 Installation
@@ -51,7 +49,7 @@ $$ div J(x) = f(x) $$
 where $J$ is the current density $[Am^{-2}]$ and $f$ is the density of the current sources $[Am^{-3}]$. 
 The current density is given by Ohm's law:
 
-$$ J = \sigma E$
+$$ J = \sigma E$$
 
 where $\sigma$ is the electrical conductivity $[\Omega^{-1}m^{-1}]$, which is the inverse of the resistivity $\rho$ $[\Omega m]$. The intensity of the electric field 
 $E$ $[Vm^{-1}]$ is given by the electric potential $u$ $[V]$:
@@ -64,7 +62,7 @@ $$ -div\left( \frac{1}{\rho} \nabla u \right) = f \quad \mbox{in} \Omega $$
 
 provided the resistivity field $\rho$ and the prescribed density of current sources $f$.
 We consider a homogeneous Neumann boundary condition (zero current density) on the surface of the gallery $\Gamma_n$
-and a homogeneous Dirichlet condition (zero potential) on the outer boundary $$\Gamma_d$$. 
+and a homogeneous Dirichlet condition (zero potential) on the outer boundary $\Gamma_d$. 
 The source density usually includes two point sources with opposite signs corresponding to the current electrodes:
 
 $$ f(x) = I\left(\delta(x-x_B)- \delta(x-x_A)\right).$$
@@ -158,7 +156,7 @@ The format (see input files in `tests` folder) starts with a header containing t
 location, operator, measuring method, arrangement of electrodes. After the header the data of individual measurements
 follows, every line contains: indices of two current and two potential electrodes, the voltage on current 
 electrodes $U_{out}$ $[V]$, current on current electrodes $I$ $[A]$, voltage on potential electrodes $U$ $[mV]$, 
-apparent resistivity $R$ $[\ Ohm]$, and standard deviation $S$ of the measurement $[%]$.
+apparent resistivity $R$ $[\Omega]$, and standard deviation $S$ of the measurement $[\%]$.
 The electrode indices, the $U / I$ ratio and the standard deviation are used for the calculation. 
 The apparent resistivity $R$ is calculated by the apparatus assuming the linear placement of the electrodes
 and is therefore not used. We rather use apparent resistivity $R_{in}$ calculated from true electrode positions (see the next paragraph).
