@@ -5,91 +5,83 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Genie reference manual</title>
-  <style>
-    code{white-space: pre-wrap;}
-    span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
-    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    ul.task-list{list-style: none;}
-    pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-    pre > code.sourceCode > span:empty { height: 1.2em; }
-    code.sourceCode > span { color: inherit; text-decoration: inherit; }
-    div.sourceCode { margin: 1em 0; }
-    pre.sourceCode { margin: 0; }
-    @media screen {
-    div.sourceCode { overflow: auto; }
-    }
-    @media print {
-    pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-    }
-    pre.numberSource code
-      { counter-reset: source-line 0; }
-    pre.numberSource code > span
-      { position: relative; left: -4em; counter-increment: source-line; }
-    pre.numberSource code > span > a:first-child::before
-      { content: counter(source-line);
-        position: relative; left: -1em; text-align: right; vertical-align: baseline;
-        border: none; display: inline-block;
-        -webkit-touch-callout: none; -webkit-user-select: none;
-        -khtml-user-select: none; -moz-user-select: none;
-        -ms-user-select: none; user-select: none;
-        padding: 0 4px; width: 4em;
-        color: #aaaaaa;
-      }
-    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      {   }
-    @media screen {
-    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-    }
-    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-    code span.at { color: #7d9029; } /* Attribute */
-    code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
-    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-    code span.ch { color: #4070a0; } /* Char */
-    code span.cn { color: #880000; } /* Constant */
-    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-    code span.dt { color: #902000; } /* DataType */
-    code span.dv { color: #40a070; } /* DecVal */
-    code span.er { color: #ff0000; font-weight: bold; } /* Error */
-    code span.ex { } /* Extension */
-    code span.fl { color: #40a070; } /* Float */
-    code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
-    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-    code span.op { color: #666666; } /* Operator */
-    code span.ot { color: #007020; } /* Other */
-    code span.pp { color: #bc7a00; } /* Preprocessor */
-    code span.sc { color: #4070a0; } /* SpecialChar */
-    code span.ss { color: #bb6688; } /* SpecialString */
-    code span.st { color: #4070a0; } /* String */
-    code span.va { color: #19177c; } /* Variable */
-    code span.vs { color: #4070a0; } /* VerbatimString */
-    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="air.css" />
-  <script src="/usr/share/javascript/mathjax/tex-mml-chtml.js" type="text/javascript"></script>
+  <script src="/usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
 </head>
 <body>
-<nav id="TOC" role="doc-toc">
+<nav id="TOC">
 <ul>
-<li><a href="#genie-reference-manual">Genie reference manual</a>
-<ul>
-<li><a href="#installation">Installation</a>
-<ul>
-<<<<<<< HEAD
 <li><a href="#genie-reference-manual">Genie reference manual</a><ul>
 <li><a href="#installation">1 Installation</a><ul>
-=======
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 <li><a href="#windows">Windows</a></li>
 <li><a href="#linux">Linux</a></li>
 </ul></li>
@@ -97,18 +89,8 @@
 <li><a href="#genie-ert">3 Genie ERT</a><ul>
 <li><a href="#forward-model">3.1 Forward model</a></li>
 <li><a href="#computational-geometry-and-mesh">3.2 Computational geometry and mesh</a></li>
-<<<<<<< HEAD
 <li><a href="#organization-of-input-data">3.3 Organization of input data</a></li>
 <li><a href="#user-interface">3.4 User Interface</a></li>
-=======
-<li><a href="#organization-of-input-data">Organization of input data</a></li>
-<li><a href="#user-interface">3.4 User Interface</a>
-<ul>
-<li><a href="#main-menu">Main menu</a></li>
-<li><a href="#graphic-panels">3.4.2 Graphic panels</a></li>
-<li><a href="#main-graphics-window">3.4.3 Main graphics window</a></li>
-<li><a href="#inversion-start">3.4.4 Inversion start</a></li>
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 </ul></li>
 <li><a href="#seismic-tomography">4 Seismic tomography</a><ul>
 <li><a href="#forward-model-1">4.1 Forward model</a></li>
@@ -122,29 +104,20 @@
 <h1 id="genie-reference-manual">Genie reference manual</h1>
 <h2 id="installation">1 Installation</h2>
 <h3 id="windows">Windows</h3>
-<p>Installation packages are available at <a href="https://geomop.nti.tul.cz/genie/packages/" class="uri">https://geomop.nti.tul.cz/genie/packages/</a>. Standard graphical installer is available for Windows 10. To run the installation execute file genie_0.2.0_x86_64.exe and go through installation wizard. Individual tools are executable by their shortcuts or by batch files. Batch files are in default installation located in directory: c:\Users\UserName\AppData\Local\Genie\bin\.</p>
+<p>Installation packages are available at <a href="https://geomop.nti.tul.cz/genie/packages/" class="uri">https://geomop.nti.tul.cz/genie/packages/</a>. Standard graphical installer is available for Windows 10. To run the installation execute file genie_1.0.0_x86_64.exe and go through installation wizard. Individual tools are executable by their shortcuts or by batch files. Batch files are in default installation located in directory: c:\Users\UserName\AppData\Local\Programs\Genie\bin\.</p>
 <h3 id="linux">Linux</h3>
-<h4 id="build-pygimli">build pygimli</h4>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">curl</span> -Ls install.pygimli.org <span class="kw">|</span> <span class="fu">bash</span></span></code></pre></div>
-<p>For detailed description go to <a href="https://www.pygimli.org/compilation.html#sec-build" class="uri">https://www.pygimli.org/compilation.html#sec-build</a>. Add path to pygimli to PYTHONPATH.</p>
+<h4 id="install-pygimli">install pygimli</h4>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" title="1"><span class="ex">conda</span> create -n pg -c gimli -c conda-forge pygimli=1.2.1</a></code></pre></div>
+<p>For detailed description go to <a href="https://www.pygimli.org/installation.html" class="uri">https://www.pygimli.org/installation.html</a>.</p>
 <h4 id="clone-project-repository">clone project repository</h4>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">git</span> clone https://github.com/GeoMop/Genie.git</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" title="1"><span class="fu">git</span> clone https://github.com/GeoMop/Genie.git</a></code></pre></div>
 <h4 id="install-python-packages">install python packages</h4>
-<<<<<<< HEAD
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb3-1" title="1"><span class="ex">pip</span> install -r requirements.txt</a></code></pre></div>
 <h2 id="summary">2 Summary</h2>
 <p>The collection of the Genie tools (GeniERT and GenieST) is suited to performing 3D inversion of electrical resistivity and seismic measurements, respectively. Both tools are specially crafted to simplify 3D inversion in mining galleries with complex geometry. The library <a href="https://www.meshlab.net">MeshLab</a> is used to process laser-scan data into the geometry of the galleries, then the <a href="https://gmsh.info/doc/texinfo/gmsh.html">GMSH</a> meshing library is used for the preparation of the computational mesh. Finally, the <a href="https://www.pygimli.org/">PyGIMLI</a> library is used to run actual ERT and ST inversions. Moreover, we provide tools for the organization of the data from measurements and simple visualization of the inversion results.</p>
 <h2 id="genie-ert">3 Genie ERT</h2>
 <p>GenieERT is software for <a href="https://en.wikipedia.org/wiki/Electrical_resistivity_tomography">electrical resistivity tomography</a> in particular on exterior domains like surrounding rock of the mine galleries.</p>
 <h3 id="forward-model">3.1 Forward model</h3>
-=======
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ex">pip</span> install -r requirements.txt</span></code></pre></div>
-<h2 id="summary">Summary</h2>
-<p>Collection of the Genie tools (GeniERT and GenieST) is suited to performing 3D inversion of electical resistivity and seismic measurements, respectively. Both tools are specialy crafted to simplify 3D inversion in mining gallery with complex geometry. The library <a href="https://www.meshlab.net">MeshLab</a> is used to process laserscan data into geometry of the galleries, then the <a href="https://gmsh.info/doc/texinfo/gmsh.html">GMSH</a> meshing library is used for preparation of the computational mesh. Finally the <a href="https://www.pygimli.org/">PyGIMLI</a> library is used to run actual ERT and ST inversions. Moreover, we provide tools for organization of the data from measurements and simple vizualization of the inversion results.</p>
-<h2 id="genie-ert">Genie ERT</h2>
-<p>GenieERT is a software for <a href="https://en.wikipedia.org/wiki/Electrical_resistivity_tomography">electrical resistivity tomography</a> in particular on exterior domains like surrounding rock of the mine galleries.</p>
-<h2 id="forward-model">Forward model</h2>
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 <p>From many resistance measurements (usually) on the surface of a rock block, ERT constructs an approximation of the specific resistivity of the rock as a function of space and thus allows to infer the geological structure of the rock. The resistivity of the rock is mainly affected by the amount of water in the rock and its salinity. Let us denote <span class="math inline">\(\Omega_b\)</span> the domain of ​​the investigated block, to approximate the influence of the outer rock we consider a larger computational domain <span class="math inline">\(\Omega \supset \Omega_b\)</span> with a boundary <span class="math inline">\(\partial\Omega\)</span>. This boundary includes both the surface of the gallery <span class="math inline">\(\Gamma_n\)</span> as well as the outer boundary <span class="math inline">\(\Gamma_d\)</span> sufficiently far from <span class="math inline">\(\Omega_b\)</span>. The basic equation is conservation of the electric charge:</p>
 <p><span class="math display">\[ div J(x) = f(x) \]</span></p>
 <p>where <span class="math inline">\(J\)</span> is the current density <span class="math inline">\([Am^{-2}]\)</span> and <span class="math inline">\(f\)</span> is the density of the current sources <span class="math inline">\([Am^{-3}]\)</span>. The current density is given by Ohm’s law:</p>
@@ -164,22 +137,9 @@
 <p><span class="math display">\[ U(C,D) = u_{AB}(D) - u_{AB}(C) = \frac{\rho_a I}{4\pi} \left( \frac{1}{r_DB} - \frac{1}{r_DA} - \frac{1}{r_CB} + \frac{1}{r_CA} \right) \]</span></p>
 <p>From here, the apparent resistivity <span class="math inline">\(\rho_a\)</span> can be determined for known positions of the electrodes. Therefore the input of the inversion consists of:</p>
 <ul>
-<<<<<<< HEAD
 <li>Computation domain <span class="math inline">\(\Omega\)</span>. A computational mesh is also required for numerical solution.</li>
 <li>Vector of electrode positions <span class="math inline">\(x_i\)</span>.</li>
 <li>Data of individual measurements <span class="math inline">\((i_A, i_B, i_C, i_D, \rho_a, s)\)</span>, including the indices of current and potential electrodes, the apparent resistivity and its standard deviation.</li>
-=======
-<li>from File menu choose New project</li>
-<li>enter project directory in dialog</li>
-<li>import xsl file</li>
-<li>import point cloud, region covered with points is shown with green color</li>
-<li>with Mesh cut tool sets area of interest</li>
-<li>on left bottom part check measurements, which will be used in inversion</li>
-<li>press Run inversion</li>
-<li>sets inversion parameters, parameters are mostly taken from BERT/GIMLI</li>
-<li>press Start</li>
-<li>after successful inversion and closing Run inversion dialog, is shown tab Inversion 3D view with inversion results, in which is possible browse slices of 3D space</li>
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 </ul>
 <p>The forward model is calculated for each measured pair of current electrodes and while all pairs of potential electrodes are evaluated from the resulting approximation of the potential.</p>
 <h3 id="computational-geometry-and-mesh">3.2 Computational geometry and mesh</h3>
@@ -215,25 +175,12 @@
 <h4 id="main-graphics-window">3.4.3 Main graphics window</h4>
 <p>The main graphics window contains tabs: <code>Situation</code>,<code>Measurement table</code>, <code>Measurement histogram</code>,<code>Misfit log</code>. Crucial is the situation tab used to select the computational domain and to display the data used for the inversion. It consists of the plan view (top) and the side view (bottom). These views contain following graphical elements:</p>
 <ul>
-<<<<<<< HEAD
 <li>The background map of galleries is bound to other elements using the georeferencing specified in its import dialog.</li>
 <li>The point cloud is indicated by gray dots. Only a subset of all points is used for display.</li>
 <li>Computational mesh, displayed instead of the point cloud if an external mesh is imported.</li>
 <li>The positions of the electrodes are marked with different colors according to their assignment to the designation of the galleries. For the currently selected measurements, the used electrodes are highlighted with a larger dot size.</li>
 <li>The position and orientation of the side view can be adjusted by the blue control.</li>
 <li>The computational domain is selected using the red control. The computational domain has the prism shape with a parallelogram at the base.</li>
-=======
-<li>inv.conf - configuration of inversion</li>
-<li>point_cloud_cut.xyz - cut point cloud</li>
-<li>gallery_mesh.ply, gallery_mesh.msh - gallery mesh</li>
-<li>inv_mesh.msh - mesh for own inversion</li>
-<li>input.dat - file with electrode positions and list of individual measurements</li>
-<li>input_snapped.dat - like previous, but electrodes are snapped to gallery mesh</li>
-<li>resistivity.vtk - result of inversion .vtk file</li>
-<li>resistivity.vector - resistivity vector on individual elements</li>
-<li>resistivity.p3d - result in p3d format</li>
-<li>resistivity.q - second file of p3d format</li>
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 </ul>
 <p>The <code>Measurement table</code> and <code>Measurement histogram</code> (see Fig. 3) tabs allow to display and filter measurement data passed into the inversion. The data can be masked by selecting individual rows of the table or by using a filter when displaying the histogram. In addition, the quantities predicted by the model are available after an inversion is completed, especially the apparent resistivity of individual measurements predicted by the model (quantity <code>AppResModel</code>) can be compared to the measured values.</p>
 <p><img src="genie_histogram.png" title="Histogram panel" /> <em>Fig. 3 Histogram panel for the selected quantity. The previously selected quantity with the same unit is displayed in gray for comparison.</em></p>
@@ -244,16 +191,12 @@
 <p>The <code>Run inversion</code> dialog (Fig. 5) is used to set other parameters of the used algorithms (on the left), the standard output of the current inversion is on the right. The available parameters are divided into five groups: <code>General</code> : displays the working directory of the inversion (contains the mesh and results), the verbosity of the standard output can be selected</p>
 <p><code>Mesh</code> : parameters for the meshing step:</p>
 <ul>
-<<<<<<< HEAD
 <li><code>Mesh from</code> : how the mesh geometry is formed, the choice between: interior boundary given by the point cloud (Gallery cloud), top boundary given by the point cloud (Surface cloud), and imported mesh (Gallery mesh)</li>
 <li><code>Small component ratio</code> : the relative resolution of the initial boundary mesh with respect to the size of the domain. Smaller values lead to better resolution of the point cloud including possible artifacts.</li>
 <li><code>Edge length</code> : mesh element size on the internal boundary given by the point cloud</li>
 <li><code>Element size</code> : mesh adaptivity with respect to electrodes (both on the boundary as in the wells), element size <code>h</code> is used up to the distance <code>d</code> from the electrodes, and element size <code>H</code> is used for distance <code>D</code> and greater. Linear transition is applied in between.</li>
 <li><code>Refine mesh</code> : allow adaptive refinement of the mesh by the forward solver</li>
 <li><code>Refine P2</code> : allow the use of second-order finite elements (experimental)</li>
-=======
-<li>some measurements have to small current, it may cause inaccuracy in computation, currently this is not solved in any way</li>
->>>>>>> 4ee6df792b0adaa35dfb90f3bcc8d19b157dea93
 </ul>
 <p><code>Electrodes</code> : electrodes are automatically attracted to the surface of the computational domain to a specified distance. By suitable choice, the attraction of the electrodes in the wells can be switched off.</p>
 <p><code>Inversion</code> : various parameters of the optimization algorithm - <code>min resistivity</code>, <code>max resistivity</code> : hard bounds for the resulting resistivity field enforced by suitable logarithmic transform - <code>Z weight</code> : Regularization anisotropy. For the values less than 1, the regularization in the vertical direction (Z-axis) is diminished, which can lead to better resolution of possible geological layers. - <code>Lambda</code>, <code>Optimize lambda</code> : Coefficient of the regularization term. Higher values lead to a smoother result, lower values to overfitting. The default value is 20. Automatic optimization tries to optimize the regularization parameter using the L-curve approach. - <code>Max iter</code> : Upper bound for the number of iterations of the optimization (Levenberg-Marquardt) algorithm. - <code>Robust data</code> : Use L1 norm for the misfit. Can be beneficial in the case of significant outliers in the data, but not used by default as it may cause deteriorated resolution. Default is usage of the L2 norm, assuming Gaussian error of the measurement. - <code>Blockly model</code> : Use L1 norm for the regularization term. Discontinuous resistivity field. - <code>Data log</code> : Use logarithmic transformation of the measurement/model data before evaluation the misfit. <!---
@@ -338,19 +281,19 @@ Columns meas_number, ca, cb, pa, pb, I, V, AppRes, std are from measurement file
 - in installation is included software Gmsh, which can be used for showing and editing of meshes
 
 ## Description of files in inversion directory
-- inv.conf - configuration of inversin
+- inv.conf - configuration of inversion
 - point_cloud_cut.xyz - cut point cloud
 - gallery_mesh.ply, gallery_mesh.msh - gallery mesh
 - inv_mesh.msh - mesh for own inversion
 - input.dat - file with electrode positions and list of individual measurements
 - input_snapped.dat - like previous, but electrodes are snapped to gallery mesh
 - resistivity.vtk - result of inversion .vtk file
-- resistivity.vector - rezistivity vektor on individual elements
+- resistivity.vector - resistivity vector on individual elements
 - resistivity.p3d - result in p3d format
 - resistivity.q - second file of p3d format
 
 ## Known issues
-- some measuremens have to small current, it may cause inaccuracy in computation, currently this is not solved in any way
+- some measurements have to small current, it may cause inaccuracy in computation, currently this is not solved in any way
 
 ## Genie ST
 Application Genie ST is similar to Genie RT. There is a "First arrival editor" dialog instead of "Analyse measurement",

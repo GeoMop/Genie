@@ -291,7 +291,7 @@ The available parameters are divided into five groups:
 
 - `Mesh from` : how the mesh geometry is formed, the choice between: interior boundary given by the point cloud (Gallery cloud), top boundary given by the point cloud (Surface cloud), and
    imported mesh (Gallery mesh)
-- `Small component ratio` : the relative resolution of the initial boundary mesh with respect to the size of the domain. Smaller values lead to better resolution of the point cloud including possible artifacts.
+- `Small component ratio` : Disconnected chunks of the point cloud with relative size smaller then this limit are ignored.
 - `Edge length` : mesh element size on the internal boundary given by the point cloud
 - `Element size` : mesh adaptivity with respect to electrodes (both on the boundary as in the wells), element size `h` is used up to the distance `d` from the electrodes, and element size `H` is used for distance `D` and greater. Linear transition is applied in between.
 - `Refine mesh` : allow adaptive refinement of the mesh by the forward solver
