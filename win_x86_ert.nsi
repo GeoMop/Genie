@@ -37,7 +37,7 @@ SetCompressor lzma
 Name "Genie ${VERSION}"
 Caption "Genie ${VERSION} Setup"
 #InstallDir "$PROGRAMFILES\GeoMop"
-OutFile "${GIT_DIR}\dist\genie_${VERSION}_x86_64.exe"
+OutFile "${GIT_DIR}\dist\genie_ert_${VERSION}_x86_64.exe"
 
 # Registry key to check for directory (so if you install again, it will 
 # overwrite the old one automatically)
