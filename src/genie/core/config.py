@@ -76,3 +76,4 @@ class ProjectConfig:
 class GenieConfig:
     current_project_dir: str = ""
     last_colormap_dir: str = ""
+    maximized: bool = True

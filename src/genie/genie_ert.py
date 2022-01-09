@@ -55,7 +55,11 @@ if __name__ == '__main__':
     genie.load_cfg()
     mainWindow = MainWindow(genie)
     mainWindow.setGeometry(400, 200, 1200, 800)
-    mainWindow.showMaximized()
+    if genie.cfg.maximized:
+        mainWindow.showMaximized()
+    else:
+        mainWindow.show()
     ret = app.exec()
+    genie.cfg.maximized = mainWindow.isMaximized()
     genie.save_cfg()
     sys.exit(ret)

@@ -16,7 +16,7 @@ class XlsReaderDialog(QtWidgets.QDialog):
         self._enable_import = enable_import
         self._method = method
 
-        self.setWindowTitle("XLSReader")
+        self.setWindowTitle("Open measurement metadata file")
 
         main_layout = QtWidgets.QVBoxLayout()
 

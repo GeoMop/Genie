@@ -28,7 +28,7 @@ class RunInvDlg(QtWidgets.QDialog):
 
         self.setWindowTitle("Run inversion")
 
-        main_layout = QtWidgets.QVBoxLayout()
+        log_layout = QtWidgets.QVBoxLayout()
 
         # edit for process output
         self._output_edit = QtWidgets.QTextEdit()
@@ -36,17 +36,19 @@ class RunInvDlg(QtWidgets.QDialog):
         font = QtGui.QFont("monospace")
         font.setStyleHint(QtGui.QFont.TypeWriter)
         self._output_edit.setFont(font)
-        main_layout.addWidget(self._output_edit)
+        log_layout.addWidget(self._output_edit)
 
         # label for showing status
         self._status_label = QtWidgets.QLabel()
         self._set_status("Ready")
         self._status_label.setMaximumHeight(40)
-        main_layout.addWidget(self._status_label)
+        log_layout.addWidget(self._status_label)
+
+        par_layout = QtWidgets.QVBoxLayout()
 
         # parameters form
         self._parameters_formLayout = QtWidgets.QFormLayout()
-        main_layout.addLayout(self._parameters_formLayout)
+        par_layout.addLayout(self._parameters_formLayout)
 
         font = QtGui.QFont()
         font.setPointSize(10)
@@ -285,12 +287,19 @@ class RunInvDlg(QtWidgets.QDialog):
         self._close_button = QtWidgets.QPushButton("Close", self)
         self._close_button.clicked.connect(self.reject)
         button_box.addButton(self._close_button, QtWidgets.QDialogButtonBox.RejectRole)
-        main_layout.addWidget(button_box)
 
-        self.setLayout(main_layout)
+        main_layout = QtWidgets.QHBoxLayout()
+        main_layout.addLayout(par_layout)
+        main_layout.addLayout(log_layout)
 
-        self.setMinimumSize(500, 600)
-        self.resize(700, 950)
+        button_box_layout = QtWidgets.QVBoxLayout()
+        button_box_layout.addLayout(main_layout)
+        button_box_layout.addWidget(button_box)
+
+        self.setLayout(button_box_layout)
+
+        self.setMinimumSize(800, 500)
+        self.resize(1200, 700)
 
         self._from_inversion_param(genie.current_inversion_cfg.inversion_param)
 

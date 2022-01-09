@@ -24,8 +24,8 @@ class Cross:
         size = 10
         z = 1
 
-        pen = QtGui.QPen(color, 1.0, QtCore.Qt.SolidLine)
-        pen_bold = QtGui.QPen(color, 3.0, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(color, 0.5, QtCore.Qt.SolidLine)
+        pen_bold = QtGui.QPen(color, 1.5, QtCore.Qt.SolidLine)
 
         self._rect = CrossRect(size, self.rect_move_to)
         self._rect.setPen(pen_bold)

@@ -16,7 +16,7 @@ class GalleryMeshDialog(QtWidgets.QDialog):
         self.origin_y = 0.0
         self.origin_z = 0.0
 
-        self.setWindowTitle("Gallery mesh")
+        self.setWindowTitle("Open gallery mesh file")
 
         main_layout = QtWidgets.QVBoxLayout()
 

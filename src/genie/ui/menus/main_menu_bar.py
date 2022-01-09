@@ -23,11 +23,13 @@ class MainMenuBar(QtWidgets.QMenuBar):
         self.file = FileMenu(genie, self)
         self.inversions = InversionsMenu(genie, self)
         self.view = ViewMenu(genie, self)
+        self.action = ActionMenu(genie, self)
 
         # add menus to main menu
         self.addAction(self.file.menuAction())
         self.addAction(self.inversions.menuAction())
         self.addAction(self.view.menuAction())
+        self.addAction(self.action.menuAction())
 
 
 class FileMenu(QtWidgets.QMenu):
@@ -124,3 +126,19 @@ class InversionsMenu(QtWidgets.QMenu):
         action = self._group.checkedAction()
         inversion_name = action.data()
         self.inversion_selected.emit(inversion_name)
+
+
+class ActionMenu(QtWidgets.QMenu):
+    def __init__(self, genie, parent=None):
+        super().__init__(parent)
+        self.setTitle("Action")
+
+        # app actions
+        self.actionAnalyseMeasurement = create_action(self, "Analyse measurement...")
+        self.actionFirstArrivalEditor = create_action(self, "First arrival editor...")
+
+        # add actions to menu
+        if genie.method == GenieMethod.ERT:
+            self.addAction(self.actionAnalyseMeasurement)
+        else:
+            self.addAction(self.actionFirstArrivalEditor)

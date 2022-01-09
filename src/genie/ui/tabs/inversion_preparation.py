@@ -141,6 +141,9 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.view.actionSideView.triggered.connect(self.side_view_panel_dock.show)
         self.main_window.menuBar.view.actionMeasurements.triggered.connect(self.measurements_dock.show)
 
+        self.main_window.menuBar.action.actionAnalyseMeasurement.triggered.connect(self._handle_analyse_measurementButton)
+        self.main_window.menuBar.action.actionFirstArrivalEditor.triggered.connect(self._handle_analyse_measurementButton)
+
         self._enable_project_ctrl(False)
 
         self._selection_disable = False
@@ -189,6 +192,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
         self.main_window.menuBar.file.actionImportPointCloud.setEnabled(enable)
         self.main_window.menuBar.file.actionImportGalleryMesh.setEnabled(enable)
         self.main_window.menuBar.file.actionImportMap.setEnabled(enable)
+        self.main_window.menuBar.action.setEnabled(enable)
         self.mesh_cut_tool_panel.setEnabled(enable)
         self.side_view_panel.setEnabled(enable)
         self.diagram_view.setEnabled(enable)
@@ -838,9 +842,10 @@ class InversionPreparation(QtWidgets.QMainWindow):
             self._save_current_inversion()
 
     def _handle_analyse_measurementButton(self):
-        index = self.measurement_view.view.currentIndex()
-        if index.row() >= 0:
-            measurement = self._measurement_model._measurements[index.row()]
+        sm = self.measurement_view.view.selectionModel()
+        indexes = sm.selectedRows()
+        if indexes:
+            measurement = self._measurement_model._measurements[indexes[0].row()]
             if self.genie.method == GenieMethod.ERT:
                 from ..dialogs.analyse_measurement_dialog import AnalyseMeasurementDlg
                 dlg = AnalyseMeasurementDlg(self._electrode_groups, measurement, self.genie, self)
@@ -852,8 +857,8 @@ class InversionPreparation(QtWidgets.QMainWindow):
                 self._save_current_inversion()
         else:
             QtWidgets.QMessageBox.information(
-                self, 'Measurement not selected',
-                'Select measurement first.')
+                self, 'No measurement selected',
+                'No measurement selected.\nSelect one or more in the Measurements panel.')
 
     def _handle_run_invButton(self):
         prj_dir = self.genie.cfg.current_project_dir

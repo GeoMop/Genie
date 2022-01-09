@@ -24,7 +24,7 @@ class ImportFirstArrivalsDialog(QtWidgets.QDialog):
 
         self.fa_tmp = {}
 
-        self.setWindowTitle("Import first arrivals")
+        self.setWindowTitle("Open first arrivals file")
 
         main_layout = QtWidgets.QVBoxLayout()
 
