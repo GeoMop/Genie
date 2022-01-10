@@ -106,8 +106,8 @@ Section "Runtime Environment" SecRuntime
 
   # Copy documentation
   RMDir /r "$INSTDIR\doc"
-  SetOutPath $INSTDIR
-  File /r "${GIT_DIR}\doc"
+  SetOutPath $INSTDIR\doc
+  File /r "${GIT_DIR}\doc\*"
 
   # Set the varible with path to conda environment.
   StrCpy $CONDA_ENV "$INSTDIR\env"
