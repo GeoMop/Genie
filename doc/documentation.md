@@ -2,11 +2,11 @@
 
 ## 1 Installation
 ### Windows
-Installation packages are available at <https://geomop.nti.tul.cz/genie/packages/>.
+Installation packages are available at [Github](https://github.com/GeoMop/Genie/releases).
 Standard graphical installer is available for Windows 10. To run the installation execute file
 genie_1.0.0_x86_64.exe and go through installation wizard. Individual tools are executable by
 their shortcuts or by batch files. Batch files are in default installation located in directory:
-c:\\Users\\UserName\\AppData\\Local\\Programs\\Genie\\bin\\.
+`c:\\Users\\UserName\\AppData\\Local\\Programs\\Genie\\bin\\.`
 
 ### Linux
 #### install pygimli
@@ -38,12 +38,12 @@ in particular on exterior domains like surrounding rock of the mine galleries.
 From many resistance measurements (usually) on the surface of a rock block, ERT constructs an approximation of the specific resistivity 
 of the rock as a function of space and thus allows to infer the geological structure of the rock. The resistivity of the rock is mainly
 affected by the amount of water in the rock and its salinity.
-Let us denote $\Omega_b$ the domain of ​​the investigated block, to approximate the influence of the outer rock  we consider 
+Let us denote $\Omega_b$ the domain of the investigated block,to approximate the influence of the outer rock  we consider 
 a larger computational domain $\Omega \supset \Omega_b$ with a boundary $\partial\Omega$. 
 This boundary includes both the surface of the gallery $\Gamma_n$ as well as the outer boundary $\Gamma_d$ sufficiently far from $\Omega_b$.
 The basic equation is conservation of the electric charge:
 
-$$ div J(x) = f(x) $$
+$$ div(J)(x) = f(x) $$
 
 
 where $J$ is the current density $[Am^{-2}]$ and $f$ is the density of the current sources $[Am^{-3}]$. 
@@ -183,7 +183,7 @@ The Genie ERT program reads the electrode arrangement data from the columns A-J,
 the date from column L and the file with measured data from column O. Corresponding columns of the repeated measurements are used.
 The folder column N is ignored, the measurement data file has to be placed in the subdirectory named by the measurement code 
 relative to the table file.
-From columns A-J, only the coordinates (columns H-J) and the electrode index within measurement (column F) 
+From columns A-J, only the coordinates (columns H-J) and the electrode index within measurement (column F)
 are actually used for the calculation, the other columns are only used for reference.
 
 Import function of the metadata table also deals with possible inconsistencies, in particular, it performs the following steps:
@@ -193,7 +193,7 @@ Import function of the metadata table also deals with possible inconsistencies, 
 - detect possible errors in the electrode indices within measurements and their coordinates
 - check the consistency of metadata and measurement data
 
-Having the metadata table imported, the referenced measurement files are loaded and inadmissible values ​​
+Having the metadata table imported, the referenced measurement files are loaded and inadmissible values
 are excluded (masked) (negative potential differences, large deviations, ..). 
 The user can perform custom masking using the `Measurement table` panel.
 
@@ -236,7 +236,7 @@ in the main graphics window on the right. There are four configuration panels:
 `Electrodes` : List of color-coded electrode groups. Measurements that contain electrodes from the selected groups are selected for the selected groups.
 
 `Mesh cut tool` : Selection of the computation domain block. It can also be controlled graphically using the red tool in the graphic window.
-The inversion domain is strongly marked, the larger computational domain of ​​the forward model is weakly marked. 
+The inversion domain is strongly marked, the larger computational domain of the forward model is weakly marked. 
 Their size ratio can be entered via the `inv factor` text field.
 
 `Side view` : Position of the side view (lower part of the graphic window). Grephicaly can be controled by the blue tool in the plane view (upper part). 
@@ -352,7 +352,7 @@ to use Fermat's principle, saying that the excitation in the sense of a beam pro
 along the path with the shortest time. The ray-tracing method (Moser (1991), Klimeš and Kvasnička (1994)) using the graph 
 theory algorithms, specifically modified Dijkstra's algorithm, is based on this principle. 
 
-The input of the forward model is the *slowness* field, i.e. the reciprocal values ​​of the wave velocities 
+The input of the forward model is the *slowness* field, i.e. the reciprocal values of the wave velocities 
 on the elements.  The output is the vector predicted arrival times for the individual measurements. Additional auxiliary nodes are
 added to the sides of the mesh elements $K \in T$. Let us denote $N$ the extended set of mesh nodes, and $N_K$ the set of nodes 
 on the boundary of an element $K$. The graph is constructed on the vertices $N$ and a complete subgraph on the vertices $N_K$ is added for every element. 
