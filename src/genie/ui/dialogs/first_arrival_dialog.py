@@ -17,7 +17,7 @@ class FirstArrivalDlg(QtWidgets.QDialog):
 
         self._sampling_rate = self._measurement.data["data"][0].stats.sampling_rate
 
-        title = "First arrival editor - source: {}".format(self._measurement.source_id)
+        title = "First arrival editor - source: {}, file: {}".format(self._measurement.source_id, self._measurement.file)
         self.setWindowTitle(title)
 
         grid = QtWidgets.QGridLayout(self)

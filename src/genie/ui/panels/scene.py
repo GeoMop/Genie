@@ -2028,7 +2028,7 @@ class SideView(QtWidgets.QGraphicsView):
             if -dir_vec_len < z < dir_vec_len:
                 op = 0.75
             else:
-                op = 0.5
+                op = 0.05
             gpt.setOpacity(op)
 
             # logaritmic

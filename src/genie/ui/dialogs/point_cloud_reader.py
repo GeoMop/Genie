@@ -44,7 +44,7 @@ class PointCloudReaderDialog(QtWidgets.QDialog):
         self._closing = False
         self._meshlab_proc = None
 
-        self.setWindowTitle("PointCloudReader")
+        self.setWindowTitle("Open point cloud file")
 
         main_layout = QtWidgets.QVBoxLayout()
 

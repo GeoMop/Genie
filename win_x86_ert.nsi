@@ -15,7 +15,7 @@ SetCompressor lzma
 
 # installation only for current user
 !define MULTIUSER_EXECUTIONLEVEL Standard
-!define MULTIUSER_INSTALLMODE_INSTDIR "Genie"
+!define MULTIUSER_INSTALLMODE_INSTDIR "GenieERT"
 !include MultiUser.nsh
 
 # Define directories.
@@ -37,11 +37,11 @@ SetCompressor lzma
 Name "Genie ${VERSION}"
 Caption "Genie ${VERSION} Setup"
 #InstallDir "$PROGRAMFILES\GeoMop"
-OutFile "${GIT_DIR}\dist\genie_${VERSION}_x86_64.exe"
+OutFile "${GIT_DIR}\dist\genie_ert_${VERSION}_x86_64.exe"
 
 # Registry key to check for directory (so if you install again, it will 
 # overwrite the old one automatically)
-InstallDirRegKey HKCU "Software\Genie" "Install_Dir"
+InstallDirRegKey HKCU "Software\GenieERT" "Install_Dir"
 
 # Request application privileges for Windows Vista and newer
 #RequestExecutionLevel admin
@@ -71,7 +71,7 @@ Function .onInit
 
   !insertmacro MULTIUSER_INIT
 
-  !define APP_HOME_DIR "$APPDATA\Genie"
+  !define APP_HOME_DIR "$APPDATA\GenieERT"
 
 FunctionEnd
 
@@ -126,7 +126,7 @@ Section "Genie" SecGenie
 
   RMDir /r "$INSTDIR\genie"
   SetOutPath $INSTDIR
-  File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc "${SRC_DIR}\genie"
+  File /r /x *~ /x __pycache__ /x pylintrc /x *.pyc /x genie_st.py "${SRC_DIR}\genie"
 
   #RMDir /r "$INSTDIR\data"
   #SetOutPath $INSTDIR\data
@@ -172,23 +172,23 @@ SectionEnd
 
 Section "Start Menu shortcuts" SecStartShortcuts
 
-  CreateDirectory "$SMPROGRAMS\Genie"
+  CreateDirectory "$SMPROGRAMS\GenieERT"
 
   # Make sure this is clean and tidy.
-  RMDir /r "$SMPROGRAMS\Genie"
-  CreateDirectory "$SMPROGRAMS\Genie"
+  RMDir /r "$SMPROGRAMS\GenieERT"
+  CreateDirectory "$SMPROGRAMS\GenieERT"
   
   # Uninstall shortcut.
   SetOutPath $INSTDIR
-  CreateShortcut "$SMPROGRAMS\Genie\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  CreateShortcut "$SMPROGRAMS\GenieERT\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
 
   IfFileExists "$INSTDIR\genie\genie_ert.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortcut "$SMPROGRAMS\Genie\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"' "$INSTDIR\genie\icons\genie_ert_128.ico" 0
+    CreateShortcut "$SMPROGRAMS\GenieERT\GenieERT.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_ert.py"' "$INSTDIR\genie\icons\genie_ert_128.ico" 0
 
   IfFileExists "$INSTDIR\genie\genie_st.py" 0 +3
     SetOutPath $INSTDIR\genie
-    CreateShortcut "$SMPROGRAMS\Genie\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"' "$INSTDIR\genie\icons\genie_st_128.ico" 0
+    CreateShortcut "$SMPROGRAMS\GenieERT\GenieST.lnk" "$INSTDIR\bin\pythonw.bat" '"$INSTDIR\genie\genie_st.py"' "$INSTDIR\genie\icons\genie_st_128.ico" 0
 
 SectionEnd
 
@@ -236,13 +236,13 @@ Section -post
   WriteUninstaller "uninstall.exe"
 
   ; Write the installation path into the registry
-  WriteRegStr HKCU SOFTWARE\Genie "Install_Dir" "$INSTDIR"
+  WriteRegStr HKCU SOFTWARE\GenieERT "Install_Dir" "$INSTDIR"
   
   ; Write the uninstall keys for Windows
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Genie" "DisplayName" "Genie"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Genie" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Genie" "NoModify" 1
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Genie" "NoRepair" 1
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GenieERT" "DisplayName" "GenieERT"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GenieERT" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GenieERT" "NoModify" 1
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GenieERT" "NoRepair" 1
   
 SectionEnd
 
@@ -270,15 +270,14 @@ SectionEnd
 Section "Uninstall"
   
   # Remove registry keys
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Genie"
-  DeleteRegKey HKCU SOFTWARE\Genie
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\GenieERT"
+  DeleteRegKey HKCU SOFTWARE\GenieERT
 
   # Delete desktop icons.
   Delete "$DESKTOP\GenieERT.lnk"
-  Delete "$DESKTOP\GenieST.lnk"
 
   # Remove start menu shortcuts.
-  RMDir /r "$SMPROGRAMS\Genie"
+  RMDir /r "$SMPROGRAMS\GenieERT"
 
   # Remove Genie installation directory and all files within.
   RMDir /r "$INSTDIR"
