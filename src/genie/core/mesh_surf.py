@@ -1,5 +1,6 @@
 from bgem.bspline import brep_writer as bw
 from bgem.bspline import bspline_approx as bs_approx
+import bgem.bspline.bspline as bs
 from .cut_point_cloud import cut_tool_to_gen_vecs, inv_tr
 
 import numpy as np
@@ -103,35 +104,65 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     faces.append(bw.Face([bw.Wire([e4, e9, e8, e12])], surface=surf))
 
 
+    def get_curves(v0, v1):
+        n_points = 100
+        u_points = np.linspace(v0[0], v1[0], n_points)
+        v_points = np.linspace(v0[1], v1[1], n_points)
+        uv_points = np.stack((u_points, v_points), axis=1)
+        xyz_points = bw_surface._bs_surface.eval_array(uv_points)
+        curve_xyz = bs_approx.curve_from_grid(xyz_points)
+
+        poles_z = curve_xyz.poles[:, 2].copy()
+        x_diff, y_diff, z_diff = np.abs(xyz_points[-1] - xyz_points[0])
+        if x_diff > y_diff:
+            axis = 0
+        else:
+            axis = 1
+        poles_t = curve_xyz.poles[:, axis].copy()
+        poles_t -= xyz_points[0][axis]
+        poles_t /= (xyz_points[-1][axis] - xyz_points[0][axis])
+        poles_z -= base_point[2]
+        poles_tz = np.stack((poles_t, poles_z), axis=1)
+        curve_tz = bs.Curve(curve_xyz.basis, poles_tz)
+
+        return bw.curve_from_bs(curve_tz), bw.curve_from_bs(curve_xyz)
+
+
     surf, vtxs_uv = bw.Approx.plane([v1.point, v1.point + gen_vecs[1], v1.point + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
     e1.attach_to_surface(surf, (0, 0), (0, v2h))
-    e2.attach_to_surface(surf, (0, v2h), (1, v3h))
+    curve_tz, curve_xyz = get_curves(v2l, v3l)
+    e2.attach_to_2d_curve((0.0, 1.0), curve_tz, surf)
+    e2.attach_to_3d_curve((0.0, 1.0), curve_xyz)
     e3.attach_to_surface(surf, (1, v3h), (1, 0))
     e4.attach_to_surface(surf, (1, 0), (0, 0))
 
     faces.append(bw.Face([bw.Wire([e1, e2, e3, e4])], surface=surf))
 
 
-    surf, vtxs_uv = bw.Approx.plane([v5.point, v5.point + gen_vecs[0], v5.point + [0, 0, 1]])
+    surf, vtxs_uv = bw.Approx.plane([v5.point + gen_vecs[0], v5.point, v5.point + gen_vecs[0] + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e1.attach_to_surface(surf, (1, 0), (1, v2h))
-    e10.attach_to_surface(surf, (1, v2h), (0, v6h))
-    e5.attach_to_surface(surf, (0, 0), (0, v6h))
-    e9.attach_to_surface(surf, (1, 0), (0, 0))
+    e1.attach_to_surface(surf, (0, 0), (0, v2h))
+    curve_tz, curve_xyz = get_curves(v2l, v6l)
+    e10.attach_to_2d_curve((0.0, 1.0), curve_tz, surf)
+    e10.attach_to_3d_curve((0.0, 1.0), curve_xyz)
+    e5.attach_to_surface(surf, (1, 0), (1, v6h))
+    e9.attach_to_surface(surf, (0, 0), (1, 0))
 
     faces.append(bw.Face([bw.Wire([e1, e10, e5, e9])], surface=surf))
 
 
-    surf, vtxs_uv = bw.Approx.plane([v8.point, v8.point + gen_vecs[0], v8.point + [0, 0, 1]])
+    surf, vtxs_uv = bw.Approx.plane([v8.point + gen_vecs[0], v8.point, v8.point + gen_vecs[0] + [0, 0, 1]])
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
-    e3.attach_to_surface(surf, (1, v3h), (1, 0) )
-    e12.attach_to_surface(surf, (1, 0), (0, 0) )
-    e7.attach_to_surface(surf, (0, v7h), (0, 0) )
-    e11.attach_to_surface(surf, (1, v3h), (0, v7h) )
+    e3.attach_to_surface(surf, (0, v3h), (0, 0))
+    e12.attach_to_surface(surf, (0, 0), (1, 0))
+    e7.attach_to_surface(surf, (1, v7h), (1, 0))
+    curve_tz, curve_xyz = get_curves(v3l, v7l)
+    e11.attach_to_2d_curve((0.0, 1.0), curve_tz, surf)
+    e11.attach_to_3d_curve((0.0, 1.0), curve_xyz)
 
     faces.append(bw.Face([bw.Wire([e3, e12, e7, e11])], surface=surf))
 
@@ -140,7 +171,9 @@ def gen(cloud_file, out_brep_file, mesh_cut_tool_param):
     assert vtxs_uv == [(0, 0), (1, 0), (0, 1)]
 
     e5.attach_to_surface(surf, (0, 0), (0, v6h))
-    e6.attach_to_surface(surf, (0, v6h), (1, v7h))
+    curve_tz, curve_xyz = get_curves(v6l, v7l)
+    e6.attach_to_2d_curve((0.0, 1.0), curve_tz, surf)
+    e6.attach_to_3d_curve((0.0, 1.0), curve_xyz)
     e7.attach_to_surface(surf, (1, v7h), (1, 0))
     e8.attach_to_surface(surf, (1, 0), (0, 0))
 
