@@ -258,7 +258,7 @@ class InversionPreparation(QtWidgets.QMainWindow):
 
         # check version
         expect_versions = [ProjectConfig().version]
-        expect_versions.extend(["0.4.0-a"])
+        expect_versions.extend(["0.4.0-a", "0.4.1-a"])
         if self.genie.method == GenieMethod.ERT:
             expect_versions.extend(["0.3.0-a"])
         if config["version"] not in expect_versions:
