@@ -1,4 +1,4 @@
-numpy==1.21.4
+numpy==1.22.0
 PyQt5==5.15.6
 vtk==9.1.0
 #bgem # commit 4428b2286b5d1711b3c2fcd9f3651a004d91704f
