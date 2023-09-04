@@ -1,5 +1,5 @@
 # Genie
-ERT 3D inversion tool
+3D inversion tool for Electrical Resistivity Tomography (ERT) and active Seismic Tomography (ST).
 
 Genie is a GUI software for processing of electrical resistivity tomography data in 3D space.
 Processing of data is consisting of this operations:
